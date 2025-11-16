@@ -1,0 +1,9 @@
+# .NET
+bin/
+obj/
+.vs/
+
+# Node/JS
+node_modules/
+dist/
+.env

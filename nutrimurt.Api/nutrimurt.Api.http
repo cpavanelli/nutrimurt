@@ -1,0 +1,6 @@
+@nutrimurt.Api_HostAddress = http://localhost:5054
+
+GET {{nutrimurt.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
