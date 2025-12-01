@@ -5,14 +5,14 @@
 namespace nutrimurt.Api.Migrations
 {
     /// <inheritdoc />
-    public partial class CreatePatient : Migration
+    public partial class QuestionAlternatives2 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AddColumn<string>(
-                name: "Phone",
-                table: "Patients",
+                name: "Name",
+                table: "Questionnaries",
                 type: "nvarchar(max)",
                 nullable: false,
                 defaultValue: "");
@@ -22,8 +22,8 @@ namespace nutrimurt.Api.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "Phone",
-                table: "Patients");
+                name: "Name",
+                table: "Questionnaries");
         }
     }
 }

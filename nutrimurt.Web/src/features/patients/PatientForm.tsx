@@ -1,4 +1,4 @@
-import { useState, FormEvent } from 'react';
+import { useState } from 'react';
 import type { Patient, PatientInput } from './types';
 import { IMaskInput } from 'react-imask';
 interface Props {
@@ -35,7 +35,7 @@ export default function PatientForm({ initial, onSubmit, onCancel, submitting }:
         }));
     }
 
-    function handleSubmit(event: FormEvent) {
+    function handleSubmit(event: React.FormEvent) {
         event.preventDefault();
         onSubmit(form);
     }

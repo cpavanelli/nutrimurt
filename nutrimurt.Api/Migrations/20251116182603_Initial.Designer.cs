@@ -12,8 +12,8 @@ using nutrimurt.Api.Data;
 namespace nutrimurt.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251116140556_MakePhoneRequired")]
-    partial class MakePhoneRequired
+    [Migration("20251116182603_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -60,6 +60,56 @@ namespace nutrimurt.Api.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Patients");
+                });
+
+            modelBuilder.Entity("nutrimurt.Api.Models.Question", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("QuestionText")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("QuestionType")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("QuestionnariesId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("QuestionnariesId");
+
+                    b.ToTable("Questions");
+                });
+
+            modelBuilder.Entity("nutrimurt.Api.Models.Questionnaries", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Questionnaries");
+                });
+
+            modelBuilder.Entity("nutrimurt.Api.Models.Question", b =>
+                {
+                    b.HasOne("nutrimurt.Api.Models.Questionnaries", null)
+                        .WithMany("Questions")
+                        .HasForeignKey("QuestionnariesId");
+                });
+
+            modelBuilder.Entity("nutrimurt.Api.Models.Questionnaries", b =>
+                {
+                    b.Navigation("Questions");
                 });
 #pragma warning restore 612, 618
         }

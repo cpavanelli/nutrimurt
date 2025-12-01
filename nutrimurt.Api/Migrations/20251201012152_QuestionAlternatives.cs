@@ -5,7 +5,7 @@
 namespace nutrimurt.Api.Migrations
 {
     /// <inheritdoc />
-    public partial class MakePhoneRequired : Migration
+    public partial class QuestionAlternatives : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
