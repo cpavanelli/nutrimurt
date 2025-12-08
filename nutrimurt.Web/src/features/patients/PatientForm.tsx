@@ -6,23 +6,29 @@ interface Props {
     onSubmit(payload: PatientInput): void;
     onCancel(): void;
     submitting?: boolean;
+    errors?: Record<string, string[]>;
 }
 
 const empty: PatientInput = {
     name: '',
     email: '',
     phone: '',
+    cpf: '',
     birth: '',
     weight: 0,
     height: 0,
 };
 
-export default function PatientForm({ initial, onSubmit, onCancel, submitting }: Props) {
+const toDateInput = (value?: string | null) =>
+  value ? value.split('T')[0] : '';
+
+export default function PatientForm({ initial, onSubmit, onCancel, submitting, errors }: Props) {
     const [form, setForm] = useState<PatientInput>(initial ? {
         name: initial.name,
         email: initial.email,
         phone: initial.phone,
-        birth: initial.birth ?? '',
+        cpf: initial.cpf,
+        birth: toDateInput(initial.birth),
         weight: initial.weight,
         height: initial.height,
     } : empty);
@@ -54,6 +60,7 @@ export default function PatientForm({ initial, onSubmit, onCancel, submitting }:
                         required={true}
                         type={field === 'email' ? 'email' : 'text'}
                     />
+                    {errors?.[field] && <p className="mt-1 text-sm text-red-400">{errors[field][0]}</p>}
                 </div>
             ))}
 
@@ -61,12 +68,29 @@ export default function PatientForm({ initial, onSubmit, onCancel, submitting }:
                 <label className="block text-sm font-medium text-slate-200">Celular</label>
                 <IMaskInput
                     mask="(00)00000-0000"
+                    name="phone"
                     value={form.phone}
+                    required={true}
                     onAccept={(value) => setForm((prev) => ({ ...prev, phone: value }))}
                     unmask={false} // keep formatted value
                     className="mt-1 w-full rounded border border-slate-700 bg-slate-900 px-3 py-2 text-white"
                     placeholder="(11)12345-6789"
                 />
+            </div>
+
+            <div>
+                <label className="block text-sm font-medium text-slate-200">CPF</label>
+                <IMaskInput
+                    mask="000.000.000-00"
+                    name="cpf"
+                    value={form.cpf}
+                    required={true}
+                    onAccept={(value) => setForm((prev) => ({ ...prev, cpf: value }))}
+                    unmask={false} // keep formatted value
+                    className="mt-1 w-full rounded border border-slate-700 bg-slate-900 px-3 py-2 text-white"
+                    placeholder="000.000.000-00"
+                />
+                {errors?.cpf && <p className="mt-1 text-sm text-red-400">{errors.cpf[0]}</p>}
             </div>
 
             <div>

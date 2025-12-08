@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { patientsApi } from './api';
+import { ApiError, patientsApi } from './api';
 import type { Patient, PatientInput } from './types';
 import PatientForm from './PatientForm';
 
@@ -10,6 +10,7 @@ export default function PatientsPage() {
   const [modal, setModal] = useState<'create' | 'edit' | null>(null);
   const [selected, setSelected] = useState<Patient | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [formErrors, setFormErrors] = useState<Record<string, string[]> | null>(null);
 
   async function load() {
     try {
@@ -29,17 +30,21 @@ export default function PatientsPage() {
 
   function openCreate() {
     setSelected(null);
+    setFormErrors(null);
     setModal('create');
   }
 
   function openEdit(patient: Patient) {
     setSelected(patient);
+    setFormErrors(null);
     setModal('edit');
   }
 
   async function handleSubmit(payload: PatientInput) {
     try {
       setSubmitting(true);
+      setFormErrors(null);
+      payload.birth = payload.birth ? payload.birth : null; // or delete if falsy
       if (modal === 'edit' && selected) {
         await patientsApi.update(selected.id, payload);
       } else {
@@ -49,6 +54,13 @@ export default function PatientsPage() {
       setModal(null);
       setSelected(null);
     } catch (err) {
+      if (err instanceof ApiError && err.validation) {
+          const normalized = Object.fromEntries(
+        Object.entries(err.validation).map(([k, v]) => [k.toLowerCase(), v])
+      );
+      setFormErrors(normalized);
+        return; // keep modal open and show errors
+      }
       alert(err instanceof Error ? err.message : 'Request failed');
     } finally {
       setSubmitting(false);
@@ -145,6 +157,7 @@ export default function PatientsPage() {
               initial={selected}
               submitting={submitting}
               onSubmit={handleSubmit}
+              errors={formErrors || undefined}
               onCancel={() => setModal(null)}
             />
           </div>

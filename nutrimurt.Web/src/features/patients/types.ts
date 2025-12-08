@@ -3,6 +3,7 @@ export interface Patient {
   name: string;
   email: string;
   phone: string;
+  cpf: string;
   birth?: string | null;
   weight: number;
   height: number;

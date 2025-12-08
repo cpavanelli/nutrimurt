@@ -12,8 +12,8 @@ using nutrimurt.Api.Data;
 namespace nutrimurt.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251117013525_Questions")]
-    partial class Questions
+    [Migration("20251205005736_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -35,6 +35,10 @@ namespace nutrimurt.Api.Migrations
 
                     b.Property<DateTime?>("Birth")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("CPF")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -60,6 +64,54 @@ namespace nutrimurt.Api.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Patients");
+                });
+
+            modelBuilder.Entity("nutrimurt.Api.Models.PatientQuestionAnswer", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Answer")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("PatientQuestionaryId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("QuestionId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PatientQuestionaryId");
+
+                    b.ToTable("PatientQuestionAnswers");
+                });
+
+            modelBuilder.Entity("nutrimurt.Api.Models.PatientQuestionary", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("PatientId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("QuestionnaryId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UrlId")
+                        .IsRequired()
+                        .HasColumnType("CHAR(32)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("PatientQuestionaries");
                 });
 
             modelBuilder.Entity("nutrimurt.Api.Models.Question", b =>
@@ -117,9 +169,20 @@ namespace nutrimurt.Api.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.HasKey("Id");
 
                     b.ToTable("Questionnaries");
+                });
+
+            modelBuilder.Entity("nutrimurt.Api.Models.PatientQuestionAnswer", b =>
+                {
+                    b.HasOne("nutrimurt.Api.Models.PatientQuestionary", null)
+                        .WithMany("Answers")
+                        .HasForeignKey("PatientQuestionaryId");
                 });
 
             modelBuilder.Entity("nutrimurt.Api.Models.Question", b =>
@@ -134,6 +197,11 @@ namespace nutrimurt.Api.Migrations
                     b.HasOne("nutrimurt.Api.Models.Question", null)
                         .WithMany("Alternatives")
                         .HasForeignKey("QuestionId");
+                });
+
+            modelBuilder.Entity("nutrimurt.Api.Models.PatientQuestionary", b =>
+                {
+                    b.Navigation("Answers");
                 });
 
             modelBuilder.Entity("nutrimurt.Api.Models.Question", b =>

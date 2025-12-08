@@ -1,9 +1,114 @@
-# .NET
+##############################
+### .NET / C# ignore rules ###
+##############################
+
+# Build output
 bin/
 obj/
+
+# User-specific files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Visual Studio
 .vs/
 
-# Node/JS
+# NuGet
+*.nupkg
+*.snupkg
+packages/
+*.nuget.props
+*.nuget.targets
+
+# .NET Secret Manager
+secrets.json
+
+# ASP.NET log files
+logs/
+*.log
+
+# Rider / JetBrains
+.idea/
+*.sln.iml
+
+
+##############################
+### React / Node ignore ######
+##############################
+
+# Node modules
 node_modules/
+
+# Build output
 dist/
+build/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment
 .env
+.env.local
+.env.*.local
+
+# Vite
+.vite/
+
+
+##############################
+### Python ignore rules ######
+##############################
+
+# Byte-compiled / optimized files
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Packages
+*.egg
+*.egg-info/
+dist/
+build/
+pip-wheel-metadata/
+
+# PyInstaller
+*.spec
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Mypy
+.mypy_cache/
+.dmypy.json
+
+# PyTest
+.pytest_cache/
+
+# IDE metadata
+*.pyproj
+*.idea/
+*.vscode/
+
+# Local settings / environment
+.env
+.env.*
+
+
+##############################
+### OS files #################
+##############################
+
+# Windows
+Thumbs.db
+Desktop.ini
