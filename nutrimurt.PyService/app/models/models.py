@@ -32,7 +32,7 @@ class Questionaries(Base):
 
 class Questions(Base):
         __tablename__ = 'Questions'
-        id: Mapped[int] = mapped_column(primary_key=True)
+        id: Mapped[int] = mapped_column("Id", primary_key=True)
         text: Mapped[str] = mapped_column("QuestionText")
         question_type: Mapped[int] = mapped_column("QuestionType")
         questionnary_id: Mapped[int] = mapped_column("QuestionnaryId", ForeignKey('Questionnaries.Id'))
@@ -40,8 +40,8 @@ class Questions(Base):
         alternatives: Mapped[list["QuestionAlternative"]] = relationship("QuestionAlternative", back_populates="question")
 
 class QuestionAlternative(Base):
-        __tablename__ = 'QuestionsAlternatives'
-        id: Mapped[int] = mapped_column(primary_key=True)
+        __tablename__ = 'QuestionAlternatives'
+        id: Mapped[int] = mapped_column("Id", primary_key=True)
         alternative: Mapped[str] = mapped_column("Alternative")
         question_id: Mapped[int] = mapped_column("QuestionId", ForeignKey('Questions.Id'))
         question: Mapped["Questions"] = relationship("Questions", back_populates="alternatives")

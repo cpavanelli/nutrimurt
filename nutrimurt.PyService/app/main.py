@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.email.emailsender import EmailSender
 from app.data.database import Database, get_db
 from sqlalchemy.orm import Session
+from app.settings import settings
 
 app = FastAPI(title="NutriMurt Python Service", version="1.0.0")
 
@@ -83,6 +84,17 @@ def sendEmail(urlID: str, request: Request, dbSession: Session = Depends(get_db)
 
     emailSender.send_email(patient_link.patient.email, subject, 
                            f"Olá {patient_link.patient.name}! Acesse o link para preencher seu {text}: "
-                            + f"{request.base_url}link/{urlID}")
+                            + f"{settings.WEBSITE_URL}/link/{urlID}")
 
     return {"status": "ok"}
+
+@app.get("/getPatientQuestionary/{urlID}")
+def getPatientQuestionary(urlID: str, request: Request, dbSession: Session = Depends(get_db)):
+    repo = Database(dbSession)
+    emailSender = EmailSender()
+    questionary = repo.get_Questionary(urlID)
+    if not questionary:
+        raise HTTPException(status_code=404, detail="Link not found")
+
+
+    return {"data": questionary}

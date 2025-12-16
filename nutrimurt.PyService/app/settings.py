@@ -6,6 +6,7 @@ class Settings(BaseSettings):
     MAILGUN_DOMAIN: str = Field(..., env='MAILGUN_DOMAIN')
     MAILGUN_FROM: str = Field(..., env='MAILGUN_FROM')
     CONNECTION_STRING: str = Field(..., env='CONNECTION_STRING')
+    WEBSITE_URL: str = Field(..., env='WEBSITE_URL')
 
     class Config:
         env_file = ".env"

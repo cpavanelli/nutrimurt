@@ -36,8 +36,7 @@ class Database:
 
     def get_Questionary(self, urlID: str):
           with self.session as session:
-            return (session.query(PatientLinks)
-            .options(joinedload(PatientLinks.patient), 
-                     joinedload(PatientLinks.questionnary).joinedload(Questionaries.questions)
-                     .joinedload(Questions.alternatives)
+            return (session.query(Questionaries)
+            .options(joinedload(Questionaries.patient_links).joinedload(PatientLinks.patient), 
+                     joinedload(Questionaries.questions).joinedload(Questions.alternatives)
                      ).filter(PatientLinks.urlID == urlID).first())
