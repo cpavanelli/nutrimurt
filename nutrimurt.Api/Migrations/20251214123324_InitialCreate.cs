@@ -12,18 +12,17 @@ namespace nutrimurt.Api.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "PatientQuestionaries",
+                name: "PatientQuestionAnswers",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    UrlId = table.Column<string>(type: "CHAR(32)", nullable: false),
-                    PatientId = table.Column<int>(type: "int", nullable: false),
-                    QuestionnaryId = table.Column<int>(type: "int", nullable: false)
+                    QuestionId = table.Column<int>(type: "int", nullable: false),
+                    Answer = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_PatientQuestionaries", x => x.Id);
+                    table.PrimaryKey("PK_PatientQuestionAnswers", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -60,23 +59,32 @@ namespace nutrimurt.Api.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "PatientQuestionAnswers",
+                name: "PatientLinks",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    QuestionId = table.Column<int>(type: "int", nullable: false),
-                    Answer = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    PatientQuestionaryId = table.Column<int>(type: "int", nullable: true)
+                    PatientId = table.Column<int>(type: "int", nullable: false),
+                    UrlId = table.Column<string>(type: "CHAR(32)", nullable: false),
+                    Type = table.Column<int>(type: "int", nullable: false),
+                    QuestionnaryId = table.Column<int>(type: "int", nullable: false),
+                    DiaryId = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_PatientQuestionAnswers", x => x.Id);
+                    table.PrimaryKey("PK_PatientLinks", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_PatientQuestionAnswers_PatientQuestionaries_PatientQuestionaryId",
-                        column: x => x.PatientQuestionaryId,
-                        principalTable: "PatientQuestionaries",
-                        principalColumn: "Id");
+                        name: "FK_PatientLinks_Patients_PatientId",
+                        column: x => x.PatientId,
+                        principalTable: "Patients",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_PatientLinks_Questionnaries_QuestionnaryId",
+                        column: x => x.QuestionnaryId,
+                        principalTable: "Questionnaries",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -87,16 +95,17 @@ namespace nutrimurt.Api.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     QuestionText = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     QuestionType = table.Column<int>(type: "int", nullable: false),
-                    QuestionnariesId = table.Column<int>(type: "int", nullable: true)
+                    QuestionnaryId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Questions", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Questions_Questionnaries_QuestionnariesId",
-                        column: x => x.QuestionnariesId,
+                        name: "FK_Questions_Questionnaries_QuestionnaryId",
+                        column: x => x.QuestionnaryId,
                         principalTable: "Questionnaries",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -119,9 +128,14 @@ namespace nutrimurt.Api.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_PatientQuestionAnswers_PatientQuestionaryId",
-                table: "PatientQuestionAnswers",
-                column: "PatientQuestionaryId");
+                name: "IX_PatientLinks_PatientId",
+                table: "PatientLinks",
+                column: "PatientId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PatientLinks_QuestionnaryId",
+                table: "PatientLinks",
+                column: "QuestionnaryId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_QuestionAlternatives_QuestionId",
@@ -129,25 +143,25 @@ namespace nutrimurt.Api.Migrations
                 column: "QuestionId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Questions_QuestionnariesId",
+                name: "IX_Questions_QuestionnaryId",
                 table: "Questions",
-                column: "QuestionnariesId");
+                column: "QuestionnaryId");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "PatientQuestionAnswers");
+                name: "PatientLinks");
 
             migrationBuilder.DropTable(
-                name: "Patients");
+                name: "PatientQuestionAnswers");
 
             migrationBuilder.DropTable(
                 name: "QuestionAlternatives");
 
             migrationBuilder.DropTable(
-                name: "PatientQuestionaries");
+                name: "Patients");
 
             migrationBuilder.DropTable(
                 name: "Questions");

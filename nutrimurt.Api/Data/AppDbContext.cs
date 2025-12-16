@@ -11,6 +11,6 @@ public class AppDbContext : DbContext
     public DbSet<Question> Questions => Set<Question>();
     public DbSet<Questionnaries> Questionnaries => Set<Questionnaries>();
     public DbSet<QuestionAlternatives> QuestionAlternatives => Set<QuestionAlternatives>();
-    public DbSet<PatientQuestionary> PatientQuestionaries => Set<PatientQuestionary>();
     public DbSet<PatientQuestionAnswer> PatientQuestionAnswers => Set<PatientQuestionAnswer>();
+    public DbSet<PatientLink> PatientLinks => Set<PatientLink>();
 }

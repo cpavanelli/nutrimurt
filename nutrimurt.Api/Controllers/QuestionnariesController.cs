@@ -59,6 +59,7 @@ public class QuestionnariesController : ControllerBase
     {
         var questionnarie = await _context.Questionnaries
                                           .Include(q => q.Questions)
+                                          .ThenInclude(q => q.Alternatives)
                                           .FirstOrDefaultAsync(q => q.Id == id);
         if (questionnarie is null) return NotFound();
 

@@ -1,16 +1,24 @@
 import { useEffect, useState } from 'react';
 import { ApiError, patientsApi } from './api';
-import type { Patient, PatientInput } from './types';
+import type { Patient, PatientInput, PatientLink, SendLinksInput } from './types';
 import PatientForm from './PatientForm';
+import { sendEmail } from './pyApi';
+import MaintenanceHeader from '../../components/MaintenanceHeader';
+import type { Questionary } from '../questionaries/types';
+import { questionariesApi } from '../questionaries/api';
+import SendLinksForm from './SendLinksForm';
 
 export default function PatientsPage() {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [modal, setModal] = useState<'create' | 'edit' | null>(null);
+  const [modal, setModal] = useState<'create' | 'edit' | 'links' | null>(null);
   const [selected, setSelected] = useState<Patient | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string[]> | null>(null);
+  const [patientLinks, setPatientLinks] = useState<PatientLink[]>([]);
+  const [questionaries, setQuestionaries] = useState<Questionary[]>([]);
+
 
   async function load() {
     try {
@@ -40,6 +48,25 @@ export default function PatientsPage() {
     setModal('edit');
   }
 
+  async function openLinks(patient: Patient) {
+    setSelected(patient);
+    setFormErrors(null);
+    setModal('links');
+    try {
+      setSubmitting(true);
+      const [qs, links] = await Promise.all([
+        questionariesApi.list(),
+        patientsApi.links(patient.id)
+      ]);
+      setQuestionaries(qs);
+      setPatientLinks(links);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Falha ao carregar links/questionários');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   async function handleSubmit(payload: PatientInput) {
     try {
       setSubmitting(true);
@@ -55,10 +82,10 @@ export default function PatientsPage() {
       setSelected(null);
     } catch (err) {
       if (err instanceof ApiError && err.validation) {
-          const normalized = Object.fromEntries(
-        Object.entries(err.validation).map(([k, v]) => [k.toLowerCase(), v])
-      );
-      setFormErrors(normalized);
+        const normalized = Object.fromEntries(
+          Object.entries(err.validation).map(([k, v]) => [k.toLowerCase(), v])
+        );
+        setFormErrors(normalized);
         return; // keep modal open and show errors
       }
       alert(err instanceof Error ? err.message : 'Request failed');
@@ -77,23 +104,39 @@ export default function PatientsPage() {
     }
   }
 
+  async function handleSendLink(payload: SendLinksInput) {
+    if (!selected) return;
+    try {
+      setSubmitting(true);
+      setFormErrors(null);
+      const updated = await patientsApi.sendLink(selected.id, payload); // returns PatientLink[] or undefined
+      if (updated) setPatientLinks(updated);
+      setModal(null);
+      setSelected(null);
+
+      //call python api to send email
+      await sendEmail(updated[0].urlId);
+
+    } catch (err) {
+      if (err instanceof ApiError && err.validation) {
+        const normalized = Object.fromEntries(
+          Object.entries(err.validation).map(([k, v]) => [k.toLowerCase(), v])
+        );
+        setFormErrors(normalized);
+        return;
+      }
+      alert(err instanceof Error ? err.message : 'Request failed');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   return (
     <div className="min-h-screen bg-slate-950 text-white">
-      <header className="border-b border-slate-800 bg-slate-900 px 6 py-4">
-        <div className="mx-auto flex max-w-5xl items-center justify-between">
-          <h1 className="text-2xl font-semibold">Patients</h1>
-          <button
-            onClick={openCreate}
-            className="rounded bg-emerald-500 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-400"
-          >
-            + Novo Paciente
-          </button>
-        </div>
-      </header>
-
+      <MaintenanceHeader title="Pacientes" addNewTitle="Novo Paciente" openCreate={openCreate} />
       <main className="mx-auto max-w-5xl px-6 py-8">
         {loading ? (
-          <p className="text-slate-400">Loading patients...</p>
+          <p className="text-slate-400">Carregando pacientes...</p>
         ) : error ? (
           <p className="text-red-400">{error}</p>
         ) : (
@@ -103,7 +146,7 @@ export default function PatientsPage() {
                 <tr>
                   {['Name', 'Email', 'Phone', 'Created'].map((header) => (
                     <th key={header} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">
-                      {header}
+                      {header === "Created" ? "Criado em" : header}
                     </th>
                   ))}
                   <th className="px-4 py-3"></th>
@@ -123,13 +166,19 @@ export default function PatientsPage() {
                         onClick={() => openEdit(patient)}
                         className="mr-3 text-emerald-400 hover:text-emerald-300"
                       >
-                        Edit
+                        Editar
+                      </button>
+                      <button
+                        onClick={() => openLinks(patient)}
+                        className="mr-3 text-blue-400 hover:text-blue-300"
+                      >
+                        Enviar Links
                       </button>
                       <button
                         onClick={() => handleDelete(patient.id)}
                         className="text-red-400 hover:text-red-300"
                       >
-                        Delete
+                        Deletar
                       </button>
                     </td>
                   </tr>
@@ -150,19 +199,40 @@ export default function PatientsPage() {
       {modal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
           <div className="w-full max-w-lg rounded-xl border border-slate-800 bg-slate-900 p-6 shadow-2xl">
-            <h2 className="text-xl font-semibold mb-4">
-              {modal === 'edit' ? 'Editar Paciente' : 'Novo Paciente'}
-            </h2>
-            <PatientForm
-              initial={selected}
-              submitting={submitting}
-              onSubmit={handleSubmit}
-              errors={formErrors || undefined}
-              onCancel={() => setModal(null)}
-            />
+
+            {modal === 'links' ? (
+              <>
+                <h2 className="text-xl font-semibold mb-4">Enviar Links</h2>
+                {selected && (
+                  <SendLinksForm
+                    patient={selected}
+                    links={patientLinks}
+                    questionaries={questionaries}
+                    submitting={submitting}
+                    errors={formErrors || undefined}
+                    onSubmit={handleSendLink}
+                    onCancel={() => setModal(null)}
+                  />
+                )}
+              </>
+            ) : (
+              <>
+                <h2 className="text-xl font-semibold mb-4">
+                  {modal === 'edit' ? 'Editar Paciente' : 'Novo Paciente'}
+                </h2>
+                <PatientForm
+                  initial={selected}
+                  submitting={submitting}
+                  onSubmit={handleSubmit}
+                  errors={formErrors || undefined}
+                  onCancel={() => setModal(null)}
+                />
+              </>
+            )}
           </div>
-        </div>
-      )}
-    </div>
+        </div >
+      )
+      }
+    </div >
   );
 }

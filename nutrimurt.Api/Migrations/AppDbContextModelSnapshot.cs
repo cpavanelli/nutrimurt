@@ -63,6 +63,39 @@ namespace nutrimurt.Api.Migrations
                     b.ToTable("Patients");
                 });
 
+            modelBuilder.Entity("nutrimurt.Api.Models.PatientLink", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("DiaryId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PatientId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("QuestionnaryId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UrlId")
+                        .IsRequired()
+                        .HasColumnType("CHAR(32)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PatientId");
+
+                    b.HasIndex("QuestionnaryId");
+
+                    b.ToTable("PatientLinks");
+                });
+
             modelBuilder.Entity("nutrimurt.Api.Models.PatientQuestionAnswer", b =>
                 {
                     b.Property<int>("Id")
@@ -75,40 +108,12 @@ namespace nutrimurt.Api.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("PatientQuestionaryId")
-                        .HasColumnType("int");
-
                     b.Property<int>("QuestionId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("PatientQuestionaryId");
-
                     b.ToTable("PatientQuestionAnswers");
-                });
-
-            modelBuilder.Entity("nutrimurt.Api.Models.PatientQuestionary", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("PatientId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("QuestionnaryId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("UrlId")
-                        .IsRequired()
-                        .HasColumnType("CHAR(32)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("PatientQuestionaries");
                 });
 
             modelBuilder.Entity("nutrimurt.Api.Models.Question", b =>
@@ -126,12 +131,12 @@ namespace nutrimurt.Api.Migrations
                     b.Property<int>("QuestionType")
                         .HasColumnType("int");
 
-                    b.Property<int?>("QuestionnariesId")
+                    b.Property<int>("QuestionnaryId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("QuestionnariesId");
+                    b.HasIndex("QuestionnaryId");
 
                     b.ToTable("Questions");
                 });
@@ -175,18 +180,34 @@ namespace nutrimurt.Api.Migrations
                     b.ToTable("Questionnaries");
                 });
 
-            modelBuilder.Entity("nutrimurt.Api.Models.PatientQuestionAnswer", b =>
+            modelBuilder.Entity("nutrimurt.Api.Models.PatientLink", b =>
                 {
-                    b.HasOne("nutrimurt.Api.Models.PatientQuestionary", null)
-                        .WithMany("Answers")
-                        .HasForeignKey("PatientQuestionaryId");
+                    b.HasOne("nutrimurt.Api.Models.Patient", "Patient")
+                        .WithMany()
+                        .HasForeignKey("PatientId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("nutrimurt.Api.Models.Questionnaries", "Questionnary")
+                        .WithMany()
+                        .HasForeignKey("QuestionnaryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Patient");
+
+                    b.Navigation("Questionnary");
                 });
 
             modelBuilder.Entity("nutrimurt.Api.Models.Question", b =>
                 {
-                    b.HasOne("nutrimurt.Api.Models.Questionnaries", null)
+                    b.HasOne("nutrimurt.Api.Models.Questionnaries", "Questionnary")
                         .WithMany("Questions")
-                        .HasForeignKey("QuestionnariesId");
+                        .HasForeignKey("QuestionnaryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Questionnary");
                 });
 
             modelBuilder.Entity("nutrimurt.Api.Models.QuestionAlternatives", b =>
@@ -194,11 +215,6 @@ namespace nutrimurt.Api.Migrations
                     b.HasOne("nutrimurt.Api.Models.Question", null)
                         .WithMany("Alternatives")
                         .HasForeignKey("QuestionId");
-                });
-
-            modelBuilder.Entity("nutrimurt.Api.Models.PatientQuestionary", b =>
-                {
-                    b.Navigation("Answers");
                 });
 
             modelBuilder.Entity("nutrimurt.Api.Models.Question", b =>

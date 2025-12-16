@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import {  questionariesApi } from './api';
 import type { Questionary, QuestionaryInput } from './types';
 import QuestionarrieForm from './QuestionarrieForm';
+import MaintenanceHeader from '../../components/MaintenanceHeader';
 
 export default function QuestionarryPage() {
   const [questionaries, setQuestionaries] = useState<Questionary[]>([]);
@@ -67,17 +68,7 @@ export default function QuestionarryPage() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-white">
-      <header className="border-b border-slate-800 bg-slate-900 px 6 py-4">
-        <div className="mx-auto flex max-w-5xl items-center justify-between">
-          <h1 className="text-2xl font-semibold">Questionaries</h1>
-          <button
-            onClick={openCreate}
-            className="rounded bg-emerald-500 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-400"
-          >
-            + Novo Questionário
-          </button>
-        </div>
-      </header>
+      <MaintenanceHeader title="Questionários" addNewTitle="Novo Questionário" openCreate={openCreate} />
 
       <main className="mx-auto max-w-5xl px-6 py-8">
         {loading ? (

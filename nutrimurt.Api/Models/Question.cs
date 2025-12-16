@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace nutrimurt.Api.Models;
 
@@ -19,6 +20,11 @@ public class Question
     
     [Required]
     public QuestionTypes QuestionType { get; set; }
+
+    [Required]
+    public int QuestionnaryId { get; set; }
+    [JsonIgnore]
+    public Questionnaries? Questionnary { get; set; }
 
     public List<QuestionAlternatives> Alternatives { get; set; } = [];
 }

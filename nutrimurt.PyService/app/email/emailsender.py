@@ -1,14 +1,15 @@
 from dotenv import load_dotenv
 import os
 import requests
+from app.settings import settings
 
 class EmailSender:
     def __init__(self):
         load_dotenv()
-        
-        self.api_key = os.getenv("MAILGUN_API_KEY")
-        self.domain = os.getenv("MAILGUN_DOMAIN")
-        self.from_email = os.getenv("MAILGUN_FROM")
+
+        self.api_key = settings.MAILGUN_API_KEY
+        self.domain = settings.MAILGUN_DOMAIN
+        self.from_email = settings.MAILGUN_FROM
 
         if not self.api_key or not self.domain or not self.from_email:
             raise ValueError("Mailgun configuration missing in .env")

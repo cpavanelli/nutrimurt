@@ -1,4 +1,4 @@
-import type { Patient, PatientInput } from './types';
+import type { Patient, PatientInput, PatientLink, SendLinksInput } from './types';
 
 const baseUrl = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:5054';
 
@@ -21,16 +21,16 @@ export class ApiError extends Error {
 
 async function request<T>(input: RequestInfo, init?: RequestInit): Promise<T> {
   const res = await fetch(input, init);
-  
-   if (!res.ok) {
+
+  if (!res.ok) {
     const contentType = res.headers.get('content-type') ?? '';
     if (contentType.includes('application/problem+json') || contentType.includes('application/json')) {
       const problem = await res.json();
       const validation = problem.errors as Record<string, string[]> | undefined;
       const message =
         validation ? Object.values(validation).flat().join(' ') :
-        problem.detail ?? problem.title ?? res.statusText;
-        console.log(message);
+          problem.detail ?? problem.title ?? res.statusText;
+      console.log(message);
       throw new ApiError(message, res.status, validation);
     }
     throw new ApiError(await res.text(), res.status);
@@ -60,4 +60,30 @@ export const patientsApi = {
     }),
   remove: (id: number) =>
     request<void>(`${baseUrl}/api/patients/${id}`, { method: 'DELETE' }),
+  links: async (id: number) => {
+    const raw = await request<any[]>(`${baseUrl}/api/patients/${id}/links`);
+    return raw.map(mapLink);
+  },
+  sendLink: async (id: number, payload: SendLinksInput) => {
+    const res = await request<any[]>(`${baseUrl}/api/patients/${id}/links/send`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 1, // Question
+        questionnaryId: payload.questionaryId,
+        diaryId: payload.diaryId ?? 0,
+      }),
+    });
+    return res.map(mapLink);
+  },
 };
+
+const mapLink = (link: any): PatientLink => ({
+  id: link.id,
+  patientId: link.patientId,
+  urlId: link.urlId,
+  questionnaryName: link.questionnaryName ?? '',
+  type: link.type === 2 ? 'diary' : 'question',
+  questionnaryId: link.questionnaryId,
+  diaryId: link.diaryId ?? ''
+});

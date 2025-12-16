@@ -1,7 +1,17 @@
-from fastapi import FastAPI
-from .emailsender import EmailSender
+from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
+from app.email.emailsender import EmailSender
+from app.data.database import Database, get_db
+from sqlalchemy.orm import Session
 
 app = FastAPI(title="NutriMurt Python Service", version="1.0.0")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],  # adjust for your frontends
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/")
 def root():
@@ -23,9 +33,56 @@ def create_patient_questionary(patient_id: int, questionary_id: int):
     return {"message": "Patient questionary created", "data": {"patient_id": patient_id, "questionary_id": questionary_id}}
 
 
-@app.get("/testEmail")
-def health():
+@app.get("/testEmailB")
+def testEmail():
     emailSender = EmailSender()
     emailSender.send_email("giovanamurtinheira@gmail.com", "Test Email from NutriMurt", "This is a test email sent from the NutriMurt Python Service.")
+    emailSender.send_email("caiopavanelli@gmail.com", "Test Email from NutriMurt", "This is a test email sent from the NutriMurt Python Service.")
     return {"status": "ok"}
 
+
+@app.post("/testEmail/{to_email}/{name}")
+def testEmail(to_email: str, name: str):
+    emailSender = EmailSender()
+    emailSender.send_email(to_email, "Test Email from NutriMurt", "Oi " + name + "!!!\n\nThis is a test email sent from the NutriMurt Python Service.")
+    return {"status": "ok"}
+
+@app.get("/testGetUser/")
+def testGetUser():
+    connection = Database()
+    patient = connection.get_Patient(4)
+
+    return {"status": "ok", "patient": {"id": patient.id, "name": patient.name, "email": patient.email}}
+
+
+@app.get("/testGetQuestionary/{urlID}")
+def testGetQuestionary(urlID: str, dbSession: Session = Depends(get_db)):
+    repo = Database(dbSession)
+    patient_link = repo.get_PatientLink(urlID)
+    total_questions = patient_link.questionnary.questions.__len__()
+    # return {"status": "ok", "questionary": {"id": patient_link.id,
+    #                                         "patient name": patient_link.patient.name}}
+
+    return {"status": "ok", "questionary": {"id": patient_link.id,
+                                            "questionary": patient_link.questionnary.name, 
+                                            "patient name": patient_link.patient.name,
+                                            "total questions": total_questions}}
+
+@app.post("/sendEmail/{urlID}")
+def sendEmail(urlID: str, request: Request, dbSession: Session = Depends(get_db)):
+    repo = Database(dbSession)
+    emailSender = EmailSender()
+    patient_link = repo.get_PatientLink(urlID)
+    if not patient_link:
+        raise HTTPException(status_code=404, detail="Link not found")
+
+    subject = patient_link.type == 1 and "Questionário NutriMurt" or "Diário NutriMurt"
+    text = patient_link.type == 1 and "questionário" or "diário"
+    
+
+
+    emailSender.send_email(patient_link.patient.email, subject, 
+                           f"Olá {patient_link.patient.name}! Acesse o link para preencher seu {text}: "
+                            + f"{request.base_url}link/{urlID}")
+
+    return {"status": "ok"}
