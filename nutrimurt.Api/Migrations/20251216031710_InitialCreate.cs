@@ -12,20 +12,6 @@ namespace nutrimurt.Api.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "PatientQuestionAnswers",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    QuestionId = table.Column<int>(type: "int", nullable: false),
-                    Answer = table.Column<string>(type: "nvarchar(max)", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_PatientQuestionAnswers", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Patients",
                 columns: table => new
                 {
@@ -109,6 +95,27 @@ namespace nutrimurt.Api.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "PatientQuestionAnswers",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    QuestionId = table.Column<int>(type: "int", nullable: false),
+                    Answer = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    PatientLinkId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PatientQuestionAnswers", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_PatientQuestionAnswers_PatientLinks_PatientLinkId",
+                        column: x => x.PatientLinkId,
+                        principalTable: "PatientLinks",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "QuestionAlternatives",
                 columns: table => new
                 {
@@ -138,6 +145,11 @@ namespace nutrimurt.Api.Migrations
                 column: "QuestionnaryId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_PatientQuestionAnswers_PatientLinkId",
+                table: "PatientQuestionAnswers",
+                column: "PatientLinkId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_QuestionAlternatives_QuestionId",
                 table: "QuestionAlternatives",
                 column: "QuestionId");
@@ -152,19 +164,19 @@ namespace nutrimurt.Api.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "PatientLinks");
-
-            migrationBuilder.DropTable(
                 name: "PatientQuestionAnswers");
 
             migrationBuilder.DropTable(
                 name: "QuestionAlternatives");
 
             migrationBuilder.DropTable(
-                name: "Patients");
+                name: "PatientLinks");
 
             migrationBuilder.DropTable(
                 name: "Questions");
+
+            migrationBuilder.DropTable(
+                name: "Patients");
 
             migrationBuilder.DropTable(
                 name: "Questionnaries");

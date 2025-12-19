@@ -21,6 +21,7 @@ class PatientLinks(Base):
         questionnary_id: Mapped[int] = mapped_column("QuestionnaryId", ForeignKey('Questionnaries.Id'))
         patient: Mapped["Patients"] = relationship("Patients", back_populates="patient_links")
         questionnary: Mapped["Questionaries"] = relationship("Questionaries", back_populates="patient_links")
+        answers: Mapped[list["PatientQuestionAnswer"]] = relationship("PatientQuestionAnswer", back_populates="patient_link")
 
 
 class Questionaries(Base):
@@ -45,3 +46,11 @@ class QuestionAlternative(Base):
         alternative: Mapped[str] = mapped_column("Alternative")
         question_id: Mapped[int] = mapped_column("QuestionId", ForeignKey('Questions.Id'))
         question: Mapped["Questions"] = relationship("Questions", back_populates="alternatives")
+
+class PatientQuestionAnswer(Base):
+        __tablename__ = 'PatientQuestionAnswers'
+        id: Mapped[int] = mapped_column("Id", primary_key=True)
+        patient_link_id: Mapped[int] = mapped_column("PatientLinkId", ForeignKey('PatientLinks.Id'))
+        question_id: Mapped[int] = mapped_column("QuestionId", ForeignKey('Questions.Id'))
+        answer: Mapped[str] = mapped_column("Answer")
+        patient_link: Mapped["PatientLinks"] = relationship("PatientLinks", back_populates="answers")

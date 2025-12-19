@@ -12,4 +12,11 @@ public class PatientQuestionAnswer
 
     [Required]
     public string Answer { get; set; } = string.Empty;
+
+    [Required]
+    public int PatientLinkId { get; set; }
+
+    [Required]
+    public PatientLink? PatientLink { get; set; }
+
 }

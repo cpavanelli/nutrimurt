@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
 import sqlalchemy as sa
 from sqlalchemy.orm import joinedload, Session
-from app.models.models import Patients, PatientLinks, Questionaries, Questions
+from app.models.models import PatientQuestionAnswer, Patients, PatientLinks, Questionaries, Questions
 from app.settings import settings
 
 engine = sa.create_engine(settings.CONNECTION_STRING)
@@ -40,3 +40,14 @@ class Database:
             .options(joinedload(Questionaries.patient_links).joinedload(PatientLinks.patient), 
                      joinedload(Questionaries.questions).joinedload(Questions.alternatives)
                      ).filter(PatientLinks.urlID == urlID).first())
+          
+    def savePatientAnswers(self, patient_link_id: int, answers: list[dict]):
+          with self.session as session:
+            for answer in answers:
+                pqa = PatientQuestionAnswer(
+                    patient_link_id=patient_link_id,
+                    question_id=answer['question_id'],
+                    answer=answer['answer']
+                )
+                session.add(pqa)
+            session.commit()

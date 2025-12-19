@@ -12,7 +12,7 @@ using nutrimurt.Api.Data;
 namespace nutrimurt.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251214123324_InitialCreate")]
+    [Migration("20251216031710_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -111,10 +111,15 @@ namespace nutrimurt.Api.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("PatientLinkId")
+                        .HasColumnType("int");
+
                     b.Property<int>("QuestionId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("PatientLinkId");
 
                     b.ToTable("PatientQuestionAnswers");
                 });
@@ -200,6 +205,17 @@ namespace nutrimurt.Api.Migrations
                     b.Navigation("Patient");
 
                     b.Navigation("Questionnary");
+                });
+
+            modelBuilder.Entity("nutrimurt.Api.Models.PatientQuestionAnswer", b =>
+                {
+                    b.HasOne("nutrimurt.Api.Models.PatientLink", "PatientLink")
+                        .WithMany()
+                        .HasForeignKey("PatientLinkId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("PatientLink");
                 });
 
             modelBuilder.Entity("nutrimurt.Api.Models.Question", b =>
