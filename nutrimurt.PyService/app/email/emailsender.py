@@ -14,18 +14,16 @@ class EmailSender:
         if not self.api_key or not self.domain or not self.from_email:
             raise ValueError("Mailgun configuration missing in .env")
 
-    def send_email(self, to_email: str, subject: str, text: str):
+    def send_email(self, to_email: str, subject: str, text: str, html: str | None = None):
         url = f"https://api.mailgun.net/v3/{self.domain}/messages"
+        data = {
+            "from": self.from_email,
+            "to": to_email,
+            "subject": subject,
+            "text": text,      # plain-text fallback
+        }
+        if html:
+            data["html"] = html  # clickable content for HTML clients
 
-        response = requests.post(
-            url,
-            auth=("api", self.api_key),
-            data={
-                "from": self.from_email,
-                "to": to_email,
-                "subject": subject,
-                "text": text,
-            }
-        )
-
+        response = requests.post(url, auth=("api", self.api_key), data=data)
         return response.status_code, response.text

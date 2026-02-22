@@ -4,8 +4,11 @@ from app.email.emailsender import EmailSender
 from app.data.database import Database, get_db
 from sqlalchemy.orm import Session
 from app.settings import settings
+from app.models.apiModels import PatientLink
+from app.services.answers import Answers
 
 app = FastAPI(title="NutriMurt Python Service", version="1.0.0")
+answersController = Answers()
 
 app.add_middleware(
     CORSMiddleware,
@@ -61,8 +64,6 @@ def testGetQuestionary(urlID: str, dbSession: Session = Depends(get_db)):
     repo = Database(dbSession)
     patient_link = repo.get_PatientLink(urlID)
     total_questions = patient_link.questionnary.questions.__len__()
-    # return {"status": "ok", "questionary": {"id": patient_link.id,
-    #                                         "patient name": patient_link.patient.name}}
 
     return {"status": "ok", "questionary": {"id": patient_link.id,
                                             "questionary": patient_link.questionnary.name, 
@@ -81,20 +82,37 @@ def sendEmail(urlID: str, request: Request, dbSession: Session = Depends(get_db)
     text = patient_link.type == 1 and "questionário" or "diário"
     
 
+    link = f"{settings.WEBSITE_URL}/answer/{urlID}"
+    text_body = f"Ola {patient_link.patient.name}! Acesse o link para preencher seu {text}: {link}"
+    html_body = (
+        f"<p>Ola {patient_link.patient.name}! "
+        f"Acesse o link para preencher seu {text}: "
+        f'<a href="{link}">Clique aqui</a></p>'
+    )
 
-    emailSender.send_email(patient_link.patient.email, subject, 
-                           f"Olá {patient_link.patient.name}! Acesse o link para preencher seu {text}: "
-                            + f"{settings.WEBSITE_URL}/link/{urlID}")
+    emailSender.send_email(patient_link.patient.email, subject, text_body, html_body)
 
     return {"status": "ok"}
 
 @app.get("/getPatientQuestionary/{urlID}")
 def getPatientQuestionary(urlID: str, request: Request, dbSession: Session = Depends(get_db)):
     repo = Database(dbSession)
-    emailSender = EmailSender()
     questionary = repo.get_Questionary(urlID)
     if not questionary:
         raise HTTPException(status_code=404, detail="Link not found")
 
+    return questionary
 
-    return {"data": questionary}
+@app.get("/getPatientLink/{urlID}")
+def getPatientLink(urlID: str, request: Request, dbSession: Session = Depends(get_db)):
+    repo = Database(dbSession)
+    patient_link = repo.get_PatientLinkForAnswer(urlID)
+    if not patient_link:
+        raise HTTPException(status_code=404, detail="Link not found")
+    return patient_link
+
+@app.post("/savePatientAnswers")
+def savePatientAnswers(patientLink: PatientLink, request: Request, dbSession: Session = Depends(get_db)):
+    repo = Database(dbSession)
+    answersController.savePatientAnswers(patientLink, repo)
+    return {"status": "ok"}

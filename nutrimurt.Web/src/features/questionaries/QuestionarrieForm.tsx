@@ -49,11 +49,11 @@ export default function QuestionaryForm({ initial, onSubmit, onCancel, submittin
             questions: [
                 ...prev.questions,
                 {
+                    createdAt: new Date().toISOString(),
                     id: 0,
                     questionText: text,
                     questionType: Number(newQuestionType),
-                    createdAt: new Date().toISOString(),
-                    alternatives: newQuestionType === 3 ? newAlternatives.map((a) => ({ alternative: a })) : []
+                    alternatives: newQuestionType === 3 ? newAlternatives.map((a) => ({ id: 0, alternative: a })) : []
                 },
             ],
         }));

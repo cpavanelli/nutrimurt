@@ -1,85 +1,146 @@
-nutrimurt
-Nutritionist management platform with ASP.NET Core Web API backend, React + Vite + Tailwind frontend, and a Python email/questionary service.
+# nutrimurt
 
-Projects
-nutrimurt.Api - .NET 8 Web API (EF Core 8 + SQL Server/Azure SQL) exposing patient CRUD endpoints.
-nutrimurt.Web - React 19 + Vite + TypeScript + Tailwind CSS 3 SPA consuming the API.
-nutrimurt.PyService - FastAPI microservice for email delivery and patient questionary links.
+Nutritionist management platform with:
+- `nutrimurt.Api` (.NET 8 Web API + EF Core + PostgreSQL)
+- `nutrimurt.Web` (React + Vite + TypeScript + Tailwind)
+- `nutrimurt.PyService` (FastAPI + SQLAlchemy + PostgreSQL + Mailgun)
 
-Backend (nutrimurt.Api)
-Setup
-Configure the connection string in nutrimurt.Api/appsettings.json (currently points to Azure SQL).
-Ensure EF Core tools installed: dotnet tool install --global dotnet-ef (add C:\Users\<you>\.dotnet\tools to PATH if needed).
+## Projects
+- `nutrimurt.Api`: patient/questionary API.
+- `nutrimurt.Web`: SPA consuming .NET API and Python service endpoints.
+- `nutrimurt.PyService`: email sending + patient link/questionary workflows.
 
-Database migrations
-cd nutrimurt.Api
-dotnet ef migrations add <MigrationName>
+## Database (PostgreSQL via Docker)
+From repository root:
+
+```powershell
+docker compose up -d
+```
+
+`docker-compose.yml` starts PostgreSQL with:
+- Host: `localhost`
+- Port: `5432`
+- DB: `nutrimurtdb`
+- User: `nutrimurt`
+- Password: `pass123`
+
+## .NET API (`nutrimurt.Api`)
+### Tech
+- .NET 8
+- EF Core 8
+- Npgsql provider
+
+### Notes
+- CORS is open in development (`AllowAnyOrigin/Method/Header`).
+- `Patient.Birth` uses `DateOnly?` and is stored as PostgreSQL `date`.
+
+### Run migrations
+From `nutrimurt.Api`:
+
+```powershell
 dotnet ef database update
+```
 
-Run API
-cd nutrimurt.Api
-dotnet watch run --urls http://localhost:5054
-CORS policy (Program.cs) allows any origin/method/header during development.
-Patient entity: Id, Name, Email, Phone (required + regex), CreatedAt (UTC), Birth, Weight, Height.
+If you reset migrations and hit table conflicts, recreate local DB volume:
 
-Endpoints:
-Method  Route                     Description
-GET     /api/patients             List patients
-GET     /api/patients/{id}        Get one
-POST    /api/patients             Create
-PUT     /api/patients/{id}        Update
-DELETE  /api/patients/{id}        Delete
+```powershell
+docker compose down -v
+docker compose up -d
+```
 
-Frontend (nutrimurt.Web)
-Setup
-cd nutrimurt.Web
+Then run `dotnet ef database update` again.
+
+### Run API
+From `nutrimurt.Api`:
+
+```powershell
+dotnet run
+```
+
+Default URL: `http://localhost:5054`
+
+### Main endpoints
+- `GET /api/patients`
+- `GET /api/patients/{id}`
+- `POST /api/patients`
+- `PUT /api/patients/{id}`
+- `DELETE /api/patients/{id}`
+- `GET /api/patients/{patientId}/links`
+- `POST /api/patients/{patientId}/links/send`
+
+## Web (`nutrimurt.Web`)
+### Setup
+From `nutrimurt.Web`:
+
+```powershell
 npm install
-Tailwind 3 configured (tailwind.config.js, postcss.config.js).
-.env or .env.local: VITE_API_BASE_URL=http://localhost:5054
+```
 
-Run
+Create `.env` or `.env.local`:
+
+```env
+VITE_API_BASE_URL=http://localhost:5054
+```
+
+### Run
+From `nutrimurt.Web`:
+
+```powershell
 npm run dev
-Vite serves on http://localhost:5173.
+```
 
-Features
-React Router routes: / (entry), /patients.
-features/patients includes:
-types.ts patient models.
-api.ts fetch helpers hitting ASP.NET API.
-PatientsPage.tsx list with Tailwind table, modal forms, create/edit/delete handling.
-PatientForm.tsx reusable form (includes phone mask via react-imask).
-Global styling via Tailwind directives in src/index.css; locale set to pt-BR in index.html.
+Default URL: `http://localhost:5173`
 
-Development workflow
-Run API with dotnet watch run --urls http://localhost:5054.
-Run frontend with npm run dev.
-React app calls API using the base URL env variable; ensure both servers are running.
+### Routes
+- `/`
+- `/patients`
+- `/answer/:urlID`
 
-Python service (nutrimurt.PyService)
-Role
-Sends transactional emails to patients (Mailgun) and will generate/send links for answering questionaries.
-Provides FastAPI endpoints to integrate with the .NET backend for questionary delivery.
+## Python Service (`nutrimurt.PyService`)
+### Tech
+- FastAPI
+- SQLAlchemy 2
+- Psycopg (PostgreSQL)
 
-Setup
-Requires Python 3.11+ and pip.
-cd nutrimurt.PyService
-Create venv: python -m venv .venv and activate it.
-Install deps: pip install -r requirements.txt
-Environment: create .env with Mailgun credentials
-MAILGUN_API_KEY=<key>
-MAILGUN_DOMAIN=<domain>
-MAILGUN_FROM=<from@domain>
+### Environment
+Create/update `nutrimurt.PyService/.env`:
 
-Run
-Local dev: uvicorn app.main:app --reload --port 8001
-Health checks: GET / and GET /health
+```env
+MAILGUN_API_KEY=...
+MAILGUN_DOMAIN=...
+MAILGUN_FROM=...
+CONNECTION_STRING=postgresql+psycopg://nutrimurt:pass123@localhost:5432/nutrimurtdb
+WEBSITE_URL=http://localhost:5173
+```
 
-Endpoints implemented so far
-GET / : Service info/version.
-GET /health : Simple ok status.
-POST /patient-questionary/{patient_id}/{questionary_id} : placeholder for generating a questionary link and notifying the patient.
-GET /testEmail : demo endpoint that triggers a test email via Mailgun.
+### Setup
+From `nutrimurt.PyService`:
 
-Email sender
-app/emailsender.py uses Mailgun HTTP API (requests) with env-configured credentials.
-Returns raw status/text from Mailgun; callers should handle failures as needed.
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
+
+### Run
+From `nutrimurt.PyService`:
+
+```powershell
+uvicorn app.main:app --reload --port 8001
+```
+
+### Main endpoints
+- `GET /`
+- `GET /health`
+- `POST /patient-questionary/{patient_id}/{questionary_id}`
+- `POST /sendEmail/{urlID}`
+- `GET /getPatientQuestionary/{urlID}`
+- `GET /getPatientLink/{urlID}`
+- `POST /savePatientAnswers`
+
+## Local development flow
+1. Start Postgres: `docker compose up -d`
+2. Apply API migrations: `dotnet ef database update` (inside `nutrimurt.Api`)
+3. Start .NET API: `dotnet run` (inside `nutrimurt.Api`)
+4. Start Web: `npm run dev` (inside `nutrimurt.Web`)
+5. Start Python service: `uvicorn app.main:app --reload --port 8001` (inside `nutrimurt.PyService`)

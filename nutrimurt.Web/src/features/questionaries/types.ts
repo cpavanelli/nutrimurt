@@ -9,7 +9,7 @@ export interface Question {
   id: number;
   questionText: string;
   questionType: number;
-  alternatives?: AlternativeInput[];
+  alternatives?: QuestionAlternative[];
   createdAt: string;
 }
 

@@ -1,11 +1,19 @@
-from dotenv import load_dotenv
 import sqlalchemy as sa
-from sqlalchemy.orm import joinedload, Session
-from app.models.models import PatientQuestionAnswer, Patients, PatientLinks, Questionaries, Questions
+from sqlalchemy.orm import Session, joinedload
+
+from app.models.models import (
+    PatientLinks,
+    PatientQuestionAnswer,
+    PatientQuestionAnswerAlternative,
+    Patients,
+    Questionaries,
+    Questions,
+)
 from app.settings import settings
 
-engine = sa.create_engine(settings.CONNECTION_STRING)
+engine = sa.create_engine(settings.CONNECTION_STRING, pool_pre_ping=True)
 SessionLocal = sa.orm.sessionmaker(bind=engine)
+
 
 def get_db():
     db: Session = SessionLocal()
@@ -14,40 +22,67 @@ def get_db():
     finally:
         db.close()
 
-class Database:
-    engine: sa.engine.Engine
-    session: sa.orm.session.Session
-    connection_string: str
 
-    def __init__(self, session: Session = None):
-        self.session = session
-        load_dotenv()
+class Database:
+    def __init__(self, session: Session | None = None):
+        self.session = session or SessionLocal()
 
     def get_Patient(self, patient_id: int):
-          with self.session as session:
-            return session.query(Patients).filter(Patients.id == patient_id).first()
+        return self.session.query(Patients).filter(Patients.id == patient_id).first()
 
     def get_PatientLink(self, urlID: str):
-          with self.session as session:
-            return session.query(PatientLinks)\
-            .options(joinedload(PatientLinks.patient), 
-                     joinedload(PatientLinks.questionnary).joinedload(Questionaries.questions)
-                     ).filter(PatientLinks.urlID == urlID).first()
+        return (
+            self.session.query(PatientLinks)
+            .options(
+                joinedload(PatientLinks.patient),
+                joinedload(PatientLinks.questionnary).joinedload(Questionaries.questions),
+            )
+            .filter(PatientLinks.urlID == urlID)
+            .first()
+        )
 
     def get_Questionary(self, urlID: str):
-          with self.session as session:
-            return (session.query(Questionaries)
-            .options(joinedload(Questionaries.patient_links).joinedload(PatientLinks.patient), 
-                     joinedload(Questionaries.questions).joinedload(Questions.alternatives)
-                     ).filter(PatientLinks.urlID == urlID).first())
-          
-    def savePatientAnswers(self, patient_link_id: int, answers: list[dict]):
-          with self.session as session:
-            for answer in answers:
-                pqa = PatientQuestionAnswer(
-                    patient_link_id=patient_link_id,
-                    question_id=answer['question_id'],
-                    answer=answer['answer']
-                )
-                session.add(pqa)
-            session.commit()
+        patient_link = (
+            self.session.query(PatientLinks)
+            .options(
+                joinedload(PatientLinks.questionnary)
+                .joinedload(Questionaries.questions)
+                .joinedload(Questions.alternatives)
+            )
+            .filter(PatientLinks.urlID == urlID)
+            .first()
+        )
+        return patient_link.questionnary if patient_link else None
+
+    def get_PatientLinkForAnswer(self, urlID: str) -> PatientLinks | None:
+        return (
+            self.session.query(PatientLinks)
+            .options(
+                joinedload(PatientLinks.patient),
+                joinedload(PatientLinks.questionnary)
+                .joinedload(Questionaries.questions)
+                .joinedload(Questions.alternatives),
+            )
+            .filter(PatientLinks.urlID == urlID)
+            .first()
+        )
+
+    def savePatientAnswers(
+        self,
+        answers: list[PatientQuestionAnswer],
+        answerAlternatives: list[PatientQuestionAnswerAlternative],
+    ):
+        for answer in answers:
+            self.session.add(answer)
+        for alt in answerAlternatives:
+            self.session.add(alt)
+        self.session.commit()
+
+    def delete_patient_answers(self, patient_link_id: int):
+        self.session.query(PatientQuestionAnswerAlternative).filter(
+            PatientQuestionAnswerAlternative.patient_link_id == patient_link_id
+        ).delete(synchronize_session=False)
+        self.session.query(PatientQuestionAnswer).filter(
+            PatientQuestionAnswer.patient_link_id == patient_link_id
+        ).delete(synchronize_session=False)
+        self.session.commit()

@@ -1,0 +1,17 @@
+﻿version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: nutrimurt-postgres
+    environment:
+      POSTGRES_USER: nutrimurt
+      POSTGRES_PASSWORD: pass123
+      POSTGRES_DB: nutrimurtdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - nutrimurt_pgdata:/var/lib/postgresql/data
+
+volumes:
+  nutrimurt_pgdata:

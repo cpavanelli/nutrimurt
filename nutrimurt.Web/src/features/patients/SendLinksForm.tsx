@@ -14,7 +14,7 @@ interface Props {
 }
 
 export default function SendLinksForm({ patient, links, questionaries, onSubmit, onCancel, submitting }: Props) {
-    const baseUrl = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:5054';
+    const appOrigin = window.location.origin;
     const [selectedLinkType, setSelectedLinkType] = useState<number | ''>('');
     const [selectedQuestionaryId, setSelectedQuestionaryId] = useState<number | ''>('');
 
@@ -83,7 +83,7 @@ export default function SendLinksForm({ patient, links, questionaries, onSubmit,
                                 <button type="button" className="text-blue-400 hover:underline focus:outline-none"
                                     onClick={async () => {
                                         try {
-                                            await navigator.clipboard.writeText(`${baseUrl}/link/${link.urlId}`);
+                                            await navigator.clipboard.writeText(`${appOrigin}/answer/${link.urlId}`);
                                         } catch (err) {
                                             console.error("Copy failed", err);
                                         }

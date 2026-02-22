@@ -5,6 +5,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import App from './App';
 import PatientsPage from './features/patients/PatientsPage';
 import QuestionariesPage from './features/questionaries/QuestionarriePage';
+import AnswerPage from './features/answers/AnswerPage';
 
 const router = createBrowserRouter([
   {
@@ -18,6 +19,10 @@ const router = createBrowserRouter([
   {
     path: "/questionaries",
     element: <QuestionariesPage />,
+  },
+    {
+    path: "/answer/:urlid",
+    element: <AnswerPage />,
   },
 ]);
 

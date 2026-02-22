@@ -19,7 +19,7 @@ public class Patient
     [Required, CPF]
     public string CPF { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public DateTime? Birth { get; set; }
+    public DateOnly? Birth { get; set; }
     public int Weight { get; set; }
     public int Height { get; set; }
 
