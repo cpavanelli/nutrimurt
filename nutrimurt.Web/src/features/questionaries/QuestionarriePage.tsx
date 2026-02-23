@@ -3,6 +3,7 @@ import {  questionariesApi } from './api';
 import type { Questionary, QuestionaryInput } from './types';
 import QuestionarrieForm from './QuestionarrieForm';
 import MaintenanceHeader from '../../components/MaintenanceHeader';
+import { toast } from 'react-toastify';
 
 export default function QuestionarryPage() {
   const [questionaries, setQuestionaries] = useState<Questionary[]>([]);
@@ -46,6 +47,7 @@ export default function QuestionarryPage() {
       } else {
         await questionariesApi.create(payload);
       }
+      toast.success('Questionário cadastrado com sucesso');
       await load();
       setModal(null);
       setSelected(null);

@@ -106,7 +106,7 @@ def getPatientQuestionary(urlID: str, request: Request, dbSession: Session = Dep
 @app.get("/getPatientLink/{urlID}")
 def getPatientLink(urlID: str, request: Request, dbSession: Session = Depends(get_db)):
     repo = Database(dbSession)
-    patient_link = repo.get_PatientLinkForAnswer(urlID)
+    patient_link = answersController.getPatientLink(urlID, repo)
     if not patient_link:
         raise HTTPException(status_code=404, detail="Link not found")
     return patient_link

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { answersApi } from './pyApi';
 import type { PatientLink, PatientLinkInput } from './types';
+import { toast } from 'react-toastify';
 
 
 
@@ -9,15 +10,20 @@ import type { PatientLink, PatientLinkInput } from './types';
 export default function AnswerPage() {
     const { urlid } = useParams<{ urlid: string }>();
     const [patientLink, setPatientLink] = useState<PatientLink | null>(null);
+    const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
+
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!patientLink) return;
         try {
             await answersApi.save(patientLink);
+            setStatus('success');
+            toast.success('Respostas enviadas com sucesso');
             // success feedback
         } catch (err) {
             console.error('Error saving answers', err);
+            toast.error('Falha ao enviar respostas. Tente novamente.');
             // error feedback
         }
     };
@@ -106,16 +112,19 @@ export default function AnswerPage() {
                                         <h2 className="text-slate-100 font-semibold uppercase tracking-wide" >{question.questionText}</h2>
                                         {question.questionType === 1 && (<div className="flex flex-col gap-2 text-sm text-slate-300">
                                             <input type='text' className="rounded border border-slate-700 bg-slate-900 px-3 py-2 text-white w-full"
+                                                value={question.answer?.answer ?? ''}
                                                 placeholder="Digite sua resposta aqui" onChange={(e) => handleTextAnswerChange(question.id, e.target.value)} />
                                         </div>)}
                                         {question.questionType === 2 && (<div className="flex flex-wrap gap-2 text-sm text-slate-300">
-                                            <input type='radio' name={`question-${question.id}`} value="Y" onChange={(e) => handleTextAnswerChange(question.id, e.target.value)} /> Sim
-                                            <input type='radio' name={`question-${question.id}`} value="N" onChange={(e) => handleTextAnswerChange(question.id, e.target.value)} /> Não
+                                            <input type='radio' checked={question.answer?.answer === 'Y'} name={`question-${question.id}`} value="Y" onChange={(e) => handleTextAnswerChange(question.id, e.target.value)} /> Sim
+                                            <input type='radio' checked={question.answer?.answer === 'N'} name={`question-${question.id}`} value="N" onChange={(e) => handleTextAnswerChange(question.id, e.target.value)} /> Não
                                         </div>)}
                                         {question.questionType === 3 && (<div className="flex flex-wrap gap-2 text-sm text-slate-300">
                                             {question.alternatives?.map((alt) => (
                                                 <label key={alt.id} className="inline-flex items-center gap-1">
-                                                    <input type="checkbox" name={`question-${question.id}-alt-${alt.id}`}  value={alt.alternative} onChange={(e) => handleCheckboxAnswerChange(question.id, e.target.value, e.target.checked )}/>
+                                                    <input type="checkbox"  name={`question-${question.id}-alt-${alt.id}`} 
+                                                    checked={(question.answerAlternatives ?? []).includes(alt.alternative)} 
+                                                    value={alt.alternative} onChange={(e) => handleCheckboxAnswerChange(question.id, e.target.value, e.target.checked )}/>
                                                     {alt.alternative}
                                                 </label>
                                             ))}
@@ -131,9 +140,10 @@ export default function AnswerPage() {
                     </section>
                     <button
                         type="submit"
+                        disabled={status === 'submitting'}
                         className="rounded bg-emerald-500 px-4 py-2 text-white hover:bg-emerald-600"
                     >
-                        Enviar respostas
+                          {status === 'submitting' ? 'Enviando...' : 'Enviar respostas'}
                     </button>
                 </div>
             </form>

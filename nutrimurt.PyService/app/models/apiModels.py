@@ -1,4 +1,5 @@
 # app/models/apiModels.py
+from datetime import datetime
 from typing import List, Optional
 from pydantic import BaseModel
 
@@ -13,6 +14,7 @@ class PatientLink(BaseModel):
     patient_id: int
     questionnary_id: int
     type: int
+    last_answered: Optional[datetime] = None
     patient: Patient
     questionnary: Questionary
 

@@ -62,6 +62,8 @@ class Database:
                 joinedload(PatientLinks.questionnary)
                 .joinedload(Questionaries.questions)
                 .joinedload(Questions.alternatives),
+                joinedload(PatientLinks.answers),
+                joinedload(PatientLinks.answer_alternatives),
             )
             .filter(PatientLinks.urlID == urlID)
             .first()
@@ -71,11 +73,18 @@ class Database:
         self,
         answers: list[PatientQuestionAnswer],
         answerAlternatives: list[PatientQuestionAnswerAlternative],
+        patient_link_id: int,
     ):
         for answer in answers:
             self.session.add(answer)
         for alt in answerAlternatives:
             self.session.add(alt)
+        self.session.query(PatientLinks).filter(
+            PatientLinks.id == patient_link_id
+        ).update(
+            {PatientLinks.last_answered: sa.func.now()},
+            synchronize_session=False,
+        )
         self.session.commit()
 
     def delete_patient_answers(self, patient_link_id: int):

@@ -3,6 +3,7 @@ import type { Patient, PatientLink, SendLinksInput } from "./types";
 import type { Questionary } from '../questionaries/types';
 
 
+
 interface Props {
     patient: Patient;
     links: PatientLink[];

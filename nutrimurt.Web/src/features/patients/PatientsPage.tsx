@@ -7,6 +7,7 @@ import MaintenanceHeader from '../../components/MaintenanceHeader';
 import type { Questionary } from '../questionaries/types';
 import { questionariesApi } from '../questionaries/api';
 import SendLinksForm from './SendLinksForm';
+import { toast } from 'react-toastify';
 
 export default function PatientsPage() {
   const [patients, setPatients] = useState<Patient[]>([]);
@@ -77,6 +78,7 @@ export default function PatientsPage() {
       } else {
         await patientsApi.create(payload);
       }
+      toast.success('Paciente cadastrado com sucesso');
       await load();
       setModal(null);
       setSelected(null);
@@ -116,6 +118,8 @@ export default function PatientsPage() {
 
       //call python api to send email
       await sendEmail(updated[0].urlId);
+
+      toast.success('E-mail enviado com sucesso');
 
     } catch (err) {
       if (err instanceof ApiError && err.validation) {

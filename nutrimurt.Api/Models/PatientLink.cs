@@ -29,4 +29,5 @@ public class PatientLink
     public Questionnaries? Questionnary { get; set; }
 
     public int? DiaryId { get; set; }
+    public DateTime? LastAnswered { get; set; }
 }

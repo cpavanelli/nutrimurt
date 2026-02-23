@@ -1,5 +1,7 @@
 # app/models/models.py
-from sqlalchemy import ForeignKey
+from datetime import datetime
+
+from sqlalchemy import DateTime, ForeignKey
 from sqlalchemy.orm import Mapped, declarative_base, mapped_column, relationship
 
 Base = declarative_base()
@@ -25,6 +27,7 @@ class PatientLinks(Base):
     patient_id: Mapped[int] = mapped_column('patient_id', ForeignKey('patients.id'))
     questionnary_id: Mapped[int] = mapped_column('questionnary_id', ForeignKey('questionnaries.id'))
     diary_id: Mapped[int | None] = mapped_column('diary_id', nullable=True)
+    last_answered: Mapped[datetime | None] = mapped_column('last_answered', DateTime(timezone=True), nullable=True)
 
     patient: Mapped['Patients'] = relationship('Patients', back_populates='patient_links')
     questionnary: Mapped['Questionaries'] = relationship('Questionaries', back_populates='patient_links')
