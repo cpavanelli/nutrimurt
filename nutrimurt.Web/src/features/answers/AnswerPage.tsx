@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { answersApi } from './pyApi';
-import type { PatientLink, PatientLinkInput } from './types';
+import type { PatientLink } from './types';
 import { toast } from 'react-toastify';
 
 

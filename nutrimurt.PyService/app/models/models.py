@@ -22,7 +22,7 @@ class PatientLinks(Base):
     __tablename__ = 'patient_links'
 
     id: Mapped[int] = mapped_column('id', primary_key=True)
-    urlID: Mapped[str] = mapped_column('url_id')
+    urlId: Mapped[str] = mapped_column('url_id')
     type: Mapped[int] = mapped_column('type')
     patient_id: Mapped[int] = mapped_column('patient_id', ForeignKey('patients.id'))
     questionnary_id: Mapped[int] = mapped_column('questionnary_id', ForeignKey('questionnaries.id'))

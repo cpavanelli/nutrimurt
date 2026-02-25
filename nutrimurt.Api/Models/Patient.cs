@@ -23,5 +23,7 @@ public class Patient
     public int Weight { get; set; }
     public int Height { get; set; }
 
-
+    [Required]
+    public List<PatientLink> PatientLinks { get; set; } = new();
+    
 }

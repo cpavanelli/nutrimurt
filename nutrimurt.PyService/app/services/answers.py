@@ -40,8 +40,8 @@ class Answers:
 
         db.savePatientAnswers(answersToSave, answersAlternativesToSave, patient_link.id)
 
-    def getPatientLink(self, urlID: str, db: Database) -> PatientLink | None:
-        dbPatientLink = db.get_PatientLinkForAnswer(urlID)
+    def getPatientLink(self, urlId: str, db: Database) -> PatientLink | None:
+        dbPatientLink = db.get_PatientLinkForAnswer(urlId)
         if not dbPatientLink:
             return None
 
@@ -77,7 +77,7 @@ class Answers:
 
         return PatientLink(
             id=dbPatientLink.id,
-            urlID=dbPatientLink.urlID,
+            urlId=dbPatientLink.urlId,
             patient_id=dbPatientLink.patient_id,
             questionnary_id=dbPatientLink.questionnary_id,
             type=dbPatientLink.type,

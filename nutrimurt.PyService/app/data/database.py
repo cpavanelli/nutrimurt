@@ -30,18 +30,18 @@ class Database:
     def get_Patient(self, patient_id: int):
         return self.session.query(Patients).filter(Patients.id == patient_id).first()
 
-    def get_PatientLink(self, urlID: str):
+    def get_PatientLink(self, urlId: str):
         return (
             self.session.query(PatientLinks)
             .options(
                 joinedload(PatientLinks.patient),
                 joinedload(PatientLinks.questionnary).joinedload(Questionaries.questions),
             )
-            .filter(PatientLinks.urlID == urlID)
+            .filter(PatientLinks.urlId == urlId)
             .first()
         )
 
-    def get_Questionary(self, urlID: str):
+    def get_Questionary(self, urlId: str):
         patient_link = (
             self.session.query(PatientLinks)
             .options(
@@ -49,12 +49,12 @@ class Database:
                 .joinedload(Questionaries.questions)
                 .joinedload(Questions.alternatives)
             )
-            .filter(PatientLinks.urlID == urlID)
+            .filter(PatientLinks.urlId == urlId)
             .first()
         )
         return patient_link.questionnary if patient_link else None
 
-    def get_PatientLinkForAnswer(self, urlID: str) -> PatientLinks | None:
+    def get_PatientLinkForAnswer(self, urlId: str) -> PatientLinks | None:
         return (
             self.session.query(PatientLinks)
             .options(
@@ -65,7 +65,7 @@ class Database:
                 joinedload(PatientLinks.answers),
                 joinedload(PatientLinks.answer_alternatives),
             )
-            .filter(PatientLinks.urlID == urlID)
+            .filter(PatientLinks.urlId == urlId)
             .first()
         )
 

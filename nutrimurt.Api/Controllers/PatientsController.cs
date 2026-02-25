@@ -32,6 +32,48 @@ public class PatientsController : ControllerBase
         return patient;
     }
 
+    [HttpGet("/api/patients/getWithAll/{id}")]
+    public async Task<ActionResult<Patient>> GetPatientWithAll(int id)
+    {
+        var patient = await _context.Patients
+        .AsNoTracking()
+        .Where(p => p.Id == id)
+        .Select(p => new PatientWithAllDto(
+            p.Id,
+            p.Name,
+            p.Email,
+            p.Phone,
+            p.CPF,
+            p.Birth,
+            p.Weight,
+            p.Height,
+            p.CreatedAt,
+            p.PatientLinks.Select(l => new PatientLinkWithQuestionaryDto(
+                l.Id,
+                l.UrlId,
+                l.Type,
+                l.QuestionnaryId,
+                l.Questionnary != null ? l.Questionnary.Name : null,
+                l.LastAnswered
+            )).ToList()
+        ))
+        .FirstOrDefaultAsync();
+
+        if (patient is null) return NotFound();
+        return Ok(patient);
+    }
+
+    [HttpGet("/api/patients/recent")]
+    public async Task<ActionResult<IEnumerable<Patient>>> GetRecentPatients()
+    {
+        var patients = await _context.Patients
+            .OrderByDescending(l => l.CreatedAt)
+            .Take(100)
+            .ToListAsync();
+
+        return Ok(patients);
+    }
+
     [HttpPost]
     public async Task<ActionResult<Patient>> CreatePatient(Patient patient)
     {
@@ -77,3 +119,25 @@ public class PatientsController : ControllerBase
         return NoContent();
     }
 }
+
+public record PatientWithAllDto(
+    int Id,
+    string Name,
+    string Email,
+    string Phone,
+    string CPF,
+    DateOnly? Birth,
+    int Weight,
+    int Height,
+    DateTime CreatedAt,
+    List<PatientLinkWithQuestionaryDto> PatientLinks
+);
+
+public record PatientLinkWithQuestionaryDto(
+    int Id,
+    string UrlId,
+    PatientLinkTypes Type,
+    int QuestionnaryId,
+    string? QuestionnaryName,
+    DateTime? LastAnswered
+);

@@ -10,7 +10,7 @@ class Patient(BaseModel):
 
 class PatientLink(BaseModel):
     id: int
-    urlID: str
+    urlId: str
     patient_id: int
     questionnary_id: int
     type: int

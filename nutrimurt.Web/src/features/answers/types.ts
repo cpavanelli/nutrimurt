@@ -32,7 +32,7 @@ export type AlternativeInput = Omit<QuestionAlternative, 'id'>;
 
 export interface PatientLink {
   id: number;
-  urlID: string;
+  urlId: string;
   patientId: number;
   questionnaryId: number;
   questionnaryName: string;

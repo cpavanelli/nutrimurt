@@ -6,8 +6,10 @@ import App from './App';
 import PatientsPage from './features/patients/PatientsPage';
 import QuestionariesPage from './features/questionaries/QuestionarriePage';
 import AnswerPage from './features/answers/AnswerPage';
+import PatientAnswerPage from './features/answers/PatientAnswerPage';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import PatientSummary from './features/patients/PatientSummary';
 
 const router = createBrowserRouter([
   {
@@ -22,10 +24,19 @@ const router = createBrowserRouter([
     path: "/questionaries",
     element: <QuestionariesPage />,
   },
-    {
+  {
     path: "/answer/:urlid",
     element: <AnswerPage />,
   },
+  {
+    path: "/patientAnswer/:urlid",
+    element: <PatientAnswerPage />,
+  },
+  {
+    path: "/patientSummary/:patientId",
+    element: <PatientSummary />,
+  }
+
 ]);
 
 const rootEl = document.getElementById('root')!;

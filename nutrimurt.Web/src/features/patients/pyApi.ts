@@ -1,5 +1,3 @@
-import type { Patient, PatientInput } from './types';
-
 const baseUrl = import.meta.env.VITE_PY_BASE_URL ?? 'http://localhost:8001';
 
 

@@ -20,7 +20,9 @@ public class PatientLinksController : ControllerBase
         PatientLinkTypes Type,
         int QuestionnaryId,
         int? DiaryId,
-        string? QuestionnaryName
+        string? QuestionnaryName,
+        string? PatientName,
+        string? LastAnswered
     );
 
     public class SendPatientLinkRequest
@@ -39,6 +41,20 @@ public class PatientLinksController : ControllerBase
         var links = await _context.PatientLinks
             .Where(l => l.PatientId == patientId)
             .Include(l => l.Questionnary)
+            .ToListAsync();
+
+        return Ok(links.Select(ToDto));
+    }
+
+    [HttpGet("/api/patient-links/recent")]
+    public async Task<ActionResult<IEnumerable<PatientLinkDto>>> GetRecentPatientLinks()
+    {
+        var links = await _context.PatientLinks
+            .Include(l => l.Questionnary)
+            .Include(l => l.Patient)
+            .OrderByDescending(l => l.LastAnswered)
+            .Where(l => l.LastAnswered != null)
+            .Take(100)
             .ToListAsync();
 
         return Ok(links.Select(ToDto));
@@ -96,6 +112,8 @@ public class PatientLinksController : ControllerBase
             link.Type,
             link.QuestionnaryId,
             link.DiaryId,
-            link.Questionnary?.Name
+            link.Questionnary?.Name,
+            link.Patient?.Name,
+            link.LastAnswered?.ToString("dd/MM/yyyy HH:mm")
         );
 }

@@ -1,4 +1,4 @@
-import type { Patient, PatientInput, PatientLink, SendLinksInput } from './types';
+import type { Patient, PatientInput, PatientLink, PatientWithLinks, SendLinksInput } from './types';
 
 const baseUrl = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:5054';
 
@@ -46,6 +46,7 @@ async function request<T>(input: RequestInfo, init?: RequestInit): Promise<T> {
 export const patientsApi = {
   list: () => request<Patient[]>(`${baseUrl}/api/patients`),
   get: (id: number) => request<Patient>(`${baseUrl}/api/patients/${id}`),
+  getWithAll: (id: number) => request<PatientWithLinks>(`${baseUrl}/api/patients/getWithAll/${id}`),
   create: (payload: PatientInput) =>
     request<Patient>(`${baseUrl}/api/patients`, {
       method: 'POST',
