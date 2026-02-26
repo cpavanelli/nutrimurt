@@ -18,11 +18,17 @@ export default function SendLinksForm({ patient, links, questionaries, onSubmit,
     const appOrigin = window.location.origin;
     const [selectedLinkType, setSelectedLinkType] = useState<number | ''>('');
     const [selectedQuestionaryId, setSelectedQuestionaryId] = useState<number | ''>('');
+    const [diaryName, setDiaryName] = useState<string>('Diário Alimentar de ' + patient.name);
 
     function handleSubmit(event: React.FormEvent) {
         event.preventDefault();
-        if (!selectedQuestionaryId) return;
-        
+        if (selectedLinkType === 1 && !selectedQuestionaryId) return;
+        if (selectedLinkType === 2 && !diaryName.trim()) return;
+
+        if (selectedLinkType === 2) {
+            onSubmit({ type: 'diary', diaryName: diaryName.trim() });
+            return;
+        }
         onSubmit({ type: 'question', questionaryId: Number(selectedQuestionaryId) });
     }
 
@@ -68,7 +74,18 @@ export default function SendLinksForm({ patient, links, questionaries, onSubmit,
                         </div>
                     )}
                     {selectedLinkType === 2 && (
-                        <p className="text-sm text-slate-400">Envio de diários não implementado ainda.</p>
+                        <div className="flex w-full gap-2">
+                            <p className="text-sm text-slate-400">
+                                <input type="text" value={diaryName} onChange={e => setDiaryName(e.target.value)}
+                                    placeholder="Nome do diário" className="block w-full rounded border border-slate-700 bg-slate-800 px-3 py-2 text-slate-200" />
+                            </p>
+                            <button type="button" className="rounded bg-emerald-500 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-400"
+                                onClick={handleSubmit}
+                                disabled={!diaryName || submitting}
+                            >
+                                +
+                            </button>
+                        </div>
                     )}
                 </div>
             </div>

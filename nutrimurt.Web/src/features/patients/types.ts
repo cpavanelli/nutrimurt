@@ -23,12 +23,13 @@ export interface PatientLink {
   questionnaryId: number;
   diaryId: number;
   lastAnswered?: string | null;
+  diaryName?: string | null;
 }
 
 export interface SendLinksInput {
-  type: 'question';        // diaries later
-  questionaryId: number;
-  diaryId?: number;        // for future, send 0/undefined now
+  type: 'question' | 'diary';        // diaries later
+  questionaryId?: number;
+  diaryName?: string;        
 }
 
 export interface PatientWithLinks extends Patient {

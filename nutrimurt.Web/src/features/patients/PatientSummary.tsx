@@ -10,6 +10,7 @@ import { sendEmail } from './pyApi';
 import { toast } from 'react-toastify';
 
 export default function PatientSummary() {
+  const appOrigin = window.location.origin;
   const { patientId } = useParams<{ patientId: string }>();
   const [patient, setPatient] = useState<PatientWithLinks | null>(null);
   const [questionLinks, setQuestionLinks] = useState<PatientLink[]>([]);
@@ -19,22 +20,6 @@ export default function PatientSummary() {
   const [linksModalOpen, setLinksModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string[]> | null>(null);
-
-  function formatLastAnswered(value?: string | null) {
-    if (!value) return '-';
-    if (/^\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}$/.test(value)) return value;
-
-    const parsed = new Date(value);
-    if (Number.isNaN(parsed.getTime())) return value;
-
-    const day = String(parsed.getDate()).padStart(2, '0');
-    const month = String(parsed.getMonth() + 1).padStart(2, '0');
-    const year = parsed.getFullYear();
-    const hours = String(parsed.getHours()).padStart(2, '0');
-    const minutes = String(parsed.getMinutes()).padStart(2, '0');
-
-    return `${day}/${month}/${year} ${hours}:${minutes}`;
-  }
 
   function syncLinks(links: PatientLink[]) {
     setPatientLinks(links);
@@ -156,26 +141,41 @@ export default function PatientSummary() {
             </div>
 
 
-            <div className="grid grid-cols-4 font-semibold border-b pb-2 ">
+            <div className="grid grid-cols-5 font-semibold border-b pb-2 ">
               <span>Questionário</span>
               <span>Respondido?</span>
               <span>Data</span>
               <span></span>
+              <span></span>
             </div>
 
             {questionLinks.map((u) => (
-              <div key={u.id} className="grid grid-cols-4 items-center py-3 border-b bg-slate-900/60 p-4 shadow">
+              <div key={u.id} className="grid grid-cols-5 items-center py-3 border-b bg-slate-900/60 p-4 shadow">
                 <span>{u.questionnaryName}</span>
                 <span>
                   {(u.lastAnswered) ? <span className={'inline-flex h-5 w-5 items-center justify-center rounded border border-emerald-400 bg-emerald-500 text-slate-950'}>✓</span> :
                     <span className={'inline-flex h-5 w-5 items-center justify-center rounded border border-slate-600 bg-slate-800 text-transparent'}>✓</span>}
                 </span>
-                <span>{formatLastAnswered(u.lastAnswered)}</span>
+                <span>{u.lastAnswered ?? '-'}</span>
                 <span>
                   <Link
                     to={`/patientAnswer/${u.urlId}`}
                     className="rounded-full bg-emerald-500 px-5 py-2 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5 hover:bg-emerald-400"
                   >Ver</Link>
+                </span>
+                <span>
+                  <button type="button" className="text-blue-400 hover:underline focus:outline-none"
+                    onClick={async () => {
+                      try {
+                        await navigator.clipboard.writeText(`${appOrigin}/answer/${u.urlId}`);
+                      } catch (err) {
+                        console.error("Copy failed", err);
+                      }
+                    }}
+                    aria-label="Copiar link"
+                  >
+                    Copiar Link
+                  </button>
                 </span>
               </div>
             ))}
@@ -191,7 +191,21 @@ export default function PatientSummary() {
             <div className="space-y-4">
               {diaryLinks.map((link) => (
                 <div key={link.id} className="border border-white/10 rounded-lg p-4 bg-slate-900/60">
-                  <p><strong>Diarios:</strong> {link.diaryId}</p>
+                  {link.diaryName}
+                <span>
+                  <button type="button" className="text-blue-400 hover:underline focus:outline-none"
+                    onClick={async () => {
+                      try {
+                        await navigator.clipboard.writeText(`${appOrigin}/answer/${link.urlId}`);
+                      } catch (err) {
+                        console.error("Copy failed", err);
+                      }
+                    }}
+                    aria-label="Copiar link"
+                  >
+                    Copiar Link
+                  </button>
+                </span>
                 </div>
               ))}
             </div>

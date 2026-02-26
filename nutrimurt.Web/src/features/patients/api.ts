@@ -70,9 +70,9 @@ export const patientsApi = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        type: 1, // Question
+        type: payload.type === 'diary' ? 2 : 1,
         questionnaryId: payload.questionaryId,
-        diaryId: payload.diaryId ?? 0,
+        diaryName: payload.diaryName,
       }),
     });
     return res.map(mapLink);

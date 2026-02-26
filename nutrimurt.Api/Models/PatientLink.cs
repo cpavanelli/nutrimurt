@@ -24,10 +24,11 @@ public class PatientLink
     [Required]
     public PatientLinkTypes Type { get; set; }
 
-    [Required]
-    public int QuestionnaryId { get; set; }
+    public int? QuestionnaryId { get; set; }
     public Questionnaries? Questionnary { get; set; }
 
     public int? DiaryId { get; set; }
     public DateTime? LastAnswered { get; set; }
+
+    public PatientDiary? Diary { get; set; }
 }

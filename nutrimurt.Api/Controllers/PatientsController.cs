@@ -48,16 +48,17 @@ public class PatientsController : ControllerBase
             p.Weight,
             p.Height,
             p.CreatedAt,
-            p.PatientLinks.Select(l => new PatientLinkWithQuestionaryDto(
-                l.Id,
-                l.UrlId,
-                l.Type,
-                l.QuestionnaryId,
-                l.Questionnary != null ? l.Questionnary.Name : null,
-                l.LastAnswered
-            )).ToList()
-        ))
-        .FirstOrDefaultAsync();
+             p.PatientLinks.Select(l => new PatientLinkWithQuestionaryDto(
+                 l.Id,
+                 l.UrlId,
+                 l.Type,
+                 l.QuestionnaryId,
+                 l.Questionnary != null ? l.Questionnary.Name : null,
+                 l.Diary != null ? l.Diary.Name : null,
+                 l.LastAnswered.HasValue ? l.LastAnswered.Value.ToString("dd/MM/yyyy HH:mm") : null
+             )).ToList()
+         ))
+         .FirstOrDefaultAsync();
 
         if (patient is null) return NotFound();
         return Ok(patient);
@@ -137,7 +138,8 @@ public record PatientLinkWithQuestionaryDto(
     int Id,
     string UrlId,
     PatientLinkTypes Type,
-    int QuestionnaryId,
+    int? QuestionnaryId,
     string? QuestionnaryName,
-    DateTime? LastAnswered
+    string? DiaryName,
+    string? LastAnswered
 );

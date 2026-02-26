@@ -15,7 +15,17 @@ async function request<T>(input: RequestInfo, init?: RequestInit): Promise<T> {
 }
 
 export const answersApi = {
-  get: (urlID: string) => request<PatientLink>(`${baseUrl}/getPatientLink/${urlID}`),
+  getQuestionaryPatientLink: (urlID: string) =>
+    request<PatientLink>(`${baseUrl}/getQuestionaryPatientLink/${urlID}`),
+  getDiaryPatientLink: (urlID: string) =>
+    request<PatientLink>(`${baseUrl}/getDiaryPatientLink/${urlID}`),
+  get: async (urlID: string) => {
+    try {
+      return await request<PatientLink>(`${baseUrl}/getQuestionaryPatientLink/${urlID}`);
+    } catch {
+      return request<PatientLink>(`${baseUrl}/getDiaryPatientLink/${urlID}`);
+    }
+  },
   save: (patientLink: PatientLink) =>
     request<void>(`${baseUrl}/savePatientAnswers`, {
       method: 'POST',

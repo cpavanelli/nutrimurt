@@ -2,6 +2,9 @@ from collections import defaultdict
 
 from app.data.database import Database
 from app.models.apiModels import (
+    Diary,
+    DiaryEntry,
+    DiaryPatientLink,
     Patient,
     PatientLink,
     Question,
@@ -40,8 +43,8 @@ class Answers:
 
         db.savePatientAnswers(answersToSave, answersAlternativesToSave, patient_link.id)
 
-    def getPatientLink(self, urlId: str, db: Database) -> PatientLink | None:
-        dbPatientLink = db.get_PatientLinkForAnswer(urlId)
+    def getQuestionaryPatientLink(self, urlId: str, db: Database) -> PatientLink | None:
+        dbPatientLink = db.get_QuestionaryPatientLinkForAnswer(urlId)
         if not dbPatientLink:
             return None
 
@@ -80,6 +83,7 @@ class Answers:
             urlId=dbPatientLink.urlId,
             patient_id=dbPatientLink.patient_id,
             questionnary_id=dbPatientLink.questionnary_id,
+            diary_id=dbPatientLink.diary_id,
             type=dbPatientLink.type,
             last_answered=dbPatientLink.last_answered,
             patient=Patient(
@@ -91,5 +95,38 @@ class Answers:
                 id=dbPatientLink.questionnary.id,
                 name=dbPatientLink.questionnary.name,
                 questions=questions,
+            ),
+        )
+
+    def getDiaryPatientLink(self, urlId: str, db: Database) -> DiaryPatientLink | None:
+        dbPatientLink = db.get_DiaryPatientLinkForAnswer(urlId)
+        if not dbPatientLink or not dbPatientLink.diary:
+            return None
+
+        return DiaryPatientLink(
+            id=dbPatientLink.id,
+            urlId=dbPatientLink.urlId,
+            patient_id=dbPatientLink.patient_id,
+            diary_id=dbPatientLink.diary_id,
+            type=dbPatientLink.type,
+            last_answered=dbPatientLink.last_answered,
+            patient=Patient(
+                id=dbPatientLink.patient.id,
+                name=dbPatientLink.patient.name,
+                email=dbPatientLink.patient.email,
+            ),
+            diary=Diary(
+                id=dbPatientLink.diary.id,
+                name=dbPatientLink.diary.name,
+                entries=[
+                    DiaryEntry(
+                        id=entry.id,
+                        date=entry.date,
+                        time=entry.time,
+                        food=entry.food,
+                        amount=entry.amount,
+                    )
+                    for entry in dbPatientLink.diary.entries
+                ],
             ),
         )

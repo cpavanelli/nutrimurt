@@ -103,10 +103,19 @@ def getPatientQuestionary(urlID: str, request: Request, dbSession: Session = Dep
 
     return questionary
 
-@app.get("/getPatientLink/{urlID}")
-def getPatientLink(urlID: str, request: Request, dbSession: Session = Depends(get_db)):
+@app.get("/getQuestionaryPatientLink/{urlID}")
+def getQuestionaryPatientLink(urlID: str, request: Request, dbSession: Session = Depends(get_db)):
     repo = Database(dbSession)
-    patient_link = answersController.getPatientLink(urlID, repo)
+    patient_link = answersController.getQuestionaryPatientLink(urlID, repo)
+    if not patient_link:
+        raise HTTPException(status_code=404, detail="Link not found")
+    return patient_link
+
+
+@app.get("/getDiaryPatientLink/{urlID}")
+def getDiaryPatientLink(urlID: str, request: Request, dbSession: Session = Depends(get_db)):
+    repo = Database(dbSession)
+    patient_link = answersController.getDiaryPatientLink(urlID, repo)
     if not patient_link:
         raise HTTPException(status_code=404, detail="Link not found")
     return patient_link

@@ -1,5 +1,5 @@
 # app/models/models.py
-from datetime import datetime
+from datetime import date as py_date, datetime
 
 from sqlalchemy import DateTime, ForeignKey
 from sqlalchemy.orm import Mapped, declarative_base, mapped_column, relationship
@@ -25,12 +25,13 @@ class PatientLinks(Base):
     urlId: Mapped[str] = mapped_column('url_id')
     type: Mapped[int] = mapped_column('type')
     patient_id: Mapped[int] = mapped_column('patient_id', ForeignKey('patients.id'))
-    questionnary_id: Mapped[int] = mapped_column('questionnary_id', ForeignKey('questionnaries.id'))
-    diary_id: Mapped[int | None] = mapped_column('diary_id', nullable=True)
+    questionnary_id: Mapped[int | None] = mapped_column('questionnary_id', ForeignKey('questionnaries.id'), nullable=True)
+    diary_id: Mapped[int | None] = mapped_column('diary_id', ForeignKey('patient_diaries.id'), nullable=True)
     last_answered: Mapped[datetime | None] = mapped_column('last_answered', DateTime(timezone=True), nullable=True)
 
     patient: Mapped['Patients'] = relationship('Patients', back_populates='patient_links')
-    questionnary: Mapped['Questionaries'] = relationship('Questionaries', back_populates='patient_links')
+    questionnary: Mapped['Questionaries | None'] = relationship('Questionaries', back_populates='patient_links')
+    diary: Mapped['PatientDiaries | None'] = relationship('PatientDiaries', back_populates='patient_links')
     answers: Mapped[list['PatientQuestionAnswer']] = relationship('PatientQuestionAnswer', back_populates='patient_link')
     answer_alternatives: Mapped[list['PatientQuestionAnswerAlternative']] = relationship(
         'PatientQuestionAnswerAlternative',
@@ -46,6 +47,29 @@ class Questionaries(Base):
 
     patient_links: Mapped[list['PatientLinks']] = relationship('PatientLinks', back_populates='questionnary')
     questions: Mapped[list['Questions']] = relationship('Questions', back_populates='questionnary')
+
+
+class PatientDiaries(Base):
+    __tablename__ = 'patient_diaries'
+
+    id: Mapped[int] = mapped_column('id', primary_key=True)
+    name: Mapped[str] = mapped_column('name')
+
+    entries: Mapped[list['PatientDiaryEntries']] = relationship('PatientDiaryEntries', back_populates='diary')
+    patient_links: Mapped[list['PatientLinks']] = relationship('PatientLinks', back_populates='diary')
+
+
+class PatientDiaryEntries(Base):
+    __tablename__ = 'patient_diary_entries'
+
+    id: Mapped[int] = mapped_column('id', primary_key=True)
+    date: Mapped[py_date] = mapped_column('date')
+    time: Mapped[datetime] = mapped_column('time', DateTime(timezone=True))
+    food: Mapped[str] = mapped_column('food')
+    amount: Mapped[str] = mapped_column('amount')
+    patient_diary_id: Mapped[int | None] = mapped_column('patient_diary_id', ForeignKey('patient_diaries.id'), nullable=True)
+
+    diary: Mapped['PatientDiaries | None'] = relationship('PatientDiaries', back_populates='entries')
 
 
 class Questions(Base):

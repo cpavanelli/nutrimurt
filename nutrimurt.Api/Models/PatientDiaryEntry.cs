@@ -8,6 +8,9 @@ public class PatientDiaryEntry
     public int Id { get; set; }
 
     [Required]
+    public DateOnly Date { get; set; }
+
+    [Required]
     public DateTime Time { get; set; }
 
     [Required]

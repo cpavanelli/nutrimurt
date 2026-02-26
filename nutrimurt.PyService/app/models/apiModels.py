@@ -1,5 +1,7 @@
 # app/models/apiModels.py
-from datetime import datetime
+from __future__ import annotations
+
+from datetime import date, datetime
 from typing import List, Optional
 from pydantic import BaseModel
 
@@ -12,7 +14,8 @@ class PatientLink(BaseModel):
     id: int
     urlId: str
     patient_id: int
-    questionnary_id: int
+    questionnary_id: Optional[int] = None
+    diary_id: Optional[int] = None
     type: int
     last_answered: Optional[datetime] = None
     patient: Patient
@@ -57,5 +60,38 @@ class QuestionAnswer(BaseModel):
         orm_mode = True
 
 
+class DiaryEntry(BaseModel):
+    id: int
+    date: date
+    time: datetime
+    food: str
+    amount: str
+
+    class Config:
+        orm_mode = True
+
+
+class Diary(BaseModel):
+    id: int
+    name: str
+    entries: List[DiaryEntry] = []
+
+    class Config:
+        orm_mode = True
+
+
+class DiaryPatientLink(BaseModel):
+    id: int
+    urlId: str
+    patient_id: int
+    diary_id: Optional[int] = None
+    type: int
+    last_answered: Optional[datetime] = None
+    patient: Patient
+    diary: Diary
+
+    class Config:
+        extra = "ignore"
+        orm_mode = True
 
 

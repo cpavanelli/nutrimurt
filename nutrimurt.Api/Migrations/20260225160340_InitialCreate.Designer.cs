@@ -12,8 +12,8 @@ using nutrimurt.Api.Data;
 namespace nutrimurt.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260222180001_Initial")]
-    partial class Initial
+    [Migration("20260225160340_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -76,6 +76,66 @@ namespace nutrimurt.Api.Migrations
                     b.ToTable("patients", (string)null);
                 });
 
+            modelBuilder.Entity("nutrimurt.Api.Models.PatientDiary", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("name");
+
+                    b.HasKey("Id")
+                        .HasName("pk_patient_diaries");
+
+                    b.ToTable("patient_diaries", (string)null);
+                });
+
+            modelBuilder.Entity("nutrimurt.Api.Models.PatientDiaryEntry", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Amount")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("amount");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date")
+                        .HasColumnName("date");
+
+                    b.Property<string>("Food")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("food");
+
+                    b.Property<int?>("PatientDiaryId")
+                        .HasColumnType("integer")
+                        .HasColumnName("patient_diary_id");
+
+                    b.Property<DateTime>("Time")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("time");
+
+                    b.HasKey("Id")
+                        .HasName("pk_patient_diary_entries");
+
+                    b.HasIndex("PatientDiaryId")
+                        .HasDatabaseName("ix_patient_diary_entries_patient_diary_id");
+
+                    b.ToTable("patient_diary_entries", (string)null);
+                });
+
             modelBuilder.Entity("nutrimurt.Api.Models.PatientLink", b =>
                 {
                     b.Property<int>("Id")
@@ -89,11 +149,15 @@ namespace nutrimurt.Api.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("diary_id");
 
+                    b.Property<DateTime?>("LastAnswered")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_answered");
+
                     b.Property<int>("PatientId")
                         .HasColumnType("integer")
                         .HasColumnName("patient_id");
 
-                    b.Property<int>("QuestionnaryId")
+                    b.Property<int?>("QuestionnaryId")
                         .HasColumnType("integer")
                         .HasColumnName("questionnary_id");
 
@@ -108,6 +172,9 @@ namespace nutrimurt.Api.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_patient_links");
+
+                    b.HasIndex("DiaryId")
+                        .HasDatabaseName("ix_patient_links_diary_id");
 
                     b.HasIndex("PatientId")
                         .HasDatabaseName("ix_patient_links_patient_id");
@@ -258,10 +325,23 @@ namespace nutrimurt.Api.Migrations
                     b.ToTable("questionnaries", (string)null);
                 });
 
+            modelBuilder.Entity("nutrimurt.Api.Models.PatientDiaryEntry", b =>
+                {
+                    b.HasOne("nutrimurt.Api.Models.PatientDiary", null)
+                        .WithMany("Entries")
+                        .HasForeignKey("PatientDiaryId")
+                        .HasConstraintName("fk_patient_diary_entries_patient_diaries_patient_diary_id");
+                });
+
             modelBuilder.Entity("nutrimurt.Api.Models.PatientLink", b =>
                 {
-                    b.HasOne("nutrimurt.Api.Models.Patient", "Patient")
+                    b.HasOne("nutrimurt.Api.Models.PatientDiary", "Diary")
                         .WithMany()
+                        .HasForeignKey("DiaryId")
+                        .HasConstraintName("fk_patient_links_patient_diaries_diary_id");
+
+                    b.HasOne("nutrimurt.Api.Models.Patient", "Patient")
+                        .WithMany("PatientLinks")
                         .HasForeignKey("PatientId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
@@ -270,9 +350,9 @@ namespace nutrimurt.Api.Migrations
                     b.HasOne("nutrimurt.Api.Models.Questionnaries", "Questionnary")
                         .WithMany()
                         .HasForeignKey("QuestionnaryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
                         .HasConstraintName("fk_patient_links_questionnaries_questionnary_id");
+
+                    b.Navigation("Diary");
 
                     b.Navigation("Patient");
 
@@ -321,6 +401,16 @@ namespace nutrimurt.Api.Migrations
                         .WithMany("Alternatives")
                         .HasForeignKey("QuestionId")
                         .HasConstraintName("fk_question_alternatives_questions_question_id");
+                });
+
+            modelBuilder.Entity("nutrimurt.Api.Models.Patient", b =>
+                {
+                    b.Navigation("PatientLinks");
+                });
+
+            modelBuilder.Entity("nutrimurt.Api.Models.PatientDiary", b =>
+                {
+                    b.Navigation("Entries");
                 });
 
             modelBuilder.Entity("nutrimurt.Api.Models.Question", b =>

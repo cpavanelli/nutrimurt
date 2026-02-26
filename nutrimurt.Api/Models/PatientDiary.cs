@@ -9,11 +9,7 @@ public class PatientDiary
     public int Id { get; set; }
 
     [Required]
-    [Column(TypeName = "CHAR(32)")]
-    public string UrlId { get; set; } = string.Empty;
-
-    [Required]
-    public int PatientId { get; set; }
+    public string Name { get; set; }
 
     public List<PatientDiaryEntry> Entries { get; set; } = new List<PatientDiaryEntry>();
 }

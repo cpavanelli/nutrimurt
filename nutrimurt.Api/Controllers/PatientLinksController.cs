@@ -18,9 +18,10 @@ public class PatientLinksController : ControllerBase
         int PatientId,
         string UrlId,
         PatientLinkTypes Type,
-        int QuestionnaryId,
+        int? QuestionnaryId,
         int? DiaryId,
         string? QuestionnaryName,
+        string? DiaryName,
         string? PatientName,
         string? LastAnswered
     );
@@ -28,8 +29,8 @@ public class PatientLinksController : ControllerBase
     public class SendPatientLinkRequest
     {
         public PatientLinkTypes Type { get; set; }
-        public int QuestionnaryId { get; set; }
-        public int? DiaryId { get; set; }
+        public int? QuestionnaryId { get; set; }
+        public string? DiaryName { get; set; }
     }
 
     [HttpGet]
@@ -51,6 +52,7 @@ public class PatientLinksController : ControllerBase
     {
         var links = await _context.PatientLinks
             .Include(l => l.Questionnary)
+            .Include(l => l.Diary)
             .Include(l => l.Patient)
             .OrderByDescending(l => l.LastAnswered)
             .Where(l => l.LastAnswered != null)
@@ -66,25 +68,38 @@ public class PatientLinksController : ControllerBase
         var patient = await _context.Patients.FindAsync(patientId);
         if (patient is null) return NotFound();
 
-        if (request.Type == PatientLinkTypes.Question && request.QuestionnaryId <= 0)
+        if (request.Type == PatientLinkTypes.Question && request.QuestionnaryId.GetValueOrDefault() <= 0)
         {
-            ModelState.AddModelError(nameof(request.QuestionnaryId), "QuestionaryId is required for question links");
+            ModelState.AddModelError(nameof(request.QuestionnaryId), "Escolha um questionario.");
             return ValidationProblem(ModelState);
         }
 
-        if (request.Type == PatientLinkTypes.Diary && (!request.DiaryId.HasValue || request.DiaryId.Value <= 0))
+        if (request.Type == PatientLinkTypes.Diary && string.IsNullOrWhiteSpace(request.DiaryName))
         {
-            ModelState.AddModelError(nameof(request.DiaryId), "DiaryId is required for diary links");
+            ModelState.AddModelError(nameof(request.DiaryName), "Escolha um nome para o diario.");
             return ValidationProblem(ModelState);
         }
+
+        int? diaryId = null;
+        if (request.Type == PatientLinkTypes.Diary)
+        {
+            var diary = new PatientDiary
+            {
+                Name = request.DiaryName!,
+            };
+            _context.PatientDiaries.Add(diary);
+            await _context.SaveChangesAsync();
+            diaryId = diary.Id;
+        }
+
 
         var link = new PatientLink
         {
             PatientId = patientId,
             UrlId = GenerateUrlId(),
             Type = request.Type,
-            QuestionnaryId = request.Type == PatientLinkTypes.Question ? request.QuestionnaryId : 0,
-            DiaryId = request.Type == PatientLinkTypes.Diary ? request.DiaryId : null
+            QuestionnaryId = request.Type == PatientLinkTypes.Question ? request.QuestionnaryId : null,
+            DiaryId = request.Type == PatientLinkTypes.Diary ? diaryId : null
         };
 
         _context.PatientLinks.Add(link);
@@ -113,6 +128,7 @@ public class PatientLinksController : ControllerBase
             link.QuestionnaryId,
             link.DiaryId,
             link.Questionnary?.Name,
+            link.Diary?.Name,
             link.Patient?.Name,
             link.LastAnswered?.ToString("dd/MM/yyyy HH:mm")
         );

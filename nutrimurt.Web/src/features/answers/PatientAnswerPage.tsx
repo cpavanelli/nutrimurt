@@ -54,7 +54,7 @@ export default function PatientAnswerPage() {
                                     </div>)}
                                     {question.questionType === 3 && (<div className="flex flex-wrap gap-2 text-sm text-slate-300">
                                         {question.alternatives?.map((alt) => {
-                                              const checked = (question.answerAlternatives ?? []).includes(alt.alternative);
+                                            const checked = (question.answerAlternatives ?? []).includes(alt.alternative);
                                             return (
 
 

@@ -2,6 +2,8 @@ import sqlalchemy as sa
 from sqlalchemy.orm import Session, joinedload
 
 from app.models.models import (
+    PatientDiaries,
+    PatientDiaryEntries,
     PatientLinks,
     PatientQuestionAnswer,
     PatientQuestionAnswerAlternative,
@@ -54,7 +56,7 @@ class Database:
         )
         return patient_link.questionnary if patient_link else None
 
-    def get_PatientLinkForAnswer(self, urlId: str) -> PatientLinks | None:
+    def get_QuestionaryPatientLinkForAnswer(self, urlId: str) -> PatientLinks | None:
         return (
             self.session.query(PatientLinks)
             .options(
@@ -64,6 +66,17 @@ class Database:
                 .joinedload(Questions.alternatives),
                 joinedload(PatientLinks.answers),
                 joinedload(PatientLinks.answer_alternatives),
+            )
+            .filter(PatientLinks.urlId == urlId)
+            .first()
+        )
+
+    def get_DiaryPatientLinkForAnswer(self, urlId: str) -> PatientLinks | None:
+        return (
+            self.session.query(PatientLinks)
+            .options(
+                joinedload(PatientLinks.patient),
+                joinedload(PatientLinks.diary).joinedload(PatientDiaries.entries),
             )
             .filter(PatientLinks.urlId == urlId)
             .first()
