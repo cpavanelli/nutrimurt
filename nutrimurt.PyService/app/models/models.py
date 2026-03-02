@@ -64,7 +64,8 @@ class PatientDiaryEntries(Base):
 
     id: Mapped[int] = mapped_column('id', primary_key=True)
     date: Mapped[py_date] = mapped_column('date')
-    time: Mapped[datetime] = mapped_column('time', DateTime(timezone=True))
+    meal_type: Mapped[int] = mapped_column('meal_type')
+    time: Mapped[datetime | None] = mapped_column('time', DateTime(timezone=True), nullable=True)
     food: Mapped[str] = mapped_column('food')
     amount: Mapped[str] = mapped_column('amount')
     patient_diary_id: Mapped[int] = mapped_column('patient_diary_id', ForeignKey('patient_diaries.id'))

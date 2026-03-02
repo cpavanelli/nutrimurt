@@ -57,11 +57,22 @@ export interface PatientDiary{
 export interface DiaryEntry {
   id: number;
   date: string;
-  time: string;
+  mealType: number;
+  time: string | null;
   food: string;
   amount: string;
   patientDiaryId?: number;
 }
+
+export const MEAL_TYPE_LABELS: Record<number, string> = {
+  1: 'Cafe da manha',
+  2: 'Almoco',
+  3: 'Cafe da tarde',
+  4: 'Jantar',
+  5: 'Lanche',
+};
+
+export const MEAL_TYPES = [1, 2, 3, 4, 5] as const;
 
 export type DiaryDayInput = {
   date: string;

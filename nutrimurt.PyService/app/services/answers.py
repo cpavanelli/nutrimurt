@@ -17,7 +17,9 @@ from app.models.models import PatientDiaryEntries, PatientQuestionAnswer, Patien
 
 class Answers:
     @staticmethod
-    def _to_entry_datetime(entry_date, entry_time: str) -> datetime:
+    def _to_entry_datetime(entry_date, entry_time: str | None) -> datetime | None:
+        if not entry_time:
+            return None
         if "T" in entry_time:
             return datetime.fromisoformat(entry_time.replace("Z", "+00:00"))
         return datetime.fromisoformat(f"{entry_date.isoformat()}T{entry_time}:00")
@@ -72,6 +74,7 @@ class Answers:
                 PatientDiaryEntries(
                     patient_diary_id=diary_id,
                     date=e.date,
+                    meal_type=e.mealType,
                     time=self._to_entry_datetime(e.date, e.time),
                     food=e.food,
                     amount=e.amount
@@ -165,11 +168,15 @@ class Answers:
                     DiaryEntry(
                         id=entry.id,
                         date=entry.date,
-                        time=entry.time.strftime("%H:%M"),
+                        mealType=entry.meal_type,
+                        time=entry.time.strftime("%H:%M") if entry.time else None,
                         food=entry.food,
                         amount=entry.amount,
                     )
-                    for entry in dbPatientLink.diary.entries
+                    for entry in sorted(
+                        dbPatientLink.diary.entries,
+                        key=lambda e: (e.date, e.meal_type, (0, e.time) if e.time else (1,)),
+                    )
                 ],
             ),
         )

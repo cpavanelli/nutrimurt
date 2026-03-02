@@ -64,7 +64,8 @@ class QuestionAnswer(BaseModel):
 class DiaryEntry(BaseModel):
     id: int
     date: date
-    time: str
+    mealType: int
+    time: str | None = None
     food: str
     amount: str
 
