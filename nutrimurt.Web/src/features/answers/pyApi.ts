@@ -26,8 +26,12 @@ export const answersApi = {
     request<PatientLink>(`${baseUrl}/getQuestionaryPatientLink/${urlID}`),
   getDiaryPatientLink: (urlID: string) =>
     request<PatientLink>(`${baseUrl}/getDiaryPatientLink/${urlID}`),
+  /** Public patient-facing fetch — no auth required, returns minimal PII. */
   get: (urlID: string) =>
-    request<PatientLink>(`${baseUrl}/getPatientLink/${urlID}`),
+    request<PatientLink>(`${baseUrl}/answer/public/${urlID}`),
+  /** Staff-only fetch — will require auth token once Phase 1 Step 5 is complete. */
+  getStaff: (urlID: string) =>
+    request<PatientLink>(`${baseUrl}/answer/staff/${urlID}`),
   save: (patientLink: PatientLink) =>
     request<void>(`${baseUrl}/savePatientAnswers`, {
       method: 'POST',

@@ -82,3 +82,20 @@ class Diary(BaseModel):
         orm_mode = True
 
 
+class PublicPatient(BaseModel):
+    name: str
+
+
+class PublicPatientLink(BaseModel):
+    """PatientLink shape returned to unauthenticated patients — no PII beyond name."""
+    id: int
+    urlId: str
+    patient_id: int
+    questionnary_id: Optional[int] = None
+    diary_id: Optional[int] = None
+    type: int
+    last_answered: Optional[datetime] = None
+    patient: PublicPatient
+    questionnary: Optional[Questionary] = None
+    diary: Optional[Diary] = None
+

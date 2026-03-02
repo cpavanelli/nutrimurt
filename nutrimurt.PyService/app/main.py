@@ -4,7 +4,7 @@ from app.email.emailsender import EmailSender
 from app.data.database import Database, get_db
 from sqlalchemy.orm import Session
 from app.settings import settings
-from app.models.apiModels import PatientLink
+from app.models.apiModels import PatientLink, PublicPatient, PublicPatientLink
 from app.services.answers import Answers
 
 app = FastAPI(title="NutriMurt Python Service", version="1.0.0")
@@ -139,6 +139,59 @@ def getPatientLink(urlID: str, request: Request, dbSession: Session = Depends(ge
         raise HTTPException(status_code=404, detail="Link payload not found")
 
     return patient_link
+
+@router.get("/answer/public/{urlID}")
+def getPublicPatientLink(urlID: str, dbSession: Session = Depends(get_db)):
+    """Public endpoint for patients — returns minimal data with no sensitive PII."""
+    repo = Database(dbSession)
+    base_link = repo.get_PatientLink(urlID)
+    if not base_link:
+        raise HTTPException(status_code=404, detail="Link not found")
+
+    if base_link.type == 1:
+        patient_link = answersController.getQuestionaryPatientLink(urlID, repo)
+    elif base_link.type == 2:
+        patient_link = answersController.getDiaryPatientLink(urlID, repo)
+    else:
+        raise HTTPException(status_code=422, detail="Unsupported link type")
+
+    if not patient_link:
+        raise HTTPException(status_code=404, detail="Link payload not found")
+
+    return PublicPatientLink(
+        id=patient_link.id,
+        urlId=patient_link.urlId,
+        patient_id=patient_link.patient_id,
+        questionnary_id=patient_link.questionnary_id,
+        diary_id=patient_link.diary_id,
+        type=patient_link.type,
+        last_answered=patient_link.last_answered,
+        patient=PublicPatient(name=patient_link.patient.name),
+        questionnary=patient_link.questionnary,
+        diary=patient_link.diary,
+    )
+
+
+@router.get("/answer/staff/{urlID}")
+def getStaffPatientLink(urlID: str, dbSession: Session = Depends(get_db)):
+    """Staff-only endpoint — returns full patient data. Auth will be enforced in Phase 1 Step 5."""
+    repo = Database(dbSession)
+    base_link = repo.get_PatientLink(urlID)
+    if not base_link:
+        raise HTTPException(status_code=404, detail="Link not found")
+
+    if base_link.type == 1:
+        patient_link = answersController.getQuestionaryPatientLink(urlID, repo)
+    elif base_link.type == 2:
+        patient_link = answersController.getDiaryPatientLink(urlID, repo)
+    else:
+        raise HTTPException(status_code=422, detail="Unsupported link type")
+
+    if not patient_link:
+        raise HTTPException(status_code=404, detail="Link payload not found")
+
+    return patient_link
+
 
 @router.post("/savePatientAnswers")
 def savePatientAnswers(patientLink: PatientLink, request: Request, dbSession: Session = Depends(get_db)):

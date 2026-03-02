@@ -16,7 +16,7 @@ export default function ViewAnswerPage() {
 
     setLoading(true);
     answersApi
-      .get(urlid)
+      .getStaff(urlid)
       .then((data) => {
         setPatientLink(data);
       })
