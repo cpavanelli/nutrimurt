@@ -1,4 +1,4 @@
-from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from app.email.emailsender import EmailSender
 from app.data.database import Database, get_db
@@ -8,6 +8,7 @@ from app.models.apiModels import PatientLink
 from app.services.answers import Answers
 
 app = FastAPI(title="NutriMurt Python Service", version="1.0.0")
+router = APIRouter(prefix="/py")
 answersController = Answers()
 
 app.add_middleware(
@@ -17,7 +18,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/")
+@router.get("/")
 def root():
     return {
         "service": "NutriMurt Python Service",
@@ -25,11 +26,11 @@ def root():
         "version": "1.0.0"
     }
 
-@app.get("/health")
+@router.get("/health")
 def health():
     return {"status": "ok"}
 
-@app.post("/patient-questionary/{patient_id}/{questionary_id}")
+@router.post("/patient-questionary/{patient_id}/{questionary_id}")
 def create_patient_questionary(patient_id: int, questionary_id: int):
     #Generate URLID
     # Logic to save the questionary would go here
@@ -37,7 +38,7 @@ def create_patient_questionary(patient_id: int, questionary_id: int):
     return {"message": "Patient questionary created", "data": {"patient_id": patient_id, "questionary_id": questionary_id}}
 
 
-@app.get("/testEmailB")
+@router.get("/testEmailB")
 def testEmail():
     emailSender = EmailSender()
     emailSender.send_email("giovanamurtinheira@gmail.com", "Test Email from NutriMurt", "This is a test email sent from the NutriMurt Python Service.")
@@ -45,13 +46,13 @@ def testEmail():
     return {"status": "ok"}
 
 
-@app.post("/testEmail/{to_email}/{name}")
+@router.post("/testEmail/{to_email}/{name}")
 def testEmail(to_email: str, name: str):
     emailSender = EmailSender()
     emailSender.send_email(to_email, "Test Email from NutriMurt", "Oi " + name + "!!!\n\nThis is a test email sent from the NutriMurt Python Service.")
     return {"status": "ok"}
 
-@app.get("/testGetUser/")
+@router.get("/testGetUser/")
 def testGetUser():
     connection = Database()
     patient = connection.get_Patient(4)
@@ -59,7 +60,7 @@ def testGetUser():
     return {"status": "ok", "patient": {"id": patient.id, "name": patient.name, "email": patient.email}}
 
 
-@app.get("/testGetQuestionary/{urlID}")
+@router.get("/testGetQuestionary/{urlID}")
 def testGetQuestionary(urlID: str, dbSession: Session = Depends(get_db)):
     repo = Database(dbSession)
     patient_link = repo.get_PatientLink(urlID)
@@ -70,7 +71,7 @@ def testGetQuestionary(urlID: str, dbSession: Session = Depends(get_db)):
                                             "patient name": patient_link.patient.name,
                                             "total questions": total_questions}}
 
-@app.post("/sendEmail/{urlID}")
+@router.post("/sendEmail/{urlID}")
 def sendEmail(urlID: str, request: Request, dbSession: Session = Depends(get_db)):
     repo = Database(dbSession)
     emailSender = EmailSender()
@@ -94,7 +95,7 @@ def sendEmail(urlID: str, request: Request, dbSession: Session = Depends(get_db)
 
     return {"status": "ok"}
 
-@app.get("/getPatientQuestionary/{urlID}")
+@router.get("/getPatientQuestionary/{urlID}")
 def getPatientQuestionary(urlID: str, request: Request, dbSession: Session = Depends(get_db)):
     repo = Database(dbSession)
     questionary = repo.get_Questionary(urlID)
@@ -103,7 +104,7 @@ def getPatientQuestionary(urlID: str, request: Request, dbSession: Session = Dep
 
     return questionary
 
-@app.get("/getQuestionaryPatientLink/{urlID}")
+@router.get("/getQuestionaryPatientLink/{urlID}")
 def getQuestionaryPatientLink(urlID: str, request: Request, dbSession: Session = Depends(get_db)):
     repo = Database(dbSession)
     patient_link = answersController.getQuestionaryPatientLink(urlID, repo)
@@ -112,7 +113,7 @@ def getQuestionaryPatientLink(urlID: str, request: Request, dbSession: Session =
     return patient_link
 
 
-@app.get("/getDiaryPatientLink/{urlID}")
+@router.get("/getDiaryPatientLink/{urlID}")
 def getDiaryPatientLink(urlID: str, request: Request, dbSession: Session = Depends(get_db)):
     repo = Database(dbSession)
     patient_link = answersController.getDiaryPatientLink(urlID, repo)
@@ -120,8 +121,37 @@ def getDiaryPatientLink(urlID: str, request: Request, dbSession: Session = Depen
         raise HTTPException(status_code=404, detail="Link not found")
     return patient_link
 
-@app.post("/savePatientAnswers")
+@router.get("/getPatientLink/{urlID}")
+def getPatientLink(urlID: str, request: Request, dbSession: Session = Depends(get_db)):
+    repo = Database(dbSession)
+    base_link = repo.get_PatientLink(urlID)
+    if not base_link:
+        raise HTTPException(status_code=404, detail="Link not found")
+
+    if base_link.type == 1:
+        patient_link = answersController.getQuestionaryPatientLink(urlID, repo)
+    elif base_link.type == 2:
+        patient_link = answersController.getDiaryPatientLink(urlID, repo)
+    else:
+        raise HTTPException(status_code=422, detail="Unsupported link type")
+
+    if not patient_link:
+        raise HTTPException(status_code=404, detail="Link payload not found")
+
+    return patient_link
+
+@router.post("/savePatientAnswers")
 def savePatientAnswers(patientLink: PatientLink, request: Request, dbSession: Session = Depends(get_db)):
     repo = Database(dbSession)
     answersController.savePatientAnswers(patientLink, repo)
     return {"status": "ok"}
+
+@router.post("/savePatientDiary")
+def savePatientDiary(patientLink: PatientLink, request: Request, dbSession: Session = Depends(get_db)):
+    repo = Database(dbSession)
+    answersController.savePatientDiary(patientLink, repo)
+    return {"status": "ok"}
+
+
+app.include_router(router)
+

@@ -1,12 +1,13 @@
 import { useState } from "react";
 import type { Patient, PatientLink, SendLinksInput } from "./types";
 import type { Questionary } from '../questionaries/types';
-
-
+import { copyOrShareLink } from './linkShare';
+import { toast } from 'react-toastify';
 
 interface Props {
     patient: Patient;
     links: PatientLink[];
+    mode: 'question' | 'diary';
     questionaries: Questionary[];
     onSubmit(payload: SendLinksInput): void | Promise<void>;
     onCancel(): void;
@@ -14,21 +15,22 @@ interface Props {
     errors?: Record<string, string[]>;
 }
 
-export default function SendLinksForm({ patient, links, questionaries, onSubmit, onCancel, submitting }: Props) {
+export default function SendLinksForm({ patient, links, mode, questionaries, onSubmit, onCancel, submitting }: Props) {
     const appOrigin = window.location.origin;
-    const [selectedLinkType, setSelectedLinkType] = useState<number | ''>('');
     const [selectedQuestionaryId, setSelectedQuestionaryId] = useState<number | ''>('');
     const [diaryName, setDiaryName] = useState<string>('Diário Alimentar de ' + patient.name);
+    const isQuestionMode = mode === 'question';
 
     function handleSubmit(event: React.FormEvent) {
         event.preventDefault();
-        if (selectedLinkType === 1 && !selectedQuestionaryId) return;
-        if (selectedLinkType === 2 && !diaryName.trim()) return;
+        if (isQuestionMode && !selectedQuestionaryId) return;
+        if (!isQuestionMode && !diaryName.trim()) return;
 
-        if (selectedLinkType === 2) {
+        if (!isQuestionMode) {
             onSubmit({ type: 'diary', diaryName: diaryName.trim() });
             return;
         }
+
         onSubmit({ type: 'question', questionaryId: Number(selectedQuestionaryId) });
     }
 
@@ -38,22 +40,14 @@ export default function SendLinksForm({ patient, links, questionaries, onSubmit,
                 <label className="block text-sm font-medium text-slate-200">Paciente</label>
                 <p className="mt-1 text-sm text-slate-400">{patient.name}</p>
             </div>
+
             <div>
-                <label className="block text-sm font-medium text-slate-200">Enviar novo link:</label>
-                <div className="grid  flex-1 gap-6 lg:grid-cols-2 ">
-                    <select value={selectedLinkType}
-                        onChange={e => {
-                            const value = e.target.value;
-                            setSelectedLinkType(value ? Number(value) : '');
-                            setSelectedQuestionaryId('');
-                        }}
-                        className="block w-full rounded border border-slate-700 bg-slate-800 px-3 py-2 text-slate-200"
-                    >
-                        <option value="0">Selecione</option>
-                        <option value="1">Questionário</option>
-                        <option value="2">Diário</option>
-                    </select>
-                    {selectedLinkType === 1 && (
+                <label className="block text-sm font-medium text-slate-200">
+                    {isQuestionMode ? 'Selecionar questionário:' : 'Nome do diário:'}
+                </label>
+
+                <div className="mt-2">
+                    {isQuestionMode && (
                         <div className="flex w-full gap-2">
                             <select
                                 value={selectedQuestionaryId}
@@ -65,7 +59,9 @@ export default function SendLinksForm({ patient, links, questionaries, onSubmit,
                                     <option key={q.id} value={q.id}>{q.name}</option>
                                 ))}
                             </select>
-                            <button type="button" className="rounded bg-emerald-500 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-400"
+                            <button
+                                type="button"
+                                className="rounded bg-emerald-500 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-400"
                                 onClick={handleSubmit}
                                 disabled={!selectedQuestionaryId || submitting}
                             >
@@ -73,13 +69,19 @@ export default function SendLinksForm({ patient, links, questionaries, onSubmit,
                             </button>
                         </div>
                     )}
-                    {selectedLinkType === 2 && (
+
+                    {!isQuestionMode && (
                         <div className="flex w-full gap-2">
-                            <p className="text-sm text-slate-400">
-                                <input type="text" value={diaryName} onChange={e => setDiaryName(e.target.value)}
-                                    placeholder="Nome do diário" className="block w-full rounded border border-slate-700 bg-slate-800 px-3 py-2 text-slate-200" />
-                            </p>
-                            <button type="button" className="rounded bg-emerald-500 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-400"
+                            <input
+                                type="text"
+                                value={diaryName}
+                                onChange={e => setDiaryName(e.target.value)}
+                                placeholder="Nome do diário"
+                                className="block w-full rounded border border-slate-700 bg-slate-800 px-3 py-2 text-slate-200"
+                            />
+                            <button
+                                type="button"
+                                className="rounded bg-emerald-500 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-400"
                                 onClick={handleSubmit}
                                 disabled={!diaryName || submitting}
                             >
@@ -89,21 +91,28 @@ export default function SendLinksForm({ patient, links, questionaries, onSubmit,
                     )}
                 </div>
             </div>
+
             <div>
-                <label className="block text-sm font-medium text-slate-200 py-1">Links enviados:</label>
+                <label className="block text-sm font-medium text-slate-200 py-1">
+                    {isQuestionMode ? 'Questionários enviados:' : 'Diários enviados:'}
+                </label>
                 <div className="space-y-4 px-0">
                     {links.map(link => (
                         <div key={link.id} className="p-4 border border-slate-700 rounded-lg bg-slate-800">
-                            {link.questionnaryName && link.type === 'question' && (<p className="text-sm text-slate-400">Questionário: {link.questionnaryName}</p>)}
-                            {link.questionnaryName && link.type !== 'question' && (<p className="text-sm text-slate-400">Diário</p>)}
-                            <div id="divLinks" className="flex items-center gap-2">
-
-                                <button type="button" className="text-blue-400 hover:underline focus:outline-none"
+                            {isQuestionMode && <p className="text-sm text-slate-400">Questionário: {link.questionnaryName}</p>}
+                            {!isQuestionMode && <p className="text-sm text-slate-400">Diário: {link.diaryName ?? '-'}</p>}
+                            <div className="flex items-center gap-2">
+                                <button
+                                    type="button"
+                                    className="text-blue-400 hover:underline focus:outline-none"
                                     onClick={async () => {
                                         try {
-                                            await navigator.clipboard.writeText(`${appOrigin}/answer/${link.urlId}`);
+                                            const result = await copyOrShareLink(`${appOrigin}/answer/${link.urlId}`);
+                                            if (result === 'copied') {
+                                                toast.success('Link copiado!');
+                                            }
                                         } catch (err) {
-                                            console.error("Copy failed", err);
+                                            console.error('Copy failed', err);
                                         }
                                     }}
                                     aria-label="Copiar link"

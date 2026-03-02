@@ -80,6 +80,13 @@ Create `.env` or `.env.local`:
 
 ```env
 VITE_API_BASE_URL=http://localhost:5054
+VITE_PY_BASE_URL=/py
+```
+
+For direct local calls to the Python service without a reverse proxy, you can use:
+
+```env
+VITE_PY_BASE_URL=http://localhost:8001/py
 ```
 
 ### Run
@@ -130,13 +137,21 @@ uvicorn app.main:app --reload --port 8001
 ```
 
 ### Main endpoints
-- `GET /`
-- `GET /health`
-- `POST /patient-questionary/{patient_id}/{questionary_id}`
-- `POST /sendEmail/{urlID}`
-- `GET /getPatientQuestionary/{urlID}`
-- `GET /getPatientLink/{urlID}`
-- `POST /savePatientAnswers`
+- `GET /py/`
+- `GET /py/health`
+- `POST /py/patient-questionary/{patient_id}/{questionary_id}`
+- `POST /py/sendEmail/{urlID}`
+- `GET /py/getPatientQuestionary/{urlID}`
+- `GET /py/getPatientLink/{urlID}`
+- `GET /py/getQuestionaryPatientLink/{urlID}`
+- `GET /py/getDiaryPatientLink/{urlID}`
+- `POST /py/savePatientAnswers`
+- `POST /py/savePatientDiary`
+
+`/py/getQuestionaryPatientLink/{urlID}` and `/py/getDiaryPatientLink/{urlID}` remain available as specialized legacy endpoints.
+
+### Reverse proxy note
+For production, configure Nginx to proxy `/py/*` to the Python service upstream.
 
 ## Local development flow
 1. Start Postgres: `docker compose up -d`

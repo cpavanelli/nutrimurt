@@ -19,7 +19,8 @@ class PatientLink(BaseModel):
     type: int
     last_answered: Optional[datetime] = None
     patient: Patient
-    questionnary: Questionary
+    questionnary: Optional[Questionary] = None
+    diary: Optional[Diary] = None
 
     class Config:
         extra = "ignore"
@@ -63,7 +64,7 @@ class QuestionAnswer(BaseModel):
 class DiaryEntry(BaseModel):
     id: int
     date: date
-    time: datetime
+    time: str
     food: str
     amount: str
 
@@ -77,21 +78,6 @@ class Diary(BaseModel):
     entries: List[DiaryEntry] = []
 
     class Config:
-        orm_mode = True
-
-
-class DiaryPatientLink(BaseModel):
-    id: int
-    urlId: str
-    patient_id: int
-    diary_id: Optional[int] = None
-    type: int
-    last_answered: Optional[datetime] = None
-    patient: Patient
-    diary: Diary
-
-    class Config:
-        extra = "ignore"
         orm_mode = True
 
 

@@ -85,6 +85,8 @@ const mapLink = (link: any): PatientLink => ({
   urlId: link.urlId,
   questionnaryName: link.questionnaryName ?? '',
   type: link.type === 2 ? 'diary' : 'question',
-  questionnaryId: link.questionnaryId,
-  diaryId: link.diaryId ?? ''
+  questionnaryId: link.questionnaryId ?? 0,
+  diaryId: link.diaryId ?? 0,
+  diaryName: link.diaryName ?? null,
+  lastAnswered: link.lastAnswered ?? null,
 });

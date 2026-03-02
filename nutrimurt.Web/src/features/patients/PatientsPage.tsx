@@ -4,8 +4,10 @@ import type { Patient, PatientInput } from './types';
 import PatientForm from './PatientForm';
 import MaintenanceHeader from '../../components/MaintenanceHeader';
 import { toast } from 'react-toastify';
+import { useNavigate } from 'react-router-dom';
 
 export default function PatientsPage() {
+  const navigate = useNavigate();
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -122,6 +124,12 @@ export default function PatientsPage() {
                         className="text-red-400 hover:text-red-300"
                       >
                         Deletar
+                      </button>
+                      <button
+                        onClick={() => navigate(`/patientSummary/${patient.id}`)}
+                        className="ml-3 text-sky-400 hover:text-sky-300"
+                      >
+                        Resumo
                       </button>
                     </td>
                   </tr>

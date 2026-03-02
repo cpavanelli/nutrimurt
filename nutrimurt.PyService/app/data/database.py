@@ -108,3 +108,32 @@ class Database:
             PatientQuestionAnswer.patient_link_id == patient_link_id
         ).delete(synchronize_session=False)
         self.session.commit()
+        
+    def savePatientDiaryEntries(
+        self,
+        entries: list[PatientDiaryEntries],
+        patient_link_id: int,
+    ):
+        for entry in entries:
+            self.session.add(entry)
+        self.session.commit()
+      
+        self.session.query(PatientLinks).filter(
+            PatientLinks.id == patient_link_id
+        ).update(
+            {PatientLinks.last_answered: sa.func.now()},
+            synchronize_session=False,
+        )
+        self.session.commit()
+        
+    def delete_patient_diary_entries(self, patient_link_id: int):
+        patient_link = self.session.query(PatientLinks).filter(
+            PatientLinks.id == patient_link_id
+        ).first()
+        if not patient_link or not patient_link.diary_id:
+            return
+
+        self.session.query(PatientDiaryEntries).filter(
+            PatientDiaryEntries.patient_diary_id == patient_link.diary_id
+        ).delete(synchronize_session=False)
+        self.session.commit()

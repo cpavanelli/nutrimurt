@@ -36,14 +36,17 @@ export interface PatientLink {
   patientId: number;
   questionnaryId: number;
   questionnaryName: string;
+  diaryName: string;
   type: PatientLinkType;
   createdAt: string;
   questionnary: Questionary;
+  diaryId: number;
+  diary: PatientDiary;
 }
 
 export type PatientLinkInput = Omit<PatientLink, 'id' | 'createdAt'>;
 
-export type PatientLinkType = 'question' | 'diary';
+export type PatientLinkType = 'question' | 'diary' | 1 | 2;
 
 export interface PatientDiary{
   id: number;
@@ -57,4 +60,10 @@ export interface DiaryEntry {
   time: string;
   food: string;
   amount: string;
+  patientDiaryId?: number;
+}
+
+export type DiaryDayInput = {
+  date: string;
+  entries: Omit<DiaryEntry, 'id' | 'patientDiaryId'>[];
 }

@@ -13,5 +13,42 @@ services:
     volumes:
       - nutrimurt_pgdata:/var/lib/postgresql/data
 
+  api:
+    build:
+      context: ./nutrimurt.Api
+    environment:
+      ASPNETCORE_URLS: http://0.0.0.0:8080
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=nutrimurtdb;Username=nutrimurt;Password=pass123
+      ASPNETCORE_ENVIRONMENT: Development
+    depends_on:
+      - postgres
+    expose:
+      - "8080"
+
+  pyservice:
+    build:
+      context: ./nutrimurt.PyService
+    environment:
+      CONNECTION_STRING: postgresql+psycopg://nutrimurt:pass123@postgres:5432/nutrimurtdb
+      ENV: development
+      # MAILGUN_API_KEY: ...
+      # MAILGUN_DOMAIN: ...
+      # WEBSITE_URL: http://localhost
+    depends_on:
+      - postgres
+    expose:
+      - "8000"
+
+    # React build served by nginx
+  gateway:
+    image: nginx:alpine
+    depends_on:
+      - api
+      - pyservice
+    ports:
+      - "80:80"
+    volumes:
+      - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nutrimurt.Web/dist:/usr/share/nginx/html:ro
 volumes:
   nutrimurt_pgdata:

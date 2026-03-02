@@ -42,6 +42,7 @@ public class PatientLinksController : ControllerBase
         var links = await _context.PatientLinks
             .Where(l => l.PatientId == patientId)
             .Include(l => l.Questionnary)
+            .Include(l => l.Diary)
             .ToListAsync();
 
         return Ok(links.Select(ToDto));
@@ -108,6 +109,7 @@ public class PatientLinksController : ControllerBase
         var updatedLinks = await _context.PatientLinks
             .Where(l => l.PatientId == patientId && l.Id == link.Id)
             .Include(l => l.Questionnary)
+            .Include(l => l.Diary)
             .ToListAsync();
 
         return Ok(updatedLinks.Select(ToDto));

@@ -8,6 +8,7 @@ import { questionariesApi } from '../questionaries/api';
 import SendLinksForm from './SendLinksForm';
 import { sendEmail } from './pyApi';
 import { toast } from 'react-toastify';
+import { copyOrShareLink } from './linkShare';
 
 export default function PatientSummary() {
   const appOrigin = window.location.origin;
@@ -15,14 +16,13 @@ export default function PatientSummary() {
   const [patient, setPatient] = useState<PatientWithLinks | null>(null);
   const [questionLinks, setQuestionLinks] = useState<PatientLink[]>([]);
   const [diaryLinks, setDiaryLinks] = useState<PatientLink[]>([]);
-  const [patientLinks, setPatientLinks] = useState<PatientLink[]>([]);
   const [questionaries, setQuestionaries] = useState<Questionary[]>([]);
-  const [linksModalOpen, setLinksModalOpen] = useState(false);
+  const [questionLinksModalOpen, setQuestionLinksModalOpen] = useState(false);
+  const [diaryLinksModalOpen, setDiaryLinksModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string[]> | null>(null);
 
   function syncLinks(links: PatientLink[]) {
-    setPatientLinks(links);
     setQuestionLinks(links.filter((link) => link.type === 'question' || link.type === 1));
     setDiaryLinks(links.filter((link) => link.type === 'diary' || link.type === 2));
     setPatient((prev) => (prev ? { ...prev, patientLinks: links } : prev));
@@ -48,11 +48,11 @@ export default function PatientSummary() {
     });
   }, [patientId]);
 
-  async function openLinks() {
+  async function openQuestionLinks() {
     if (!patient) return;
 
     setFormErrors(null);
-    setLinksModalOpen(true);
+    setQuestionLinksModalOpen(true);
 
     try {
       setSubmitting(true);
@@ -64,6 +64,23 @@ export default function PatientSummary() {
       syncLinks(links);
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Falha ao carregar links/questionarios');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function openDiaryLinks() {
+    if (!patient) return;
+
+    setFormErrors(null);
+    setDiaryLinksModalOpen(true);
+
+    try {
+      setSubmitting(true);
+      const links = await patientsApi.links(patient.id);
+      syncLinks(links);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Falha ao carregar links');
     } finally {
       setSubmitting(false);
     }
@@ -84,7 +101,8 @@ export default function PatientSummary() {
       const refreshedLinks = await patientsApi.links(patient.id);
       syncLinks(refreshedLinks);
 
-      setLinksModalOpen(false);
+      setQuestionLinksModalOpen(false);
+      setDiaryLinksModalOpen(false);
       toast.success('E-mail enviado com sucesso');
     } catch (err) {
       if (err instanceof ApiError && err.validation) {
@@ -124,12 +142,20 @@ export default function PatientSummary() {
               <p><strong>Data de Nascimento:</strong> {patient?.birth}</p>
               <p><strong>Peso:</strong> {patient?.weight} kg</p>
               <p><strong>Altura:</strong> {patient?.height} cm</p>
-              <button
-                onClick={openLinks}
-                className="mr-3 text-blue-400 hover:text-blue-300"
-              >
-                Enviar Links
-              </button>
+              <div className="mt-4 flex flex-wrap gap-3">
+                <button
+                  onClick={openQuestionLinks}
+                  className="rounded-full bg-emerald-500 px-5 py-2 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5 hover:bg-emerald-400"
+                >
+                  Enviar Questionário
+                </button>
+                <button
+                  onClick={openDiaryLinks}
+                  className="rounded-full border border-cyan-300/60 bg-cyan-400/20 px-5 py-2 text-sm font-semibold text-cyan-100 shadow-lg shadow-cyan-500/20 transition hover:-translate-y-0.5 hover:bg-cyan-400/30"
+                >
+                  Enviar Diário
+                </button>
+              </div>
             </div>
           </div>
         </section>
@@ -159,7 +185,7 @@ export default function PatientSummary() {
                 <span>{u.lastAnswered ?? '-'}</span>
                 <span>
                   <Link
-                    to={`/patientAnswer/${u.urlId}`}
+                    to={`/viewAnswer/${u.urlId}`}
                     className="rounded-full bg-emerald-500 px-5 py-2 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5 hover:bg-emerald-400"
                   >Ver</Link>
                 </span>
@@ -167,7 +193,10 @@ export default function PatientSummary() {
                   <button type="button" className="text-blue-400 hover:underline focus:outline-none"
                     onClick={async () => {
                       try {
-                        await navigator.clipboard.writeText(`${appOrigin}/answer/${u.urlId}`);
+                        const result = await copyOrShareLink(`${appOrigin}/answer/${u.urlId}`);
+                        if (result === 'copied') {
+                          toast.success('Link copiado!');
+                        }
                       } catch (err) {
                         console.error("Copy failed", err);
                       }
@@ -188,15 +217,36 @@ export default function PatientSummary() {
             <div className="mb-6 flex items-center justify-between text-xs uppercase tracking-[0.4em] text-slate-300">
               <span>Diarios Alimentares</span>
             </div>
-            <div className="space-y-4">
-              {diaryLinks.map((link) => (
-                <div key={link.id} className="border border-white/10 rounded-lg p-4 bg-slate-900/60">
-                  {link.diaryName}
+            <div className="grid grid-cols-5 font-semibold border-b pb-2 ">
+              <span>Diário</span>
+              <span>Respondido?</span>
+              <span>Data</span>
+              <span></span>
+              <span></span>
+            </div>
+
+            {diaryLinks.map((u) => (
+              <div key={u.id} className="grid grid-cols-5 items-center py-3 border-b bg-slate-900/60 p-4 shadow">
+                <span>{u.diaryName}</span>
+                <span>
+                  {(u.lastAnswered) ? <span className={'inline-flex h-5 w-5 items-center justify-center rounded border border-emerald-400 bg-emerald-500 text-slate-950'}>✓</span> :
+                    <span className={'inline-flex h-5 w-5 items-center justify-center rounded border border-slate-600 bg-slate-800 text-transparent'}>✓</span>}
+                </span>
+                <span>{u.lastAnswered ?? '-'}</span>
+                <span>
+                  <Link
+                    to={`/viewAnswer/${u.urlId}`}
+                    className="rounded-full bg-emerald-500 px-5 py-2 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5 hover:bg-emerald-400"
+                  >Ver</Link>
+                </span>
                 <span>
                   <button type="button" className="text-blue-400 hover:underline focus:outline-none"
                     onClick={async () => {
                       try {
-                        await navigator.clipboard.writeText(`${appOrigin}/answer/${link.urlId}`);
+                        const result = await copyOrShareLink(`${appOrigin}/answer/${u.urlId}`);
+                        if (result === 'copied') {
+                          toast.success('Link copiado!');
+                        }
                       } catch (err) {
                         console.error("Copy failed", err);
                       }
@@ -206,25 +256,43 @@ export default function PatientSummary() {
                     Copiar Link
                   </button>
                 </span>
-                </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
         </section>
       </div>
 
-      {linksModalOpen && patient && (
+      {questionLinksModalOpen && patient && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
           <div className="w-full max-w-lg rounded-xl border border-slate-800 bg-slate-900 p-6 shadow-2xl">
-            <h2 className="text-xl font-semibold mb-4">Enviar Links</h2>
+            <h2 className="text-xl font-semibold mb-4">Enviar Questionário</h2>
             <SendLinksForm
               patient={patient}
-              links={patientLinks}
+              mode="question"
+              links={questionLinks}
               questionaries={questionaries}
               submitting={submitting}
               errors={formErrors || undefined}
               onSubmit={handleSendLink}
-              onCancel={() => setLinksModalOpen(false)}
+              onCancel={() => setQuestionLinksModalOpen(false)}
+            />
+          </div>
+        </div>
+      )}
+
+      {diaryLinksModalOpen && patient && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-lg rounded-xl border border-slate-800 bg-slate-900 p-6 shadow-2xl">
+            <h2 className="text-xl font-semibold mb-4">Enviar Diário</h2>
+            <SendLinksForm
+              patient={patient}
+              mode="diary"
+              links={diaryLinks}
+              questionaries={[]}
+              submitting={submitting}
+              errors={formErrors || undefined}
+              onSubmit={handleSendLink}
+              onCancel={() => setDiaryLinksModalOpen(false)}
             />
           </div>
         </div>
@@ -232,3 +300,4 @@ export default function PatientSummary() {
     </main>
   );
 }
+

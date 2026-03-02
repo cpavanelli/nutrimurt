@@ -1,4 +1,11 @@
-const baseUrl = import.meta.env.VITE_PY_BASE_URL ?? 'http://localhost:8001';
+const rawBaseUrl = import.meta.env.VITE_PY_BASE_URL ?? '/py';
+const normalizedBaseUrl = rawBaseUrl.replace(/\/+$/, '');
+const baseUrl =
+  normalizedBaseUrl === ''
+    ? '/py'
+    : normalizedBaseUrl.endsWith('/py')
+      ? normalizedBaseUrl
+      : `${normalizedBaseUrl}/py`;
 
 
 export async function sendTestEmail(email : string, name: string): Promise<{ status: string }> {
