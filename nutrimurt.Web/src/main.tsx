@@ -2,6 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { ClerkProvider } from '@clerk/clerk-react';
 import App from './App';
 import PatientsPage from './features/patients/PatientsPage';
 import QuestionariesPage from './features/questionaries/QuestionarriePage';
@@ -10,40 +11,49 @@ import ViewAnswerPage from './features/answers/ViewAnswerPage';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import PatientSummary from './features/patients/PatientSummary';
+import ProtectedRoute from './components/ProtectedRoute';
+import SignInPage from './pages/SignInPage';
+
+const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
 const router = createBrowserRouter([
   {
-    path: "/",
-    element: <App />,
-  },
-  {
-    path: "/patients",
-    element: <PatientsPage />,
-  },
-  {
-    path: "/questionaries",
-    element: <QuestionariesPage />,
+    path: "/sign-in",
+    element: <SignInPage />,
   },
   {
     path: "/answer/:urlid",
     element: <AnswerPage />,
   },
   {
+    path: "/",
+    element: <ProtectedRoute><App /></ProtectedRoute>,
+  },
+  {
+    path: "/patients",
+    element: <ProtectedRoute><PatientsPage /></ProtectedRoute>,
+  },
+  {
+    path: "/questionaries",
+    element: <ProtectedRoute><QuestionariesPage /></ProtectedRoute>,
+  },
+  {
     path: "/viewAnswer/:urlid",
-    element: <ViewAnswerPage />,
+    element: <ProtectedRoute><ViewAnswerPage /></ProtectedRoute>,
   },
   {
     path: "/patientSummary/:patientId",
-    element: <PatientSummary />,
-  }
-
+    element: <ProtectedRoute><PatientSummary /></ProtectedRoute>,
+  },
 ]);
 
 const rootEl = document.getElementById('root')!;
 createRoot(rootEl).render(
   <StrictMode>
-    <RouterProvider router={router} />
-    <ToastContainer position="top-right" theme="dark" autoClose={3000} />
+    <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
+      <RouterProvider router={router} />
+      <ToastContainer position="top-right" theme="dark" autoClose={3000} />
+    </ClerkProvider>
   </StrictMode>
 );
 

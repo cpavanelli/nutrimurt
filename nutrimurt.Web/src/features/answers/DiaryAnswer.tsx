@@ -115,12 +115,6 @@ export default function DiaryAnswer({ patientLink, readOnly = false }: Props) {
   }, [patientLink, readOnly]);
 
   const [selectedMealType, setSelectedMealType] = useState<number>(1);
-  const [useTime, setUseTime] = useState(false);
-
-  const timeRightNow = () => {
-    const now = new Date();
-    return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-  };
 
   const [entryDraft, setEntryDraft] = useState<Omit<DiaryEntry, 'id'>>({
     date: '',
@@ -129,10 +123,6 @@ export default function DiaryAnswer({ patientLink, readOnly = false }: Props) {
     food: '',
     amount: ''
   });
-  const hourOptions = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
-  const minuteOptions = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'));
-  const draftTime = entryDraft.time || '00:00';
-  const [draftHour = '00', draftMinute = '00'] = draftTime.split(':');
 
   const hasRequiredEntryFields = entryDraft.food && entryDraft.amount;
 
@@ -141,7 +131,7 @@ export default function DiaryAnswer({ patientLink, readOnly = false }: Props) {
     const newEntry: Omit<DiaryEntry, 'id' | 'patientDiaryId'> = {
       date: currentDay.date,
       mealType: selectedMealType,
-      time: useTime ? (entryDraft.time || timeRightNow()) : null,
+      time: null,
       food: entryDraft.food,
       amount: entryDraft.amount
     };
@@ -154,7 +144,7 @@ export default function DiaryAnswer({ patientLink, readOnly = false }: Props) {
       )
     );
 
-    setEntryDraft((prev) => ({ ...prev, time: useTime ? timeRightNow() : null, food: '', amount: '' }));
+    setEntryDraft((prev) => ({ ...prev, time: null, food: '', amount: '' }));
   };
 
   const removeEntry = (dayIndex: number, entryIndex: number) => {
