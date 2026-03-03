@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { dashboardApi } from './api';
+import { useDashboardApi } from './api';
 import { Link } from 'react-router-dom';
 import type { Patient } from '../patients/types';
 
 
 export default function RecentlyAnswered() {
+  const dashboardApi = useDashboardApi();
   const [patients, setPatients] = useState<Patient[]>([]);
 
 

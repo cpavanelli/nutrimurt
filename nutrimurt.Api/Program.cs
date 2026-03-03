@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using nutrimurt.Api.Data;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,6 +12,18 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 // Add Controllers
 builder.Services.AddControllers();
+
+// Clerk JWT authentication
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.Authority = builder.Configuration["Clerk:Authority"];
+        options.RequireHttpsMetadata = false;
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateAudience = false
+        };
+    });
 
 // Swagger
 builder.Services.AddEndpointsApiExplorer();
@@ -39,6 +53,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.Run();

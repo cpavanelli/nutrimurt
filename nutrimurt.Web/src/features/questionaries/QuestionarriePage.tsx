@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
-import {  questionariesApi } from './api';
+import { useQuestionariesApi } from './api';
 import type { Questionary, QuestionaryInput } from './types';
 import QuestionarrieForm from './QuestionarrieForm';
 import MaintenanceHeader from '../../components/MaintenanceHeader';
 import { toast } from 'react-toastify';
 
 export default function QuestionarryPage() {
+  const questionariesApi = useQuestionariesApi();
   const [questionaries, setQuestionaries] = useState<Questionary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ApiError, patientsApi } from './api';
+import { ApiError, usePatientsApi } from './api';
 import type { Patient, PatientInput } from './types';
 import PatientForm from './PatientForm';
 import MaintenanceHeader from '../../components/MaintenanceHeader';
@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 
 export default function PatientsPage() {
   const navigate = useNavigate();
+  const patientsApi = usePatientsApi();
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');

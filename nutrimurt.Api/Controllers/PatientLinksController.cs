@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using nutrimurt.Api.Data;
@@ -6,6 +7,7 @@ using nutrimurt.Api.Models;
 
 namespace nutrimurt.Api.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/patients/{patientId}/links")]
 public class PatientLinksController : ControllerBase

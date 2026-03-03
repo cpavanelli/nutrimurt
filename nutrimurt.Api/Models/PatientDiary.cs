@@ -9,7 +9,7 @@ public class PatientDiary
     public int Id { get; set; }
 
     [Required]
-    public string Name { get; set; }
+    public string Name { get; set; } = string.Empty;
 
     public List<PatientDiaryEntry> Entries { get; set; } = new List<PatientDiaryEntry>();
 }
