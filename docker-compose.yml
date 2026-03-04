@@ -1,4 +1,4 @@
-﻿version: "3.9"
+version: "3.9"
 
 services:
   postgres:
@@ -6,7 +6,7 @@ services:
     container_name: nutrimurt-postgres
     environment:
       POSTGRES_USER: nutrimurt
-      POSTGRES_PASSWORD: pass123
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: nutrimurtdb
     ports:
       - "5432:5432"
@@ -18,7 +18,7 @@ services:
       context: ./nutrimurt.Api
     environment:
       ASPNETCORE_URLS: http://0.0.0.0:8080
-      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=nutrimurtdb;Username=nutrimurt;Password=pass123
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=nutrimurtdb;Username=nutrimurt;Password=${DB_PASSWORD}
       ASPNETCORE_ENVIRONMENT: Development
     depends_on:
       - postgres
@@ -29,8 +29,9 @@ services:
     build:
       context: ./nutrimurt.PyService
     environment:
-      CONNECTION_STRING: postgresql+psycopg://nutrimurt:pass123@postgres:5432/nutrimurtdb
+      CONNECTION_STRING: postgresql+psycopg://nutrimurt:${DB_PASSWORD}@postgres:5432/nutrimurtdb
       ENV: development
+      WEBSITE_URL: http://localhost
       # MAILGUN_API_KEY: ...
       # MAILGUN_DOMAIN: ...
       # WEBSITE_URL: http://localhost
@@ -39,7 +40,6 @@ services:
     expose:
       - "8000"
 
-    # React build served by nginx
   gateway:
     image: nginx:alpine
     depends_on:

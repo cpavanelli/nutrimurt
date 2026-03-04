@@ -1,5 +1,8 @@
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 from app.email.emailsender import EmailSender
 from app.data.database import Database, get_db
 from sqlalchemy.orm import Session
@@ -8,13 +11,17 @@ from app.models.apiModels import PatientLink, PublicPatient, PublicPatientLink
 from app.services.answers import Answers
 from app.auth import require_auth
 
+limiter = Limiter(key_func=get_remote_address)
 app = FastAPI(title="NutriMurt Python Service", version="1.0.0")
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 router = APIRouter(prefix="/py")
 answersController = Answers()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # adjust for your frontends
+    allow_origins=["http://localhost:5173", "https://yourdomain.com"],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -37,40 +44,6 @@ def create_patient_questionary(patient_id: int, questionary_id: int, _auth=Depen
     # Logic to save the questionary would go here
     #Send email to patient with link to questionary
     return {"message": "Patient questionary created", "data": {"patient_id": patient_id, "questionary_id": questionary_id}}
-
-
-@router.get("/testEmailB")
-def testEmail(_auth=Depends(require_auth)):
-    emailSender = EmailSender()
-    emailSender.send_email("giovanamurtinheira@gmail.com", "Test Email from NutriMurt", "This is a test email sent from the NutriMurt Python Service.")
-    emailSender.send_email("caiopavanelli@gmail.com", "Test Email from NutriMurt", "This is a test email sent from the NutriMurt Python Service.")
-    return {"status": "ok"}
-
-
-@router.post("/testEmail/{to_email}/{name}")
-def testEmailPost(to_email: str, name: str, _auth=Depends(require_auth)):
-    emailSender = EmailSender()
-    emailSender.send_email(to_email, "Test Email from NutriMurt", "Oi " + name + "!!!\n\nThis is a test email sent from the NutriMurt Python Service.")
-    return {"status": "ok"}
-
-@router.get("/testGetUser/")
-def testGetUser(_auth=Depends(require_auth)):
-    connection = Database()
-    patient = connection.get_Patient(4)
-
-    return {"status": "ok", "patient": {"id": patient.id, "name": patient.name, "email": patient.email}}
-
-
-@router.get("/testGetQuestionary/{urlID}")
-def testGetQuestionary(urlID: str, _auth=Depends(require_auth), dbSession: Session = Depends(get_db)):
-    repo = Database(dbSession)
-    patient_link = repo.get_PatientLink(urlID)
-    total_questions = patient_link.questionnary.questions.__len__()
-
-    return {"status": "ok", "questionary": {"id": patient_link.id,
-                                            "questionary": patient_link.questionnary.name, 
-                                            "patient name": patient_link.patient.name,
-                                            "total questions": total_questions}}
 
 @router.post("/sendEmail/{urlID}")
 def sendEmail(urlID: str, request: Request, _auth=Depends(require_auth), dbSession: Session = Depends(get_db)):
@@ -142,7 +115,8 @@ def getPatientLink(urlID: str, request: Request, _auth=Depends(require_auth), db
     return patient_link
 
 @router.get("/answer/public/{urlID}")
-def getPublicPatientLink(urlID: str, dbSession: Session = Depends(get_db)):
+@limiter.limit("10/second")
+def getPublicPatientLink(urlID: str, request: Request, dbSession: Session = Depends(get_db)):
     """Public endpoint for patients — returns minimal data with no sensitive PII."""
     repo = Database(dbSession)
     base_link = repo.get_PatientLink(urlID)
@@ -162,9 +136,6 @@ def getPublicPatientLink(urlID: str, dbSession: Session = Depends(get_db)):
     return PublicPatientLink(
         id=patient_link.id,
         urlId=patient_link.urlId,
-        patient_id=patient_link.patient_id,
-        questionnary_id=patient_link.questionnary_id,
-        diary_id=patient_link.diary_id,
         type=patient_link.type,
         last_answered=patient_link.last_answered,
         patient=PublicPatient(name=patient_link.patient.name),
@@ -195,12 +166,14 @@ def getStaffPatientLink(urlID: str, _auth=Depends(require_auth), dbSession: Sess
 
 
 @router.post("/savePatientAnswers")
+@limiter.limit("5/second")
 def savePatientAnswers(patientLink: PatientLink, request: Request, dbSession: Session = Depends(get_db)):
     repo = Database(dbSession)
     answersController.savePatientAnswers(patientLink, repo)
     return {"status": "ok"}
 
 @router.post("/savePatientDiary")
+@limiter.limit("5/second")
 def savePatientDiary(patientLink: PatientLink, request: Request, dbSession: Session = Depends(get_db)):
     repo = Database(dbSession)
     answersController.savePatientDiary(patientLink, repo)
