@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.settings import settings
 from app.models.apiModels import PatientLink, PublicPatient, PublicPatientLink
 from app.services.answers import Answers
+from app.auth import require_auth
 
 app = FastAPI(title="NutriMurt Python Service", version="1.0.0")
 router = APIRouter(prefix="/py")
@@ -31,7 +32,7 @@ def health():
     return {"status": "ok"}
 
 @router.post("/patient-questionary/{patient_id}/{questionary_id}")
-def create_patient_questionary(patient_id: int, questionary_id: int):
+def create_patient_questionary(patient_id: int, questionary_id: int, _auth=Depends(require_auth)):
     #Generate URLID
     # Logic to save the questionary would go here
     #Send email to patient with link to questionary
@@ -39,7 +40,7 @@ def create_patient_questionary(patient_id: int, questionary_id: int):
 
 
 @router.get("/testEmailB")
-def testEmail():
+def testEmail(_auth=Depends(require_auth)):
     emailSender = EmailSender()
     emailSender.send_email("giovanamurtinheira@gmail.com", "Test Email from NutriMurt", "This is a test email sent from the NutriMurt Python Service.")
     emailSender.send_email("caiopavanelli@gmail.com", "Test Email from NutriMurt", "This is a test email sent from the NutriMurt Python Service.")
@@ -47,13 +48,13 @@ def testEmail():
 
 
 @router.post("/testEmail/{to_email}/{name}")
-def testEmail(to_email: str, name: str):
+def testEmailPost(to_email: str, name: str, _auth=Depends(require_auth)):
     emailSender = EmailSender()
     emailSender.send_email(to_email, "Test Email from NutriMurt", "Oi " + name + "!!!\n\nThis is a test email sent from the NutriMurt Python Service.")
     return {"status": "ok"}
 
 @router.get("/testGetUser/")
-def testGetUser():
+def testGetUser(_auth=Depends(require_auth)):
     connection = Database()
     patient = connection.get_Patient(4)
 
@@ -61,7 +62,7 @@ def testGetUser():
 
 
 @router.get("/testGetQuestionary/{urlID}")
-def testGetQuestionary(urlID: str, dbSession: Session = Depends(get_db)):
+def testGetQuestionary(urlID: str, _auth=Depends(require_auth), dbSession: Session = Depends(get_db)):
     repo = Database(dbSession)
     patient_link = repo.get_PatientLink(urlID)
     total_questions = patient_link.questionnary.questions.__len__()
@@ -72,7 +73,7 @@ def testGetQuestionary(urlID: str, dbSession: Session = Depends(get_db)):
                                             "total questions": total_questions}}
 
 @router.post("/sendEmail/{urlID}")
-def sendEmail(urlID: str, request: Request, dbSession: Session = Depends(get_db)):
+def sendEmail(urlID: str, request: Request, _auth=Depends(require_auth), dbSession: Session = Depends(get_db)):
     repo = Database(dbSession)
     emailSender = EmailSender()
     patient_link = repo.get_PatientLink(urlID)
@@ -96,7 +97,7 @@ def sendEmail(urlID: str, request: Request, dbSession: Session = Depends(get_db)
     return {"status": "ok"}
 
 @router.get("/getPatientQuestionary/{urlID}")
-def getPatientQuestionary(urlID: str, request: Request, dbSession: Session = Depends(get_db)):
+def getPatientQuestionary(urlID: str, request: Request, _auth=Depends(require_auth), dbSession: Session = Depends(get_db)):
     repo = Database(dbSession)
     questionary = repo.get_Questionary(urlID)
     if not questionary:
@@ -105,7 +106,7 @@ def getPatientQuestionary(urlID: str, request: Request, dbSession: Session = Dep
     return questionary
 
 @router.get("/getQuestionaryPatientLink/{urlID}")
-def getQuestionaryPatientLink(urlID: str, request: Request, dbSession: Session = Depends(get_db)):
+def getQuestionaryPatientLink(urlID: str, request: Request, _auth=Depends(require_auth), dbSession: Session = Depends(get_db)):
     repo = Database(dbSession)
     patient_link = answersController.getQuestionaryPatientLink(urlID, repo)
     if not patient_link:
@@ -114,7 +115,7 @@ def getQuestionaryPatientLink(urlID: str, request: Request, dbSession: Session =
 
 
 @router.get("/getDiaryPatientLink/{urlID}")
-def getDiaryPatientLink(urlID: str, request: Request, dbSession: Session = Depends(get_db)):
+def getDiaryPatientLink(urlID: str, request: Request, _auth=Depends(require_auth), dbSession: Session = Depends(get_db)):
     repo = Database(dbSession)
     patient_link = answersController.getDiaryPatientLink(urlID, repo)
     if not patient_link:
@@ -122,7 +123,7 @@ def getDiaryPatientLink(urlID: str, request: Request, dbSession: Session = Depen
     return patient_link
 
 @router.get("/getPatientLink/{urlID}")
-def getPatientLink(urlID: str, request: Request, dbSession: Session = Depends(get_db)):
+def getPatientLink(urlID: str, request: Request, _auth=Depends(require_auth), dbSession: Session = Depends(get_db)):
     repo = Database(dbSession)
     base_link = repo.get_PatientLink(urlID)
     if not base_link:
@@ -173,8 +174,8 @@ def getPublicPatientLink(urlID: str, dbSession: Session = Depends(get_db)):
 
 
 @router.get("/answer/staff/{urlID}")
-def getStaffPatientLink(urlID: str, dbSession: Session = Depends(get_db)):
-    """Staff-only endpoint — returns full patient data. Auth will be enforced in Phase 1 Step 5."""
+def getStaffPatientLink(urlID: str, _auth=Depends(require_auth), dbSession: Session = Depends(get_db)):
+    """Staff-only endpoint — returns full patient data."""
     repo = Database(dbSession)
     base_link = repo.get_PatientLink(urlID)
     if not base_link:

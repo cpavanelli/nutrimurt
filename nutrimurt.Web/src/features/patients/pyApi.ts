@@ -8,26 +8,32 @@ const baseUrl =
       : `${normalizedBaseUrl}/py`;
 
 
-export async function sendTestEmail(email : string, name: string): Promise<{ status: string }> {
-const res = await fetch(
+export async function sendTestEmail(email: string, name: string, token?: string | null): Promise<{ status: string }> {
+  const res = await fetch(
     `${baseUrl}/testEmail/${encodeURIComponent(email)}/${encodeURIComponent(name)}`,
-    { method: 'POST' }
+    {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    },
   );
   if (!res.ok) {
     const text = await res.text();
     throw new Error(text || `testEmail failed with ${res.status}`);
   }
-  return res.json(); // { status: "ok" } expected
+  return res.json();
 }
 
-export async function sendEmail(urlID : string): Promise<{ status: string }> {
-const res = await fetch(
+export async function sendEmail(urlID: string, token?: string | null): Promise<{ status: string }> {
+  const res = await fetch(
     `${baseUrl}/sendEmail/${encodeURIComponent(urlID)}`,
-    { method: 'POST' }
+    {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    },
   );
   if (!res.ok) {
     const text = await res.text();
     throw new Error(text || `sendEmail failed with ${res.status}`);
   }
-  return res.json(); // { status: "ok" } expected
+  return res.json();
 }

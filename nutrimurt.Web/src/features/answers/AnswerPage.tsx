@@ -15,7 +15,7 @@ export default function AnswerPage() {
         if (!urlid) return;
         setLoading(true);
         setLoadError(null);
-        answersApi.get(urlid).then((data) => {
+        answersApi.getPatientLink(urlid).then((data) => {
             setPatientLink(data);
         }).catch((error) => {
             console.error('Error fetching patient link:', error);

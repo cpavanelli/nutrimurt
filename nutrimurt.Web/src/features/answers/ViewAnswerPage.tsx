@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '@clerk/clerk-react';
 import { answersApi } from './pyApi';
 import type { PatientLink } from './types';
 import TopHeader from '../../components/TopHeader';
@@ -8,6 +9,7 @@ import DiaryAnswer from './DiaryAnswer';
 export default function ViewAnswerPage() {
   const { urlid } = useParams<{ urlid: string }>();
   const navigate = useNavigate();
+  const { getToken } = useAuth();
   const [patientLink, setPatientLink] = useState<PatientLink | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -15,8 +17,8 @@ export default function ViewAnswerPage() {
     if (!urlid) return;
 
     setLoading(true);
-    answersApi
-      .getStaff(urlid)
+    getToken()
+      .then((token) => answersApi.getPatientLinkStaff(urlid, token))
       .then((data) => {
         setPatientLink(data);
       })
@@ -26,7 +28,7 @@ export default function ViewAnswerPage() {
       .finally(() => {
         setLoading(false);
       });
-  }, [urlid]);
+  }, [urlid, getToken]);
 
   const type = (patientLink as any)?.type;
   const isQuestionary = type === 'question' || type === 1;

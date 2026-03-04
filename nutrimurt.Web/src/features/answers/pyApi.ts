@@ -10,28 +10,28 @@ const baseUrl =
       : `${normalizedBaseUrl}/py`;
 
 
-async function request<T>(input: RequestInfo, init?: RequestInit): Promise<T> {
-  const res = await fetch(input, init);
+async function request<T>(input: RequestInfo, init?: RequestInit, token?: string | null): Promise<T> {
+  const headers: HeadersInit = {
+    ...(init?.headers ?? {}),
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+  const res = await fetch(input, { ...init, headers });
   if (!res.ok) throw new Error(await res.text());
 
   if (res.status === 204) {
-    return undefined as T; // no body
+    return undefined as T;
   }
 
   return res.json();
 }
 
 export const answersApi = {
-  getQuestionaryPatientLink: (urlID: string) =>
-    request<PatientLink>(`${baseUrl}/getQuestionaryPatientLink/${urlID}`),
-  getDiaryPatientLink: (urlID: string) =>
-    request<PatientLink>(`${baseUrl}/getDiaryPatientLink/${urlID}`),
   /** Public patient-facing fetch — no auth required, returns minimal PII. */
-  get: (urlID: string) =>
+  getPatientLink: (urlID: string) =>
     request<PatientLink>(`${baseUrl}/answer/public/${urlID}`),
-  /** Staff-only fetch — will require auth token once Phase 1 Step 5 is complete. */
-  getStaff: (urlID: string) =>
-    request<PatientLink>(`${baseUrl}/answer/staff/${urlID}`),
+  /** Staff-only fetch — requires Clerk auth token. */
+  getPatientLinkStaff: (urlID: string, token?: string | null) =>
+    request<PatientLink>(`${baseUrl}/answer/staff/${urlID}`, undefined, token),
   save: (patientLink: PatientLink) =>
     request<void>(`${baseUrl}/savePatientAnswers`, {
       method: 'POST',
