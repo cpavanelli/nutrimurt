@@ -112,3 +112,10 @@ pip-wheel-metadata/
 # Windows
 Thumbs.db
 Desktop.ini
+
+
+##############################
+### Local TLS certificates ###
+##############################
+
+infra/certs/
