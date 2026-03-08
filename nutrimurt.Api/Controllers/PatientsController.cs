@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using nutrimurt.Api.Data;
+using nutrimurt.Api.Extensions;
 using nutrimurt.Api.Models;
 
 namespace nutrimurt.Api.Controllers;
@@ -21,13 +22,15 @@ public class PatientsController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Patient>>> GetPatients()
     {
-        return await _context.Patients.ToListAsync();
+        var userId = User.GetUserId();
+        return await _context.Patients.Where(p => p.UserId == userId).ToListAsync();
     }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<Patient>> GetPatient(int id)
     {
-        var patient = await _context.Patients.FindAsync(id);
+        var userId = User.GetUserId();
+        var patient = await _context.Patients.FirstOrDefaultAsync(p => p.Id == id && p.UserId == userId);
         if (patient == null)
             return NotFound();
 
@@ -37,9 +40,10 @@ public class PatientsController : ControllerBase
     [HttpGet("/api/patients/getWithAll/{id}")]
     public async Task<ActionResult<Patient>> GetPatientWithAll(int id)
     {
+        var userId = User.GetUserId();
         var patient = await _context.Patients
         .AsNoTracking()
-        .Where(p => p.Id == id)
+        .Where(p => p.Id == id && p.UserId == userId)
         .Select(p => new PatientWithAllDto(
             p.Id,
             p.Name,
@@ -69,7 +73,9 @@ public class PatientsController : ControllerBase
     [HttpGet("/api/patients/recent")]
     public async Task<ActionResult<IEnumerable<Patient>>> GetRecentPatients()
     {
+        var userId = User.GetUserId();
         var patients = await _context.Patients
+            .Where(p => p.UserId == userId)
             .OrderByDescending(l => l.CreatedAt)
             .Take(100)
             .ToListAsync();
@@ -80,6 +86,7 @@ public class PatientsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Patient>> CreatePatient(Patient patient)
     {
+        patient.UserId = User.GetUserId();
         _context.Patients.Add(patient);
         await _context.SaveChangesAsync();
 
@@ -92,6 +99,12 @@ public class PatientsController : ControllerBase
         if (id != updated.Id)
             return BadRequest();
 
+        var userId = User.GetUserId();
+        var existing = await _context.Patients.AsNoTracking().FirstOrDefaultAsync(p => p.Id == id && p.UserId == userId);
+        if (existing is null)
+            return NotFound();
+
+        updated.UserId = userId;
         _context.Entry(updated).State = EntityState.Modified;
 
         try
@@ -112,7 +125,8 @@ public class PatientsController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeletePatient(int id)
     {
-        var patient = await _context.Patients.FindAsync(id);
+        var userId = User.GetUserId();
+        var patient = await _context.Patients.FirstOrDefaultAsync(p => p.Id == id && p.UserId == userId);
         if (patient == null)
             return NotFound();
 

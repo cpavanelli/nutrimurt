@@ -7,6 +7,8 @@ public class Questionnaries
     [Required]
     public int Id { get; set; }
 
+    public string UserId { get; set; } = string.Empty;
+
     [Required]
     public string Name { get; set; } = string.Empty;
 

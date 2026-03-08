@@ -16,4 +16,11 @@ public class AppDbContext : DbContext
     public DbSet<PatientQuestionAnswerAlternative> PatientQuestionAnswerAlternatives => Set<PatientQuestionAnswerAlternative>();
     public DbSet<PatientDiary> PatientDiaries => Set<PatientDiary>();
     public DbSet<PatientDiaryEntry> PatientDiaryEntries => Set<PatientDiaryEntry>();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Patient>().HasIndex(p => p.UserId);
+        modelBuilder.Entity<Questionnaries>().HasIndex(q => q.UserId);
+        modelBuilder.Entity<PatientLink>().HasIndex(l => l.UserId);
+    }
 }

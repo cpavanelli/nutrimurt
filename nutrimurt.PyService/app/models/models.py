@@ -11,6 +11,7 @@ class Patients(Base):
     __tablename__ = 'patients'
 
     id: Mapped[int] = mapped_column('id', primary_key=True)
+    user_id: Mapped[str] = mapped_column('user_id')
     name: Mapped[str] = mapped_column('name')
     email: Mapped[str] = mapped_column('email')
     phone: Mapped[str] = mapped_column('phone')
@@ -22,6 +23,7 @@ class PatientLinks(Base):
     __tablename__ = 'patient_links'
 
     id: Mapped[int] = mapped_column('id', primary_key=True)
+    user_id: Mapped[str] = mapped_column('user_id')
     urlId: Mapped[str] = mapped_column('url_id')
     type: Mapped[int] = mapped_column('type')
     patient_id: Mapped[int] = mapped_column('patient_id', ForeignKey('patients.id'))
@@ -43,6 +45,7 @@ class Questionaries(Base):
     __tablename__ = 'questionnaries'
 
     id: Mapped[int] = mapped_column('id', primary_key=True)
+    user_id: Mapped[str] = mapped_column('user_id')
     name: Mapped[str] = mapped_column('name')
 
     patient_links: Mapped[list['PatientLinks']] = relationship('PatientLinks', back_populates='questionnary')

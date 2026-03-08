@@ -31,6 +31,7 @@ namespace nutrimurt.Api.Migrations
                 {
                     id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    user_id = table.Column<string>(type: "text", nullable: false),
                     name = table.Column<string>(type: "text", nullable: false),
                     email = table.Column<string>(type: "text", nullable: false),
                     phone = table.Column<string>(type: "text", nullable: false),
@@ -51,6 +52,7 @@ namespace nutrimurt.Api.Migrations
                 {
                     id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    user_id = table.Column<string>(type: "text", nullable: false),
                     name = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
@@ -65,7 +67,8 @@ namespace nutrimurt.Api.Migrations
                     id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     date = table.Column<DateOnly>(type: "date", nullable: false),
-                    time = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    meal_type = table.Column<int>(type: "integer", nullable: false),
+                    time = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     food = table.Column<string>(type: "text", nullable: false),
                     amount = table.Column<string>(type: "text", nullable: false),
                     patient_diary_id = table.Column<int>(type: "integer", nullable: true)
@@ -86,6 +89,7 @@ namespace nutrimurt.Api.Migrations
                 {
                     id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    user_id = table.Column<string>(type: "text", nullable: false),
                     patient_id = table.Column<int>(type: "integer", nullable: false),
                     url_id = table.Column<string>(type: "CHAR(32)", nullable: false),
                     type = table.Column<int>(type: "integer", nullable: false),
@@ -217,6 +221,11 @@ namespace nutrimurt.Api.Migrations
                 column: "questionnary_id");
 
             migrationBuilder.CreateIndex(
+                name: "ix_patient_links_user_id",
+                table: "patient_links",
+                column: "user_id");
+
+            migrationBuilder.CreateIndex(
                 name: "ix_patient_question_answer_alternatives_patient_link_id",
                 table: "patient_question_answer_alternatives",
                 column: "patient_link_id");
@@ -227,9 +236,19 @@ namespace nutrimurt.Api.Migrations
                 column: "patient_link_id");
 
             migrationBuilder.CreateIndex(
+                name: "ix_patients_user_id",
+                table: "patients",
+                column: "user_id");
+
+            migrationBuilder.CreateIndex(
                 name: "ix_question_alternatives_question_id",
                 table: "question_alternatives",
                 column: "question_id");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_questionnaries_user_id",
+                table: "questionnaries",
+                column: "user_id");
 
             migrationBuilder.CreateIndex(
                 name: "ix_questions_questionnary_id",

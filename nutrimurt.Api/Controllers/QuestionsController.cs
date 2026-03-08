@@ -1,8 +1,8 @@
-// nutrimurt.Api/Controllers/QuestionsController.cs
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using nutrimurt.Api.Data;
+using nutrimurt.Api.Extensions;
 using nutrimurt.Api.Models;
 
 namespace nutrimurt.Api.Controllers;
@@ -16,21 +16,33 @@ public class QuestionsController : ControllerBase
     public QuestionsController(AppDbContext context) => _context = context;
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Question>>> GetQuestions() =>
-        await _context.Questions.ToListAsync();
+    public async Task<ActionResult<IEnumerable<Question>>> GetQuestions()
+    {
+        var userId = User.GetUserId();
+        return await _context.Questions
+            .Where(q => q.Questionnary!.UserId == userId)
+            .ToListAsync();
+    }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<Question>> GetQuestion(int id)
     {
+        var userId = User.GetUserId();
         var question = await _context.Questions
-        .Include(q => q.Alternatives)
-        .FirstOrDefaultAsync(q => q.Id == id);
+            .Include(q => q.Alternatives)
+            .Include(q => q.Questionnary)
+            .FirstOrDefaultAsync(q => q.Id == id && q.Questionnary!.UserId == userId);
         return question is null ? NotFound() : question;
     }
 
     [HttpPost]
     public async Task<ActionResult<Question>> CreateQuestion(Question question)
     {
+        var userId = User.GetUserId();
+        var ownsQuestionnary = await _context.Questionnaries
+            .AnyAsync(q => q.Id == question.QuestionnaryId && q.UserId == userId);
+        if (!ownsQuestionnary) return NotFound();
+
         _context.Questions.Add(question);
 
         foreach (var alternative in question.Alternatives)
@@ -45,9 +57,11 @@ public class QuestionsController : ControllerBase
     {
         if (id != updated.Id) return BadRequest();
 
+        var userId = User.GetUserId();
         var existing = await _context.Questions
                              .Include(q => q.Alternatives)
-                             .FirstOrDefaultAsync(q => q.Id == id);
+                             .Include(q => q.Questionnary)
+                             .FirstOrDefaultAsync(q => q.Id == id && q.Questionnary!.UserId == userId);
 
         if (existing is null) return NotFound();
 
@@ -99,17 +113,14 @@ public class QuestionsController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteQuestion(int id)
     {
-
-        var question = await _context.Questions.FindAsync(id);
+        var userId = User.GetUserId();
+        var question = await _context.Questions
+            .Include(q => q.Alternatives)
+            .Include(q => q.Questionnary)
+            .FirstOrDefaultAsync(q => q.Id == id && q.Questionnary!.UserId == userId);
         if (question is null) return NotFound();
 
-        foreach (var alternative in question.Alternatives)
-        {
-            var alt = await _context.QuestionAlternatives.FindAsync(alternative.Id);
-            if (alt != null)
-                _context.QuestionAlternatives.Remove(alt);
-        }
-
+        _context.QuestionAlternatives.RemoveRange(question.Alternatives);
         _context.Questions.Remove(question);
         await _context.SaveChangesAsync();
         return NoContent();

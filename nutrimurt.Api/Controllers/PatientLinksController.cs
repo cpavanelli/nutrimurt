@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using nutrimurt.Api.Data;
+using nutrimurt.Api.Extensions;
 using nutrimurt.Api.Models;
 
 namespace nutrimurt.Api.Controllers;
@@ -38,11 +39,12 @@ public class PatientLinksController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<PatientLinkDto>>> GetLinks(int patientId)
     {
-        var patientExists = await _context.Patients.AnyAsync(p => p.Id == patientId);
+        var userId = User.GetUserId();
+        var patientExists = await _context.Patients.AnyAsync(p => p.Id == patientId && p.UserId == userId);
         if (!patientExists) return NotFound();
 
         var links = await _context.PatientLinks
-            .Where(l => l.PatientId == patientId)
+            .Where(l => l.PatientId == patientId && l.UserId == userId)
             .Include(l => l.Questionnary)
             .Include(l => l.Diary)
             .ToListAsync();
@@ -53,12 +55,13 @@ public class PatientLinksController : ControllerBase
     [HttpGet("/api/patient-links/recent")]
     public async Task<ActionResult<IEnumerable<PatientLinkDto>>> GetRecentPatientLinks()
     {
+        var userId = User.GetUserId();
         var links = await _context.PatientLinks
+            .Where(l => l.UserId == userId && l.LastAnswered != null)
             .Include(l => l.Questionnary)
             .Include(l => l.Diary)
             .Include(l => l.Patient)
             .OrderByDescending(l => l.LastAnswered)
-            .Where(l => l.LastAnswered != null)
             .Take(100)
             .ToListAsync();
 
@@ -68,7 +71,8 @@ public class PatientLinksController : ControllerBase
     [HttpPost("send")]
     public async Task<ActionResult<IEnumerable<PatientLinkDto>>> SendLink(int patientId, [FromBody] SendPatientLinkRequest request)
     {
-        var patient = await _context.Patients.FindAsync(patientId);
+        var userId = User.GetUserId();
+        var patient = await _context.Patients.FirstOrDefaultAsync(p => p.Id == patientId && p.UserId == userId);
         if (patient is null) return NotFound();
 
         if (request.Type == PatientLinkTypes.Question && request.QuestionnaryId.GetValueOrDefault() <= 0)
@@ -95,9 +99,9 @@ public class PatientLinksController : ControllerBase
             diaryId = diary.Id;
         }
 
-
         var link = new PatientLink
         {
+            UserId = userId,
             PatientId = patientId,
             UrlId = GenerateUrlId(),
             Type = request.Type,
@@ -120,7 +124,7 @@ public class PatientLinksController : ControllerBase
     private string GenerateUrlId()
     {
         var bytes = RandomNumberGenerator.GetBytes(16);
-        return Convert.ToHexString(bytes).ToLower();  // 32 chars
+        return Convert.ToHexString(bytes).ToLower();
     }
 
     private static PatientLinkDto ToDto(PatientLink link) =>

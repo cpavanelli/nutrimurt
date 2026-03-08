@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from app.settings import settings
 from app.models.apiModels import PatientLink, PublicPatient, PublicPatientLink
 from app.services.answers import Answers
-from app.auth import require_auth
+from app.auth import require_auth, get_user_id
 
 limiter = Limiter(key_func=get_remote_address)
 app = FastAPI(title="NutriMurt Python Service", version="1.0.0")
@@ -39,18 +39,19 @@ def health():
     return {"status": "ok"}
 
 @router.post("/patient-questionary/{patient_id}/{questionary_id}")
-def create_patient_questionary(patient_id: int, questionary_id: int, _auth=Depends(require_auth)):
+def create_patient_questionary(patient_id: int, questionary_id: int, auth=Depends(require_auth)):
     #Generate URLID
     # Logic to save the questionary would go here
     #Send email to patient with link to questionary
     return {"message": "Patient questionary created", "data": {"patient_id": patient_id, "questionary_id": questionary_id}}
 
 @router.post("/sendEmail/{urlID}")
-def sendEmail(urlID: str, request: Request, _auth=Depends(require_auth), dbSession: Session = Depends(get_db)):
+def sendEmail(urlID: str, request: Request, auth=Depends(require_auth), dbSession: Session = Depends(get_db)):
+    user_id = get_user_id(auth)
     repo = Database(dbSession)
     emailSender = EmailSender()
     patient_link = repo.get_PatientLink(urlID)
-    if not patient_link:
+    if not patient_link or patient_link.user_id != user_id:
         raise HTTPException(status_code=404, detail="Link not found")
 
     subject = patient_link.type == 1 and "Questionário NutriMurt" or "Diário NutriMurt"
@@ -70,8 +71,12 @@ def sendEmail(urlID: str, request: Request, _auth=Depends(require_auth), dbSessi
     return {"status": "ok"}
 
 @router.get("/getPatientQuestionary/{urlID}")
-def getPatientQuestionary(urlID: str, request: Request, _auth=Depends(require_auth), dbSession: Session = Depends(get_db)):
+def getPatientQuestionary(urlID: str, request: Request, auth=Depends(require_auth), dbSession: Session = Depends(get_db)):
+    user_id = get_user_id(auth)
     repo = Database(dbSession)
+    base_link = repo.get_PatientLink(urlID)
+    if not base_link or base_link.user_id != user_id:
+        raise HTTPException(status_code=404, detail="Link not found")
     questionary = repo.get_Questionary(urlID)
     if not questionary:
         raise HTTPException(status_code=404, detail="Link not found")
@@ -79,8 +84,12 @@ def getPatientQuestionary(urlID: str, request: Request, _auth=Depends(require_au
     return questionary
 
 @router.get("/getQuestionaryPatientLink/{urlID}")
-def getQuestionaryPatientLink(urlID: str, request: Request, _auth=Depends(require_auth), dbSession: Session = Depends(get_db)):
+def getQuestionaryPatientLink(urlID: str, request: Request, auth=Depends(require_auth), dbSession: Session = Depends(get_db)):
+    user_id = get_user_id(auth)
     repo = Database(dbSession)
+    base_link = repo.get_PatientLink(urlID)
+    if not base_link or base_link.user_id != user_id:
+        raise HTTPException(status_code=404, detail="Link not found")
     patient_link = answersController.getQuestionaryPatientLink(urlID, repo)
     if not patient_link:
         raise HTTPException(status_code=404, detail="Link not found")
@@ -88,18 +97,23 @@ def getQuestionaryPatientLink(urlID: str, request: Request, _auth=Depends(requir
 
 
 @router.get("/getDiaryPatientLink/{urlID}")
-def getDiaryPatientLink(urlID: str, request: Request, _auth=Depends(require_auth), dbSession: Session = Depends(get_db)):
+def getDiaryPatientLink(urlID: str, request: Request, auth=Depends(require_auth), dbSession: Session = Depends(get_db)):
+    user_id = get_user_id(auth)
     repo = Database(dbSession)
+    base_link = repo.get_PatientLink(urlID)
+    if not base_link or base_link.user_id != user_id:
+        raise HTTPException(status_code=404, detail="Link not found")
     patient_link = answersController.getDiaryPatientLink(urlID, repo)
     if not patient_link:
         raise HTTPException(status_code=404, detail="Link not found")
     return patient_link
 
 @router.get("/getPatientLink/{urlID}")
-def getPatientLink(urlID: str, request: Request, _auth=Depends(require_auth), dbSession: Session = Depends(get_db)):
+def getPatientLink(urlID: str, request: Request, auth=Depends(require_auth), dbSession: Session = Depends(get_db)):
+    user_id = get_user_id(auth)
     repo = Database(dbSession)
     base_link = repo.get_PatientLink(urlID)
-    if not base_link:
+    if not base_link or base_link.user_id != user_id:
         raise HTTPException(status_code=404, detail="Link not found")
 
     if base_link.type == 1:
@@ -145,11 +159,12 @@ def getPublicPatientLink(urlID: str, request: Request, dbSession: Session = Depe
 
 
 @router.get("/answer/staff/{urlID}")
-def getStaffPatientLink(urlID: str, _auth=Depends(require_auth), dbSession: Session = Depends(get_db)):
+def getStaffPatientLink(urlID: str, auth=Depends(require_auth), dbSession: Session = Depends(get_db)):
     """Staff-only endpoint — returns full patient data."""
+    user_id = get_user_id(auth)
     repo = Database(dbSession)
     base_link = repo.get_PatientLink(urlID)
-    if not base_link:
+    if not base_link or base_link.user_id != user_id:
         raise HTTPException(status_code=404, detail="Link not found")
 
     if base_link.type == 1:

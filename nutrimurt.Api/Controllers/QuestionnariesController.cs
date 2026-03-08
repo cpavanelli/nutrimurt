@@ -1,8 +1,8 @@
-// nutrimurt.Api/Controllers/QuestionnariesController.cs
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using nutrimurt.Api.Data;
+using nutrimurt.Api.Extensions;
 using nutrimurt.Api.Models;
 
 namespace nutrimurt.Api.Controllers;
@@ -16,13 +16,21 @@ public class QuestionnariesController : ControllerBase
     public QuestionnariesController(AppDbContext context) => _context = context;
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Questionnaries>>> GetQuestionnaries() =>
-        await _context.Questionnaries.Include(q => q.Questions).ToListAsync();
+    public async Task<ActionResult<IEnumerable<Questionnaries>>> GetQuestionnaries()
+    {
+        var userId = User.GetUserId();
+        return await _context.Questionnaries
+            .Where(q => q.UserId == userId)
+            .Include(q => q.Questions)
+            .ToListAsync();
+    }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<Questionnaries>> GetQuestionnarie(int id)
     {
+        var userId = User.GetUserId();
         var questionnarie = await _context.Questionnaries
+                                          .Where(q => q.UserId == userId)
                                           .Include(q => q.Questions)
                                           .FirstOrDefaultAsync(q => q.Id == id);
         return questionnarie is null ? NotFound() : questionnarie;
@@ -31,6 +39,7 @@ public class QuestionnariesController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Questionnaries>> CreateQuestionnarie(Questionnaries questionnarie)
     {
+        questionnarie.UserId = User.GetUserId();
         _context.Questionnaries.Add(questionnarie);
         await _context.SaveChangesAsync();
         return CreatedAtAction(nameof(GetQuestionnarie), new { id = questionnarie.Id }, questionnarie);
@@ -41,7 +50,9 @@ public class QuestionnariesController : ControllerBase
     {
         if (id != updated.Id) return BadRequest();
 
+        var userId = User.GetUserId();
         var existing = await _context.Questionnaries
+            .Where(q => q.UserId == userId)
             .Include(q => q.Questions)
                 .ThenInclude(q => q.Alternatives)
             .FirstOrDefaultAsync(q => q.Id == id);
@@ -59,13 +70,14 @@ public class QuestionnariesController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteQuestionnarie(int id)
     {
+        var userId = User.GetUserId();
         var questionnarie = await _context.Questionnaries
+                                          .Where(q => q.UserId == userId)
                                           .Include(q => q.Questions)
                                           .ThenInclude(q => q.Alternatives)
                                           .FirstOrDefaultAsync(q => q.Id == id);
         if (questionnarie is null) return NotFound();
 
-        // Ensure associated questions disappear with the questionnaire
         _context.Questions.RemoveRange(questionnarie.Questions);
         _context.Questionnaries.Remove(questionnarie);
         await _context.SaveChangesAsync();
@@ -79,7 +91,6 @@ public class QuestionnariesController : ControllerBase
         var incoming = updated.Questions ?? new();
         var incomingIds = incoming.Where(q => q.Id != 0).Select(q => q.Id).ToHashSet();
 
-        // remove deleted questions (+ their alternatives)
         var toRemove = existing.Questions.Where(q => !incomingIds.Contains(q.Id)).ToList();
         foreach (var q in toRemove)
         {

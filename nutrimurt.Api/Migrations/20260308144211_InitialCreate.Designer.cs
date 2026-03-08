@@ -12,7 +12,7 @@ using nutrimurt.Api.Data;
 namespace nutrimurt.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260225160340_InitialCreate")]
+    [Migration("20260308144211_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -66,12 +66,20 @@ namespace nutrimurt.Api.Migrations
                         .HasColumnType("text")
                         .HasColumnName("phone");
 
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("user_id");
+
                     b.Property<int>("Weight")
                         .HasColumnType("integer")
                         .HasColumnName("weight");
 
                     b.HasKey("Id")
                         .HasName("pk_patients");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_patients_user_id");
 
                     b.ToTable("patients", (string)null);
                 });
@@ -119,11 +127,15 @@ namespace nutrimurt.Api.Migrations
                         .HasColumnType("text")
                         .HasColumnName("food");
 
+                    b.Property<int>("MealType")
+                        .HasColumnType("integer")
+                        .HasColumnName("meal_type");
+
                     b.Property<int?>("PatientDiaryId")
                         .HasColumnType("integer")
                         .HasColumnName("patient_diary_id");
 
-                    b.Property<DateTime>("Time")
+                    b.Property<DateTime?>("Time")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("time");
 
@@ -170,6 +182,11 @@ namespace nutrimurt.Api.Migrations
                         .HasColumnType("CHAR(32)")
                         .HasColumnName("url_id");
 
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("user_id");
+
                     b.HasKey("Id")
                         .HasName("pk_patient_links");
 
@@ -181,6 +198,9 @@ namespace nutrimurt.Api.Migrations
 
                     b.HasIndex("QuestionnaryId")
                         .HasDatabaseName("ix_patient_links_questionnary_id");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_patient_links_user_id");
 
                     b.ToTable("patient_links", (string)null);
                 });
@@ -319,8 +339,16 @@ namespace nutrimurt.Api.Migrations
                         .HasColumnType("text")
                         .HasColumnName("name");
 
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("user_id");
+
                     b.HasKey("Id")
                         .HasName("pk_questionnaries");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_questionnaries_user_id");
 
                     b.ToTable("questionnaries", (string)null);
                 });

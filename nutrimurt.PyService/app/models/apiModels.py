@@ -6,14 +6,14 @@ from typing import List, Optional
 from pydantic import BaseModel
 
 class Patient(BaseModel):
-    id: int
+    id: Optional[int] = None
     name: str
-    email: str
+    email: Optional[str] = None
 
 class PatientLink(BaseModel):
     id: int
     urlId: str
-    patient_id: int
+    patient_id: Optional[int] = None
     questionnary_id: Optional[int] = None
     diary_id: Optional[int] = None
     type: int
@@ -62,7 +62,7 @@ class QuestionAnswer(BaseModel):
 
 
 class DiaryEntry(BaseModel):
-    id: int
+    id: Optional[int] = None
     date: date
     mealType: int
     time: str | None = None

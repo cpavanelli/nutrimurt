@@ -14,6 +14,9 @@ public class PatientLink
 {
     [Required]
     public int Id { get; set; }
+
+    public string UserId { get; set; } = string.Empty;
+
     public int PatientId { get; set; }
 
     [Required]

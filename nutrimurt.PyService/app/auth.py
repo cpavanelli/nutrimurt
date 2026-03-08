@@ -63,3 +63,11 @@ def require_auth(request: Request) -> dict:
         raise HTTPException(status_code=401, detail="Token has expired")
     except jwt.InvalidTokenError as exc:
         raise HTTPException(status_code=401, detail=f"Invalid token: {exc}")
+
+
+def get_user_id(auth_payload: dict) -> str:
+    """Extract the Clerk user ID (sub claim) from a validated JWT payload."""
+    user_id = auth_payload.get("sub")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Missing user ID in token")
+    return user_id
