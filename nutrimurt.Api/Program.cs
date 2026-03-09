@@ -37,7 +37,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy(name: MyCors, policy =>
     {
-        policy.WithOrigins("http://localhost:5173", "https://localhost", "https://yourdomain.com")
+        policy.WithOrigins("http://localhost:5173", "https://localhost", "https://nutrimurt.com.br")
             .AllowAnyMethod()
             .AllowAnyHeader()
             .AllowCredentials();

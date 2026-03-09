@@ -8,8 +8,8 @@ services:
       POSTGRES_USER: nutrimurt
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: nutrimurtdb
-    ports:
-      - "5432:5432"
+    expose:
+      - "5432"
     volumes:
       - nutrimurt_pgdata:/var/lib/postgresql/data
 
@@ -32,9 +32,9 @@ services:
       CONNECTION_STRING: postgresql+psycopg://nutrimurt:${DB_PASSWORD}@postgres:5432/nutrimurtdb
       ENV: development
       WEBSITE_URL: https://localhost
+      MAILGUN_FROM: "NutriMurt <noreply@nutrimurt.com.br>"
       # MAILGUN_API_KEY: ...
       # MAILGUN_DOMAIN: ...
-      # WEBSITE_URL: http://localhost
     depends_on:
       - postgres
     expose:

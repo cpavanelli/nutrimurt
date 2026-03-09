@@ -20,7 +20,7 @@ answersController = Answers()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "https://yourdomain.com"],
+    allow_origins=["http://localhost:5173", "https://nutrimurt.com.br"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

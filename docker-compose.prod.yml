@@ -1,6 +1,20 @@
 version: "3.9"
 
 services:
+  api:
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      Clerk__Authority: https://clerk.nutrimurt.com.br
+
+  pyservice:
+    environment:
+      ENV: production
+      WEBSITE_URL: https://nutrimurt.com.br
+      CLERK_ISSUER: https://clerk.nutrimurt.com.br
+      MAILGUN_API_KEY: ${MAILGUN_API_KEY}
+      MAILGUN_DOMAIN: ${MAILGUN_DOMAIN}
+      MAILGUN_FROM: ${MAILGUN_FROM}
+
   gateway:
     ports:
       - "80:80"

@@ -1,10 +1,11 @@
+import os
 import time
 from datetime import timedelta
 import httpx
 import jwt
 from fastapi import HTTPException, Request
 
-CLERK_ISSUER = "https://next-herring-26.clerk.accounts.dev"
+CLERK_ISSUER = os.environ.get("CLERK_ISSUER", "https://clerk.nutrimurt.com.br")
 JWKS_URL = f"{CLERK_ISSUER}/.well-known/jwks.json"
 
 _jwks_cache: dict | None = None
