@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using nutrimurt.Api.Data;
 using nutrimurt.Api.Extensions;
+using nutrimurt.Api.Constants;
 using nutrimurt.Api.Models;
 
 namespace nutrimurt.Api.Controllers;
@@ -87,6 +88,11 @@ public class PatientsController : ControllerBase
     public async Task<ActionResult<Patient>> CreatePatient(Patient patient)
     {
         patient.UserId = User.GetUserId();
+
+        var count = await _context.Patients.CountAsync(p => p.UserId == patient.UserId);
+        if (count >= Guardrails.MaxPatients)
+            return Problem(detail: "Você atingiu o número máximo de pacientes.", statusCode: 409);
+
         _context.Patients.Add(patient);
         await _context.SaveChangesAsync();
 

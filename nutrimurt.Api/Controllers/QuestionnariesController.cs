@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using nutrimurt.Api.Data;
 using nutrimurt.Api.Extensions;
+using nutrimurt.Api.Constants;
 using nutrimurt.Api.Models;
 
 namespace nutrimurt.Api.Controllers;
@@ -40,6 +41,19 @@ public class QuestionnariesController : ControllerBase
     public async Task<ActionResult<Questionnaries>> CreateQuestionnarie(Questionnaries questionnarie)
     {
         questionnarie.UserId = User.GetUserId();
+
+        var count = await _context.Questionnaries.CountAsync(q => q.UserId == questionnarie.UserId);
+        if (count >= Guardrails.MaxQuestionnaries)
+            return Problem(detail: "Você atingiu o número máximo de questionários.", statusCode: 409);
+
+        if (questionnarie.Questions is { Count: > 0 })
+        {
+            if (questionnarie.Questions.Count > Guardrails.MaxQuestions)
+                return Problem(statusCode: 409);
+            if (questionnarie.Questions.Any(q => q.Alternatives is { Count: > 0 } && q.Alternatives.Count > Guardrails.MaxAlternatives))
+                return Problem(statusCode: 409);
+        }
+
         _context.Questionnaries.Add(questionnarie);
         await _context.SaveChangesAsync();
         return CreatedAtAction(nameof(GetQuestionnarie), new { id = questionnarie.Id }, questionnarie);
@@ -58,6 +72,14 @@ public class QuestionnariesController : ControllerBase
             .FirstOrDefaultAsync(q => q.Id == id);
 
         if (existing is null) return NotFound();
+
+        if (updated.Questions is { Count: > 0 })
+        {
+            if (updated.Questions.Count > Guardrails.MaxQuestions)
+                return Problem(statusCode: 409);
+            if (updated.Questions.Any(q => q.Alternatives is { Count: > 0 } && q.Alternatives.Count > Guardrails.MaxAlternatives))
+                return Problem(statusCode: 409);
+        }
 
         existing.Name = updated.Name;
 

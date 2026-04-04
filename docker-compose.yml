@@ -19,6 +19,7 @@ services:
     environment:
       ASPNETCORE_URLS: http://0.0.0.0:8080
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=nutrimurtdb;Username=nutrimurt;Password=${DB_PASSWORD}
+      Clerk__Authority: https://next-herring-26.clerk.accounts.dev
       ASPNETCORE_ENVIRONMENT: Development
     depends_on:
       - postgres
@@ -33,6 +34,7 @@ services:
       ENV: development
       WEBSITE_URL: https://localhost
       MAILGUN_FROM: "NutriMurt <noreply@nutrimurt.com.br>"
+      CLERK_ISSUER: https://next-herring-26.clerk.accounts.dev
       # MAILGUN_API_KEY: ...
       # MAILGUN_DOMAIN: ...
     depends_on:

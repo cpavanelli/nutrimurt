@@ -36,6 +36,19 @@ CORS is restricted to specific origins:
 - `https://localhost` (Docker HTTPS)
 - `https://yourdomain.com` (production)
 
+### Guardrails
+Per-user resource limits enforced on both API (server-side) and Web (client-side):
+
+| Resource                        | Limit | API constant (`Guardrails.cs`) | Web constant (`guardrails.ts`) |
+|---------------------------------|-------|-------------------------------|-------------------------------|
+| Patients                        | 2     | `MaxPatients`                 | —                             |
+| Questionnaires                  | 2     | `MaxQuestionnaries`           | —                             |
+| Questions per questionnaire     | 10    | `MaxQuestions`                | `MAX_QUESTIONS`               |
+| Alternatives per question       | 10    | `MaxAlternatives`             | `MAX_ALTERNATIVES`            |
+
+- **API**: returns `409 Conflict` when a limit is exceeded (create and update endpoints).
+- **Web**: disables the add button and blocks submission when at the limit.
+
 ### Rate limiting
 Rate limiting is applied at two layers:
 

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { Questionary, QuestionaryInput } from './types';
+import { MAX_QUESTIONS, MAX_ALTERNATIVES } from '../../constants/guardrails';
 interface Props {
     initial?: Questionary | null;
     onSubmit(payload: QuestionaryInput): void;
@@ -43,6 +44,7 @@ export default function QuestionaryForm({ initial, onSubmit, onCancel, submittin
     function handleAddQuestion() {
         const text = newQuestionText.trim();
         if (!text) return;
+        if (form.questions.length >= MAX_QUESTIONS) return;
 
         setForm((prev) => ({
             ...prev,
@@ -80,6 +82,7 @@ export default function QuestionaryForm({ initial, onSubmit, onCancel, submittin
     function handleAddQuestionAlternative() {
         const text = newQuestionAlternativeText.trim();
         if (!text) return;
+        if (newAlternatives.length >= MAX_ALTERNATIVES) return;
         setNewAlternatives((prev) => [...prev, text]);
         setNewQuestionAlternativeText('');
     }
@@ -140,7 +143,8 @@ export default function QuestionaryForm({ initial, onSubmit, onCancel, submittin
                                 <button
                                     type="button"
                                     onClick={handleAddQuestionAlternative}
-                                    className="rounded bg-emerald-500 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-400"
+                                    disabled={newAlternatives.length >= MAX_ALTERNATIVES}
+                                    className="rounded bg-emerald-500 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-400 disabled:opacity-60"
                                 >
                                     +
                                 </button>
@@ -169,7 +173,8 @@ export default function QuestionaryForm({ initial, onSubmit, onCancel, submittin
                         <button
                         type="button"
                         onClick={handleAddQuestion}
-                        className="rounded bg-emerald-500 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-400"
+                        disabled={form.questions.length >= MAX_QUESTIONS}
+                        className="rounded bg-emerald-500 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-400 disabled:opacity-60"
                         >
                         Adicionar Pergunta
                         </button>
