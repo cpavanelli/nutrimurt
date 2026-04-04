@@ -1,6 +1,9 @@
-from collections import defaultdict
+from collections import Counter, defaultdict
 from datetime import datetime
 
+from fastapi import HTTPException
+
+from app.constants.guardrails import Guardrails
 from app.data.database import Database
 from app.models.apiModels import (
     Diary,
@@ -60,10 +63,18 @@ class Answers:
         raise ValueError("Invalid PatientLink payload for savePatientAnswers")
 
     def savePatientDiaryAnswers(self, patient_link: PatientLink, db: Database):
-        db.delete_patient_diary_entries(patient_link.id)
-
         if not patient_link.diary:
             raise ValueError("Diary payload is required for diary answers")
+
+        entries_per_day = Counter(e.date for e in patient_link.diary.entries)
+        for day, count in entries_per_day.items():
+            if count > Guardrails.MAX_DIARY_ENTRIES_PER_DAY:
+                raise HTTPException(
+                    status_code=409,
+                    detail="Você atingiu o número máximo de entradas por dia.",
+                )
+
+        db.delete_patient_diary_entries(patient_link.id)
 
         diary_id = patient_link.diary_id or patient_link.diary.id
 

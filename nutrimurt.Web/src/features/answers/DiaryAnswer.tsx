@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import { MAX_DIARY_ENTRIES_PER_DAY } from '../../constants/guardrails';
+import { ApiError } from '../../lib/apiClient';
 import { answersApi } from './pyApi';
 import type { PatientLink, DiaryEntry, DiaryDayInput } from './types';
 import { MEAL_TYPE_LABELS, MEAL_TYPES } from './types';
@@ -128,6 +130,10 @@ export default function DiaryAnswer({ patientLink, readOnly = false }: Props) {
 
   const addEntry = () => {
     if (readOnly || !hasRequiredEntryFields || !currentDay) return;
+    if (currentDay.entries.length >= MAX_DIARY_ENTRIES_PER_DAY) {
+      toast.warn('Você atingiu o número máximo de entradas por dia.');
+      return;
+    }
     const newEntry: Omit<DiaryEntry, 'id' | 'patientDiaryId'> = {
       date: currentDay.date,
       mealType: selectedMealType,
@@ -211,7 +217,11 @@ export default function DiaryAnswer({ patientLink, readOnly = false }: Props) {
     } catch (err) {
       setStatus('error');
       console.error('Error saving answers', err);
-      toast.error('Falha ao enviar diario. Tente novamente.');
+      if (err instanceof ApiError && err.status === 409) {
+        toast.error(err.message || 'Você atingiu o número máximo de entradas por dia.');
+      } else {
+        toast.error('Falha ao enviar diario. Tente novamente.');
+      }
     }
   };
 

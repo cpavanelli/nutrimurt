@@ -1,3 +1,4 @@
+import { ApiError } from '../../lib/apiClient';
 import type { PatientLink } from './types';
 
 const rawBaseUrl = import.meta.env.VITE_PY_BASE_URL ?? '/py';
@@ -16,7 +17,10 @@ async function request<T>(input: RequestInfo, init?: RequestInit, token?: string
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
   const res = await fetch(input, { ...init, headers });
-  if (!res.ok) throw new Error(await res.text());
+  if (!res.ok) {
+    const body = await res.text();
+    throw new ApiError(body, res.status);
+  }
 
   if (res.status === 204) {
     return undefined as T;
