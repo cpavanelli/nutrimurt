@@ -1,3 +1,29 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer utilities {
+  .modal-scrollbar {
+    scrollbar-gutter: stable;
+    scrollbar-width: thin;
+    scrollbar-color: rgb(71 85 105) rgb(15 23 42);
+  }
+
+  .modal-scrollbar::-webkit-scrollbar {
+    width: 12px;
+  }
+
+  .modal-scrollbar::-webkit-scrollbar-track {
+    background: rgb(15 23 42);
+  }
+
+  .modal-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgb(71 85 105);
+    border-radius: 9999px;
+    border: 3px solid rgb(15 23 42);
+  }
+
+  .modal-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: rgb(100 116 139);
+  }
+}

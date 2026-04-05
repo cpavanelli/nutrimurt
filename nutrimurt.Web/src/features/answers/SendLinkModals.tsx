@@ -114,37 +114,41 @@ export default function SendLinkModals({
       </div>
 
       {questionLinksModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-lg rounded-xl border border-slate-800 bg-slate-900 p-6 shadow-2xl">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 p-4">
+          <div className="flex min-h-full items-start justify-center py-6">
+            <div className="modal-scrollbar w-full max-w-lg max-h-[calc(100vh-3rem)] overflow-y-scroll rounded-xl border border-slate-800 bg-slate-900 p-6 shadow-2xl">
             <h2 className="text-xl font-semibold mb-4">Enviar Questionário</h2>
-            <SendLinksForm
-              patient={patient}
-              mode="question"
-              links={questionLinks}
-              questionaries={questionaries}
-              submitting={submitting}
-              errors={formErrors || undefined}
-              onSubmit={handleSendLink}
-              onCancel={() => setQuestionLinksModalOpen(false)}
-            />
+              <SendLinksForm
+                patient={patient}
+                mode="question"
+                links={questionLinks}
+                questionaries={questionaries}
+                submitting={submitting}
+                errors={formErrors || undefined}
+                onSubmit={handleSendLink}
+                onCancel={() => setQuestionLinksModalOpen(false)}
+              />
+            </div>
           </div>
         </div>
       )}
 
       {diaryLinksModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-lg rounded-xl border border-slate-800 bg-slate-900 p-6 shadow-2xl">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 p-4">
+          <div className="flex min-h-full items-start justify-center py-6">
+            <div className="modal-scrollbar w-full max-w-lg max-h-[calc(100vh-3rem)] overflow-y-scroll rounded-xl border border-slate-800 bg-slate-900 p-6 shadow-2xl">
             <h2 className="text-xl font-semibold mb-4">Enviar Diário</h2>
-            <SendLinksForm
-              patient={patient}
-              mode="diary"
-              links={diaryLinks}
-              questionaries={[]}
-              submitting={submitting}
-              errors={formErrors || undefined}
-              onSubmit={handleSendLink}
-              onCancel={() => setDiaryLinksModalOpen(false)}
-            />
+              <SendLinksForm
+                patient={patient}
+                mode="diary"
+                links={diaryLinks}
+                questionaries={[]}
+                submitting={submitting}
+                errors={formErrors || undefined}
+                onSubmit={handleSendLink}
+                onCancel={() => setDiaryLinksModalOpen(false)}
+              />
+            </div>
           </div>
         </div>
       )}
