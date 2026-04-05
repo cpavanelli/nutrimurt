@@ -4,6 +4,7 @@ import { toast } from 'react-toastify';
 import { ApiError, usePatientsApi } from '../patients/api';
 import { useQuestionariesApi } from '../questionaries/api';
 import SendLinksForm from '../patients/SendLinksForm';
+import LoadingOverlay from '../../components/LoadingOverlay';
 import { sendEmail } from '../patients/pyApi';
 import type { PatientLink, PatientWithLinks, SendLinksInput } from '../patients/types';
 import type { Questionary } from '../questionaries/types';
@@ -155,7 +156,8 @@ export default function SendLinkModals({
       {questionLinksModalOpen && (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 p-4">
           <div className="flex min-h-full items-start justify-center py-6">
-            <div className="modal-scrollbar w-full max-w-lg max-h-[calc(100vh-3rem)] overflow-y-scroll rounded-xl border border-slate-800 bg-slate-900 p-6 shadow-2xl">
+            <div className="relative modal-scrollbar w-full max-w-lg max-h-[calc(100vh-3rem)] overflow-y-scroll rounded-xl border border-slate-800 bg-slate-900 p-6 shadow-2xl">
+            <LoadingOverlay visible={submitting} label="Processando..." />
             <h2 className="text-xl font-semibold mb-4">Enviar Questionário</h2>
               <SendLinksForm
                 patient={patient}
@@ -177,7 +179,8 @@ export default function SendLinkModals({
       {diaryLinksModalOpen && (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 p-4">
           <div className="flex min-h-full items-start justify-center py-6">
-            <div className="modal-scrollbar w-full max-w-lg max-h-[calc(100vh-3rem)] overflow-y-scroll rounded-xl border border-slate-800 bg-slate-900 p-6 shadow-2xl">
+            <div className="relative modal-scrollbar w-full max-w-lg max-h-[calc(100vh-3rem)] overflow-y-scroll rounded-xl border border-slate-800 bg-slate-900 p-6 shadow-2xl">
+            <LoadingOverlay visible={submitting} label="Processando..." />
             <h2 className="text-xl font-semibold mb-4">Enviar Diário</h2>
               <SendLinksForm
                 patient={patient}

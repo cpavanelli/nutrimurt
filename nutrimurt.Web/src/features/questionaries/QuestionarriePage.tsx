@@ -3,6 +3,7 @@ import { useQuestionariesApi } from './api';
 import type { Questionary, QuestionaryInput } from './types';
 import QuestionarrieForm from './QuestionarrieForm';
 import MaintenanceHeader from '../../components/MaintenanceHeader';
+import LoadingOverlay from '../../components/LoadingOverlay';
 import { toast } from 'react-toastify';
 
 export default function QuestionarryPage() {
@@ -60,7 +61,7 @@ export default function QuestionarryPage() {
   }
 
   async function handleDelete(id: number) {
-    if (!confirm('Delete this questionary?')) return;
+    if (!confirm('Apagar este questionário?')) return;
     try {
       await questionariesApi.remove(id);
       setQuestionaries((prev) => prev.filter((p) => p.id !== id));
@@ -127,7 +128,8 @@ export default function QuestionarryPage() {
       {modal && (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 p-4">
           <div className="flex min-h-full items-start justify-center py-6">
-            <div className="modal-scrollbar w-full max-w-3xl max-h-[calc(100vh-3rem)] overflow-y-scroll rounded-xl border border-slate-800 bg-slate-900 p-6 shadow-2xl">
+            <div className="relative modal-scrollbar w-full max-w-3xl max-h-[calc(100vh-3rem)] overflow-y-scroll rounded-xl border border-slate-800 bg-slate-900 p-6 shadow-2xl">
+              <LoadingOverlay visible={submitting} label="Salvando..." />
               <h2 className="text-xl font-semibold mb-4">
               {modal === 'edit' ? 'Editar Questionário' : 'Novo Questionário'}
               </h2>

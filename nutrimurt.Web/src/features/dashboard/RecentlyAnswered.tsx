@@ -2,26 +2,26 @@ import { useEffect, useState } from 'react';
 import { useDashboardApi } from './api';
 import type { DashboardPatientLink } from './types';
 import { Link } from 'react-router-dom';
+import Spinner from '../../components/Spinner';
 
 
 export default function RecentlyAnswered() {
   const dashboardApi = useDashboardApi();
   const [patientLinks, setPatientLinks] = useState<DashboardPatientLink[]>([]);
+  const [loading, setLoading] = useState(true);
 
 
 
   async function load() {
     try {
-      //   setLoading(true);
+      setLoading(true);
       const data = await dashboardApi.listRecentPatientLinks();
       setPatientLinks(data.filter((link) => link.type === 1));
     } catch (err) {
-      //setError(err instanceof Error ? err.message : 'Failed to load');
       console.log('Failed to load listRecentPatientLinks');
+    } finally {
+      setLoading(false);
     }
-    // finally {
-    //   setLoading(false);
-    // }
   }
 
   useEffect(() => {
@@ -35,31 +35,34 @@ export default function RecentlyAnswered() {
       <div className="mb-6 flex items-center justify-between text-xs uppercase tracking-[0.4em] text-slate-300 ">
         <span>Questionários respondidos</span>
       </div>
-      <div className="max-w-3xl mx-auto shadow-md rounded-xl p-6 border-white/10 bg-slate-900/60 p-4 shadow">
-
-
-        <div className="grid grid-cols-4 font-semibold border-b pb-2 ">
-          <span>Nome</span>
-          <span>Questionário</span>
-          <span>Data</span>
-          <span></span>
+      {loading ? (
+        <div className="flex justify-center py-8">
+          <Spinner size="md" />
         </div>
-
-        {patientLinks.map((u) => (
-          <div key={u.id} className="grid grid-cols-4 items-center py-3 border-b bg-slate-900/60 p-4 shadow">
-            <span>{u.patientName}</span>
-            <span>{u.questionnaryName}</span>
-            <span>{u.lastAnswered}</span>
-            <span>
-              <Link
-                to={`/viewAnswer/${u.urlId}`}
-                className="rounded-full bg-emerald-500 px-5 py-2 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5 hover:bg-emerald-400"
-              >Ver</Link>
-
-            </span>
+      ) : (
+        <div className="max-w-3xl mx-auto shadow-md rounded-xl p-6 border-white/10 bg-slate-900/60 p-4 shadow">
+          <div className="grid grid-cols-4 font-semibold border-b pb-2 ">
+            <span>Nome</span>
+            <span>Questionário</span>
+            <span>Data</span>
+            <span></span>
           </div>
-        ))}
-      </div>
+
+          {patientLinks.map((u) => (
+            <div key={u.id} className="grid grid-cols-4 items-center py-3 border-b bg-slate-900/60 p-4 shadow">
+              <span>{u.patientName}</span>
+              <span>{u.questionnaryName}</span>
+              <span>{u.lastAnswered}</span>
+              <span>
+                <Link
+                  to={`/viewAnswer/${u.urlId}`}
+                  className="rounded-full bg-emerald-500 px-5 py-2 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5 hover:bg-emerald-400"
+                >Ver</Link>
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

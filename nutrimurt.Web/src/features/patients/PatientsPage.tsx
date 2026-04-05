@@ -3,6 +3,7 @@ import { ApiError, usePatientsApi } from './api';
 import type { Patient, PatientInput } from './types';
 import PatientForm from './PatientForm';
 import MaintenanceHeader from '../../components/MaintenanceHeader';
+import LoadingOverlay from '../../components/LoadingOverlay';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 
@@ -151,7 +152,8 @@ export default function PatientsPage() {
       {modal && (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 p-4">
           <div className="flex min-h-full items-start justify-center py-6">
-            <div className="modal-scrollbar w-full max-w-lg max-h-[calc(100vh-3rem)] overflow-y-scroll rounded-xl border border-slate-800 bg-slate-900 p-6 shadow-2xl">
+            <div className="relative modal-scrollbar w-full max-w-lg max-h-[calc(100vh-3rem)] overflow-y-scroll rounded-xl border border-slate-800 bg-slate-900 p-6 shadow-2xl">
+              <LoadingOverlay visible={submitting} label="Salvando..." />
               <h2 className="text-xl font-semibold mb-4">
                 {modal === 'edit' ? 'Editar Paciente' : 'Novo Paciente'}
               </h2>
