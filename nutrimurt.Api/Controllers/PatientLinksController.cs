@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using nutrimurt.Api.Data;
 using nutrimurt.Api.Extensions;
+using nutrimurt.Api.Constants;
 using nutrimurt.Api.Models;
 
 namespace nutrimurt.Api.Controllers;
@@ -74,6 +75,10 @@ public class PatientLinksController : ControllerBase
         var userId = User.GetUserId();
         var patient = await _context.Patients.FirstOrDefaultAsync(p => p.Id == patientId && p.UserId == userId);
         if (patient is null) return NotFound();
+
+        var linkCount = await _context.PatientLinks.CountAsync(l => l.PatientId == patientId && l.UserId == userId);
+        if (linkCount >= Guardrails.MaxLinksPerPatient)
+            return Problem(detail: "Você atingiu o número máximo de links para este paciente.", statusCode: 409);
 
         if (request.Type == PatientLinkTypes.Question && request.QuestionnaryId.GetValueOrDefault() <= 0)
         {

@@ -16,6 +16,7 @@ public class Question
     public int Id { get; set; }
 
     [Required]
+    [StringLength(500)]
     public string QuestionText { get; set; } = string.Empty;
     
     [Required]

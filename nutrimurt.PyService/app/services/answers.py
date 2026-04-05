@@ -29,6 +29,13 @@ class Answers:
 
     def savePatientAnswers(self, patient_link: PatientLink, db: Database):
         if patient_link.type == 1 and patient_link.questionnary:
+            if len(patient_link.questionnary.questions) > Guardrails.MAX_QUESTIONS_PER_SUBMISSION:
+                raise HTTPException(status_code=409, detail="Payload exceeds question limit.")
+
+            for q in patient_link.questionnary.questions:
+                if len(q.answerAlternatives) > Guardrails.MAX_ANSWER_ALTERNATIVES_PER_QUESTION:
+                    raise HTTPException(status_code=409, detail="Too many alternative selections.")
+
             db.delete_patient_answers(patient_link.id)
 
             answersToSave: list[PatientQuestionAnswer] = []
@@ -66,7 +73,20 @@ class Answers:
         if not patient_link.diary:
             raise ValueError("Diary payload is required for diary answers")
 
+        if len(patient_link.diary.entries) > Guardrails.MAX_TOTAL_DIARY_ENTRIES:
+            raise HTTPException(
+                status_code=409,
+                detail="Você atingiu o número máximo de entradas no diário.",
+            )
+
         entries_per_day = Counter(e.date for e in patient_link.diary.entries)
+
+        if len(entries_per_day) > Guardrails.MAX_DIARY_DISTINCT_DAYS:
+            raise HTTPException(
+                status_code=409,
+                detail="Você atingiu o número máximo de dias no diário.",
+            )
+
         for day, count in entries_per_day.items():
             if count > Guardrails.MAX_DIARY_ENTRIES_PER_DAY:
                 raise HTTPException(

@@ -184,6 +184,9 @@ def getStaffPatientLink(urlID: str, auth=Depends(require_auth), dbSession: Sessi
 @limiter.limit("5/second")
 def savePatientAnswers(patientLink: PatientLink, request: Request, dbSession: Session = Depends(get_db)):
     repo = Database(dbSession)
+    db_link = repo.get_PatientLink(patientLink.urlId)
+    if not db_link:
+        raise HTTPException(status_code=404, detail="Link not found")
     answersController.savePatientAnswers(patientLink, repo)
     return {"status": "ok"}
 
@@ -191,6 +194,9 @@ def savePatientAnswers(patientLink: PatientLink, request: Request, dbSession: Se
 @limiter.limit("5/second")
 def savePatientDiary(patientLink: PatientLink, request: Request, dbSession: Session = Depends(get_db)):
     repo = Database(dbSession)
+    db_link = repo.get_PatientLink(patientLink.urlId)
+    if not db_link:
+        raise HTTPException(status_code=404, detail="Link not found")
     answersController.savePatientDiary(patientLink, repo)
     return {"status": "ok"}
 

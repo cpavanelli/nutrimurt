@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using nutrimurt.Api.Data;
 using nutrimurt.Api.Extensions;
+using nutrimurt.Api.Constants;
 using nutrimurt.Api.Models;
 
 namespace nutrimurt.Api.Controllers;
@@ -43,6 +44,13 @@ public class QuestionsController : ControllerBase
             .AnyAsync(q => q.Id == question.QuestionnaryId && q.UserId == userId);
         if (!ownsQuestionnary) return NotFound();
 
+        var questionCount = await _context.Questions.CountAsync(q => q.QuestionnaryId == question.QuestionnaryId);
+        if (questionCount >= Guardrails.MaxQuestions)
+            return Problem(detail: "Você atingiu o número máximo de perguntas neste questionário.", statusCode: 409);
+
+        if (question.Alternatives is { Count: > 0 } && question.Alternatives.Count > Guardrails.MaxAlternatives)
+            return Problem(statusCode: 409);
+
         _context.Questions.Add(question);
 
         foreach (var alternative in question.Alternatives)
@@ -64,6 +72,9 @@ public class QuestionsController : ControllerBase
                              .FirstOrDefaultAsync(q => q.Id == id && q.Questionnary!.UserId == userId);
 
         if (existing is null) return NotFound();
+
+        if (updated.Alternatives is { Count: > 0 } && updated.Alternatives.Count > Guardrails.MaxAlternatives)
+            return Problem(statusCode: 409);
 
         existing.QuestionText = updated.QuestionText;
         existing.QuestionType = updated.QuestionType;

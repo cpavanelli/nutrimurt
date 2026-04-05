@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from datetime import date, datetime
 from typing import List, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, field_validator
 
 class Patient(BaseModel):
     id: Optional[int] = None
@@ -43,6 +43,14 @@ class Question(BaseModel):
     answer: Optional[QuestionAnswer] = None
     answerAlternatives: List[str] = []
 
+    @field_validator("answerAlternatives", mode="before")
+    @classmethod
+    def validate_alternative_lengths(cls, v):
+        for item in v:
+            if isinstance(item, str) and len(item) > 500:
+                raise ValueError("Alternative text exceeds maximum length of 500 characters")
+        return v
+
     class Config:
         orm_mode = True
 
@@ -55,7 +63,7 @@ class QuestionAlternative(BaseModel):
 
 class QuestionAnswer(BaseModel):
     id: Optional[int] = None
-    answer: str = ""
+    answer: str = Field(default="", max_length=500)
 
     class Config:
         orm_mode = True
@@ -66,8 +74,8 @@ class DiaryEntry(BaseModel):
     date: date
     mealType: int
     time: str | None = None
-    food: str
-    amount: str
+    food: str = Field(max_length=500)
+    amount: str = Field(max_length=200)
 
     class Config:
         orm_mode = True

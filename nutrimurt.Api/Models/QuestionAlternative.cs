@@ -8,6 +8,7 @@ public class QuestionAlternatives
     public int Id { get; set; }
 
     [Required]
+    [StringLength(500)]
     public string Alternative { get; set; } = string.Empty;
 
 }
