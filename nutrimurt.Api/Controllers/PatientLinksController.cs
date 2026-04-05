@@ -126,6 +126,54 @@ public class PatientLinksController : ControllerBase
         return Ok(updatedLinks.Select(ToDto));
     }
 
+    [HttpDelete("{linkId}")]
+    public async Task<IActionResult> DeleteLink(int patientId, int linkId)
+    {
+        var userId = User.GetUserId();
+        var link = await _context.PatientLinks
+            .FirstOrDefaultAsync(l => l.Id == linkId && l.PatientId == patientId && l.UserId == userId);
+
+        if (link is null) return NotFound();
+
+        if (link.DiaryId is int diaryId)
+        {
+            var diaryEntries = await _context.PatientDiaryEntries
+                .Where(entry => EF.Property<int?>(entry, "PatientDiaryId") == diaryId)
+                .ToListAsync();
+            if (diaryEntries.Count > 0)
+            {
+                _context.PatientDiaryEntries.RemoveRange(diaryEntries);
+            }
+
+            var diary = await _context.PatientDiaries.FirstOrDefaultAsync(d => d.Id == diaryId);
+            if (diary is not null)
+            {
+                _context.PatientDiaries.Remove(diary);
+            }
+        }
+
+        var answers = await _context.PatientQuestionAnswers
+            .Where(answer => answer.PatientLinkId == linkId)
+            .ToListAsync();
+        if (answers.Count > 0)
+        {
+            _context.PatientQuestionAnswers.RemoveRange(answers);
+        }
+
+        var alternatives = await _context.PatientQuestionAnswerAlternatives
+            .Where(answer => answer.PatientLinkId == linkId)
+            .ToListAsync();
+        if (alternatives.Count > 0)
+        {
+            _context.PatientQuestionAnswerAlternatives.RemoveRange(alternatives);
+        }
+
+        _context.PatientLinks.Remove(link);
+        await _context.SaveChangesAsync();
+
+        return NoContent();
+    }
+
     private string GenerateUrlId()
     {
         var bytes = RandomNumberGenerator.GetBytes(16);

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { MAX_DIARY_ENTRIES_PER_DAY } from '../../constants/guardrails';
@@ -49,7 +49,6 @@ export default function DiaryAnswer({ patientLink, readOnly = false }: Props) {
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
   const [days, setDays] = useState<DiaryDayInput[]>([]);
   const [currentDayIndex, setCurrentDayIndex] = useState(0);
-  const dateInputRef = useRef<HTMLInputElement>(null);
   const maxDays = 3;
   const canAddNewDay = days.length < maxDays;
   const currentDay = days[currentDayIndex] ?? null;
@@ -255,26 +254,18 @@ export default function DiaryAnswer({ patientLink, readOnly = false }: Props) {
             <div className="flex flex-wrap gap-2 border-b border-white/10 pb-4">
               {days.map((day, index) => (
                 index === currentDayIndex ? (
-                  <span
+                  <div
                     key={`${day.date}-${index}`}
-                    className="relative inline-flex items-center rounded-xl border border-emerald-300/40 bg-emerald-500 px-3 py-1 text-sm font-medium text-white"
+                    className="inline-flex items-center rounded-xl border border-emerald-300/40 bg-emerald-500/15 px-3 py-1"
                   >
-                    <button
-                      type="button"
-                      onClick={() => dateInputRef.current?.showPicker()}
-                      className="cursor-pointer bg-transparent text-white"
-                    >
-                      {formatDate(day.date)}
-                    </button>
                     <input
-                      ref={dateInputRef}
                       type="date"
                       value={day.date}
                       onChange={(e) => handleDateChange(index, e.target.value)}
-                      className="pointer-events-none absolute inset-0 h-0 w-0 overflow-hidden opacity-0"
-                      tabIndex={-1}
+                      aria-label={`Selecionar data do dia ${formatDate(day.date)}`}
+                      className="rounded-lg bg-transparent text-sm font-medium text-white outline-none [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:invert"
                     />
-                  </span>
+                  </div>
                 ) : (
                   <button
                     key={`${day.date}-${index}`}

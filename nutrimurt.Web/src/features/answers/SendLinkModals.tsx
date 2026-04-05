@@ -70,18 +70,57 @@ export default function SendLinkModals({
       setSubmitting(true);
       setFormErrors(null);
 
-      const updated = await patientsApi.sendLink(patient.id, payload);
-      if (updated?.length) {
-        const token = await getToken();
-        await sendEmail(updated[0].urlId, token);
-      }
+      await patientsApi.sendLink(patient.id, payload);
 
       const refreshedLinks = await patientsApi.links(patient.id);
       onLinksUpdated(refreshedLinks);
 
-      setQuestionLinksModalOpen(false);
-      setDiaryLinksModalOpen(false);
+      toast.success('Link criado com sucesso');
+    } catch (err) {
+      if (err instanceof ApiError && err.validation) {
+        const normalized = Object.fromEntries(
+          Object.entries(err.validation).map(([k, v]) => [k.toLowerCase(), v]),
+        );
+        setFormErrors(normalized);
+        return;
+      }
+      alert(err instanceof Error ? err.message : 'Request failed');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleSendEmail(link: PatientLink) {
+    try {
+      setSubmitting(true);
+      const token = await getToken();
+      await sendEmail(link.urlId, token);
       toast.success('E-mail enviado com sucesso');
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Falha ao enviar e-mail');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleDeleteLink(link: PatientLink) {
+    const itemName =
+      link.type === 'diary' || link.type === 2
+        ? link.diaryName ?? 'este diário'
+        : link.questionnaryName;
+
+    if (!window.confirm(`Excluir o link "${itemName}"?`)) {
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      await patientsApi.deleteLink(patient.id, link.id);
+
+      const refreshedLinks = await patientsApi.links(patient.id);
+      onLinksUpdated(refreshedLinks);
+
+      toast.success('Link excluído com sucesso');
     } catch (err) {
       if (err instanceof ApiError && err.validation) {
         const normalized = Object.fromEntries(
@@ -126,6 +165,8 @@ export default function SendLinkModals({
                 submitting={submitting}
                 errors={formErrors || undefined}
                 onSubmit={handleSendLink}
+                onSendEmail={handleSendEmail}
+                onDeleteLink={handleDeleteLink}
                 onCancel={() => setQuestionLinksModalOpen(false)}
               />
             </div>
@@ -146,6 +187,8 @@ export default function SendLinkModals({
                 submitting={submitting}
                 errors={formErrors || undefined}
                 onSubmit={handleSendLink}
+                onSendEmail={handleSendEmail}
+                onDeleteLink={handleDeleteLink}
                 onCancel={() => setDiaryLinksModalOpen(false)}
               />
             </div>

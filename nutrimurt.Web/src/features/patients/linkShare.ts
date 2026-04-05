@@ -20,7 +20,6 @@ export async function copyOrShareLink(url: string): Promise<'shared' | 'copied' 
       try {
         await navigator.share({
           title: 'Link do paciente',
-          text: url,
           url,
         });
         return 'shared';

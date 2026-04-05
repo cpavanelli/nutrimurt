@@ -10,12 +10,24 @@ interface Props {
     mode: 'question' | 'diary';
     questionaries: Questionary[];
     onSubmit(payload: SendLinksInput): void | Promise<void>;
+    onSendEmail(link: PatientLink): void | Promise<void>;
+    onDeleteLink(link: PatientLink): void | Promise<void>;
     onCancel(): void;
     submitting?: boolean;
     errors?: Record<string, string[]>;
 }
 
-export default function SendLinksForm({ patient, links, mode, questionaries, onSubmit, onCancel, submitting }: Props) {
+export default function SendLinksForm({
+    patient,
+    links,
+    mode,
+    questionaries,
+    onSubmit,
+    onSendEmail,
+    onDeleteLink,
+    onCancel,
+    submitting,
+}: Props) {
     const appOrigin = window.location.origin;
     const [selectedQuestionaryId, setSelectedQuestionaryId] = useState<number | ''>('');
     const [diaryName, setDiaryName] = useState<string>('Diário Alimentar de ' + patient.name);
@@ -116,8 +128,27 @@ export default function SendLinksForm({ patient, links, mode, questionaries, onS
                                         }
                                     }}
                                     aria-label="Copiar link"
+                                    disabled={submitting}
                                 >
                                     Copiar Link
+                                </button>
+                                <button
+                                    type="button"
+                                    className="text-emerald-400 hover:underline focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                                    onClick={() => onSendEmail(link)}
+                                    aria-label="Enviar por email"
+                                    disabled={submitting}
+                                >
+                                    Enviar por email
+                                </button>
+                                <button
+                                    type="button"
+                                    className="ml-auto inline-flex h-7 w-7 items-center justify-center rounded border border-rose-500/60 bg-rose-500/10 text-sm font-bold text-rose-400 transition hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+                                    onClick={() => onDeleteLink(link)}
+                                    aria-label="Excluir link"
+                                    disabled={submitting}
+                                >
+                                    X
                                 </button>
                             </div>
                         </div>

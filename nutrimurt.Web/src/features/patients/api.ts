@@ -55,6 +55,10 @@ export function createPatientsApi(getToken: GetToken) {
       });
       return res.map(mapLink);
     },
+    deleteLink: (patientId: number, linkId: number) =>
+      request<void>(`${baseUrl}/api/patients/${patientId}/links/${linkId}`, {
+        method: 'DELETE',
+      }),
   };
 }
 
