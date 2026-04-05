@@ -19,6 +19,15 @@ class Patients(Base):
     patient_links: Mapped[list['PatientLinks']] = relationship('PatientLinks', back_populates='patient')
 
 
+class UserEmailSendCounters(Base):
+    __tablename__ = 'user_email_send_counters'
+
+    user_id: Mapped[str] = mapped_column('user_id', primary_key=True)
+    window_date: Mapped[py_date] = mapped_column('window_date')
+    send_count: Mapped[int] = mapped_column('send_count')
+    updated_at: Mapped[datetime] = mapped_column('updated_at', DateTime(timezone=True))
+
+
 class PatientLinks(Base):
     __tablename__ = 'patient_links'
 

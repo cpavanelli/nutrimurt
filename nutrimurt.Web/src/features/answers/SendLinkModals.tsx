@@ -6,6 +6,7 @@ import { useQuestionariesApi } from '../questionaries/api';
 import SendLinksForm from '../patients/SendLinksForm';
 import LoadingOverlay from '../../components/LoadingOverlay';
 import { sendEmail } from '../patients/pyApi';
+import { copyOrShareLink } from '../patients/linkShare';
 import type { PatientLink, PatientWithLinks, SendLinksInput } from '../patients/types';
 import type { Questionary } from '../questionaries/types';
 
@@ -29,8 +30,13 @@ export default function SendLinkModals({
   const [questionLinksModalOpen, setQuestionLinksModalOpen] = useState(false);
   const [diaryLinksModalOpen, setDiaryLinksModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [busyQuestionaryId, setBusyQuestionaryId] = useState<number | null>(null);
   const [formErrors, setFormErrors] = useState<Record<string, string[]> | null>(null);
   const [questionaries, setQuestionaries] = useState<Questionary[]>([]);
+
+  function getErrorMessage(err: unknown, fallback: string) {
+    return err instanceof Error && err.message ? err.message : fallback;
+  }
 
   async function openQuestionLinks() {
     setFormErrors(null);
@@ -91,37 +97,31 @@ export default function SendLinkModals({
     }
   }
 
-  async function handleSendEmail(link: PatientLink) {
+  async function handleCopyLink(link: PatientLink) {
     try {
-      setSubmitting(true);
-      const token = await getToken();
-      await sendEmail(link.urlId, token);
-      toast.success('E-mail enviado com sucesso');
+      const result = await copyOrShareLink(`${window.location.origin}/answer/${link.urlId}`);
+      if (result === 'copied') toast.success('Link copiado!');
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Falha ao enviar e-mail');
-    } finally {
-      setSubmitting(false);
+      console.error('Copy failed', err);
     }
   }
 
-  async function handleDeleteLink(link: PatientLink) {
-    const itemName =
-      link.type === 'diary' || link.type === 2
-        ? link.diaryName ?? 'este diário'
-        : link.questionnaryName;
-
-    if (!window.confirm(`Excluir o link "${itemName}"?`)) {
-      return;
-    }
-
+  async function handleCreateAndCopy(questionaryId: number) {
     try {
-      setSubmitting(true);
-      await patientsApi.deleteLink(patient.id, link.id);
+      setBusyQuestionaryId(questionaryId);
+      setFormErrors(null);
 
+      await patientsApi.sendLink(patient.id, { type: 'question', questionaryId });
       const refreshedLinks = await patientsApi.links(patient.id);
       onLinksUpdated(refreshedLinks);
 
-      toast.success('Link excluído com sucesso');
+      const newLink = refreshedLinks.find(
+        l => l.questionnaryId === questionaryId && (l.type === 'question' || l.type === 1),
+      );
+      if (newLink) {
+        const result = await copyOrShareLink(`${window.location.origin}/answer/${newLink.urlId}`);
+        if (result === 'copied') toast.success('Link criado e copiado!');
+      }
     } catch (err) {
       if (err instanceof ApiError && err.validation) {
         const normalized = Object.fromEntries(
@@ -130,7 +130,55 @@ export default function SendLinkModals({
         setFormErrors(normalized);
         return;
       }
-      alert(err instanceof Error ? err.message : 'Request failed');
+      alert(err instanceof Error ? err.message : 'Falha ao criar link');
+    } finally {
+      setBusyQuestionaryId(null);
+    }
+  }
+
+  async function handleCreateAndEmail(questionaryId: number) {
+    try {
+      setBusyQuestionaryId(questionaryId);
+      setFormErrors(null);
+
+      await patientsApi.sendLink(patient.id, { type: 'question', questionaryId });
+      const refreshedLinks = await patientsApi.links(patient.id);
+      onLinksUpdated(refreshedLinks);
+
+      const newLink = refreshedLinks.find(
+        l => l.questionnaryId === questionaryId && (l.type === 'question' || l.type === 1),
+      );
+      if (newLink) {
+        try {
+          const token = await getToken();
+          await sendEmail(newLink.urlId, token);
+          toast.success('Link criado e e-mail enviado!');
+        } catch (err) {
+          toast.warn(`Link criado, mas o e-mail não foi enviado. ${getErrorMessage(err, 'Falha ao enviar e-mail')}`);
+        }
+      }
+    } catch (err) {
+      if (err instanceof ApiError && err.validation) {
+        const normalized = Object.fromEntries(
+          Object.entries(err.validation).map(([k, v]) => [k.toLowerCase(), v]),
+        );
+        setFormErrors(normalized);
+        return;
+      }
+      toast.error(getErrorMessage(err, 'Falha ao criar link / enviar e-mail'));
+    } finally {
+      setBusyQuestionaryId(null);
+    }
+  }
+
+  async function handleSendEmail(link: PatientLink) {
+    try {
+      setSubmitting(true);
+      const token = await getToken();
+      await sendEmail(link.urlId, token);
+      toast.success('E-mail enviado com sucesso');
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Falha ao enviar e-mail'));
     } finally {
       setSubmitting(false);
     }
@@ -165,10 +213,13 @@ export default function SendLinkModals({
                 links={questionLinks}
                 questionaries={questionaries}
                 submitting={submitting}
+                busyQuestionaryId={busyQuestionaryId}
                 errors={formErrors || undefined}
                 onSubmit={handleSendLink}
+                onCreateAndCopy={handleCreateAndCopy}
+                onCreateAndEmail={handleCreateAndEmail}
+                onCopyLink={handleCopyLink}
                 onSendEmail={handleSendEmail}
-                onDeleteLink={handleDeleteLink}
                 onCancel={() => setQuestionLinksModalOpen(false)}
               />
             </div>
@@ -191,7 +242,6 @@ export default function SendLinkModals({
                 errors={formErrors || undefined}
                 onSubmit={handleSendLink}
                 onSendEmail={handleSendEmail}
-                onDeleteLink={handleDeleteLink}
                 onCancel={() => setDiaryLinksModalOpen(false)}
               />
             </div>

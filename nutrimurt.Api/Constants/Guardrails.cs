@@ -7,4 +7,5 @@ public static class Guardrails
     public const int MaxQuestions = 10;
     public const int MaxAlternatives = 10;
     public const int MaxLinksPerPatient = 10;
+    public const int MaxEmailSendsPerDay = 10;
 }

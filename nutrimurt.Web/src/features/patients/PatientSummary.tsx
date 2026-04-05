@@ -14,6 +14,29 @@ export default function PatientSummary() {
   const [patient, setPatient] = useState<PatientWithLinks | null>(null);
   const [questionLinks, setQuestionLinks] = useState<PatientLink[]>([]);
   const [diaryLinks, setDiaryLinks] = useState<PatientLink[]>([]);
+  const [deleting, setDeleting] = useState<number | null>(null);
+
+  async function handleDeleteLink(link: PatientLink) {
+    const itemName =
+      link.type === 'diary' || link.type === 2
+        ? link.diaryName ?? 'este diário'
+        : link.questionnaryName;
+
+    if (!window.confirm(`Excluir o link "${itemName}"?`)) return;
+    if (!patient) return;
+
+    try {
+      setDeleting(link.id);
+      await patientsApi.deleteLink(patient.id, link.id);
+      const refreshedLinks = await patientsApi.links(patient.id);
+      syncLinks(refreshedLinks);
+      toast.success('Link excluído com sucesso');
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Falha ao excluir link');
+    } finally {
+      setDeleting(null);
+    }
+  }
 
   function syncLinks(links: PatientLink[]) {
     setQuestionLinks(links.filter((link) => link.type === 'question' || link.type === 1));
@@ -84,16 +107,17 @@ export default function PatientSummary() {
             </div>
 
 
-            <div className="grid grid-cols-5 font-semibold border-b pb-2 ">
+            <div className="grid grid-cols-6 font-semibold border-b pb-2 ">
               <span>Questionário</span>
               <span>Respondido?</span>
               <span>Data</span>
               <span></span>
               <span></span>
+              <span></span>
             </div>
 
             {questionLinks.map((u) => (
-              <div key={u.id} className="grid grid-cols-5 items-center py-3 border-b bg-slate-900/60 p-4 shadow">
+              <div key={u.id} className="grid grid-cols-6 items-center py-3 border-b bg-slate-900/60 p-4 shadow">
                 <span>{u.questionnaryName}</span>
                 <span>
                   {(u.lastAnswered) ? <span className={'inline-flex h-5 w-5 items-center justify-center rounded border border-emerald-400 bg-emerald-500 text-slate-950'}>✓</span> :
@@ -123,6 +147,16 @@ export default function PatientSummary() {
                     Copiar Link
                   </button>
                 </span>
+                <span>
+                  <button
+                    type="button"
+                    className="rounded border border-rose-500/60 bg-rose-500/10 px-3 py-1.5 text-sm font-medium text-rose-400 transition hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+                    onClick={() => handleDeleteLink(u)}
+                    disabled={deleting === u.id}
+                  >
+                    Excluir
+                  </button>
+                </span>
               </div>
             ))}
           </div>
@@ -134,16 +168,17 @@ export default function PatientSummary() {
             <div className="mb-6 flex items-center justify-between text-xs uppercase tracking-[0.4em] text-slate-300">
               <span>Diarios Alimentares</span>
             </div>
-            <div className="grid grid-cols-5 font-semibold border-b pb-2 ">
+            <div className="grid grid-cols-6 font-semibold border-b pb-2 ">
               <span>Diário</span>
               <span>Respondido?</span>
               <span>Data</span>
               <span></span>
               <span></span>
+              <span></span>
             </div>
 
             {diaryLinks.map((u) => (
-              <div key={u.id} className="grid grid-cols-5 items-center py-3 border-b bg-slate-900/60 p-4 shadow">
+              <div key={u.id} className="grid grid-cols-6 items-center py-3 border-b bg-slate-900/60 p-4 shadow">
                 <span>{u.diaryName}</span>
                 <span>
                   {(u.lastAnswered) ? <span className={'inline-flex h-5 w-5 items-center justify-center rounded border border-emerald-400 bg-emerald-500 text-slate-950'}>✓</span> :
@@ -171,6 +206,16 @@ export default function PatientSummary() {
                     aria-label="Copiar link"
                   >
                     Copiar Link
+                  </button>
+                </span>
+                <span>
+                  <button
+                    type="button"
+                    className="rounded border border-rose-500/60 bg-rose-500/10 px-3 py-1.5 text-sm font-medium text-rose-400 transition hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+                    onClick={() => handleDeleteLink(u)}
+                    disabled={deleting === u.id}
+                  >
+                    Excluir
                   </button>
                 </span>
               </div>

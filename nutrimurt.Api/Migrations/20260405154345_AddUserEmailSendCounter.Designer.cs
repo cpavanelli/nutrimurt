@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using nutrimurt.Api.Data;
@@ -11,9 +12,11 @@ using nutrimurt.Api.Data;
 namespace nutrimurt.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260405154345_AddUserEmailSendCounter")]
+    partial class AddUserEmailSendCounter
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -275,8 +278,7 @@ namespace nutrimurt.Api.Migrations
 
                     b.Property<string>("QuestionText")
                         .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
+                        .HasColumnType("text")
                         .HasColumnName("question_text");
 
                     b.Property<int>("QuestionType")
@@ -307,8 +309,7 @@ namespace nutrimurt.Api.Migrations
 
                     b.Property<string>("Alternative")
                         .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
+                        .HasColumnType("text")
                         .HasColumnName("alternative");
 
                     b.Property<int?>("QuestionId")

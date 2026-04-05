@@ -1,5 +1,4 @@
 from dotenv import load_dotenv
-import os
 import requests
 from app.settings import settings
 
@@ -14,7 +13,7 @@ class EmailSender:
         if not self.api_key or not self.domain or not self.from_email:
             raise ValueError("Mailgun configuration missing in .env")
 
-    def send_email(self, to_email: str, subject: str, text: str, html: str | None = None):
+    def send_email(self, to_email: str, subject: str, text: str, html: str | None = None) -> requests.Response:
         url = f"https://api.mailgun.net/v3/{self.domain}/messages"
         data = {
             "from": self.from_email,
@@ -25,5 +24,4 @@ class EmailSender:
         if html:
             data["html"] = html  # clickable content for HTML clients
 
-        response = requests.post(url, auth=("api", self.api_key), data=data)
-        return response.status_code, response.text
+        return requests.post(url, auth=("api", self.api_key), data=data, timeout=15)

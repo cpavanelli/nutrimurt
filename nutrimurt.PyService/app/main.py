@@ -1,3 +1,4 @@
+import requests
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -49,10 +50,16 @@ def create_patient_questionary(patient_id: int, questionary_id: int, auth=Depend
 def sendEmail(urlID: str, request: Request, auth=Depends(require_auth), dbSession: Session = Depends(get_db)):
     user_id = get_user_id(auth)
     repo = Database(dbSession)
-    emailSender = EmailSender()
     patient_link = repo.get_PatientLink(urlID)
     if not patient_link or patient_link.user_id != user_id:
         raise HTTPException(status_code=404, detail="Link not found")
+
+    repo.reserve_email_send_slot(user_id)
+
+    try:
+        emailSender = EmailSender()
+    except ValueError as exc:
+        raise HTTPException(status_code=502, detail="Serviço de e-mail indisponível.") from exc
 
     subject = patient_link.type == 1 and "Questionário NutriMurt" or "Diário NutriMurt"
     text = patient_link.type == 1 and "questionário" or "diário"
@@ -66,7 +73,13 @@ def sendEmail(urlID: str, request: Request, auth=Depends(require_auth), dbSessio
         f'<a href="{link}">Clique aqui</a></p>'
     )
 
-    emailSender.send_email(patient_link.patient.email, subject, text_body, html_body)
+    try:
+        response = emailSender.send_email(patient_link.patient.email, subject, text_body, html_body)
+    except requests.RequestException as exc:
+        raise HTTPException(status_code=502, detail="Falha ao enviar e-mail pelo provedor.") from exc
+
+    if not response.ok:
+        raise HTTPException(status_code=502, detail="O provedor de e-mail rejeitou a solicitação.")
 
     return {"status": "ok"}
 
