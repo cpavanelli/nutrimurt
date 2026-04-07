@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { ClerkProvider } from '@clerk/clerk-react';
+import { ptBR } from '@clerk/localizations';
 import App from './App';
 import PatientsPage from './features/patients/PatientsPage';
 import QuestionariesPage from './features/questionaries/QuestionarriePage';
@@ -50,7 +51,7 @@ const router = createBrowserRouter([
 const rootEl = document.getElementById('root')!;
 createRoot(rootEl).render(
   <StrictMode>
-    <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
+    <ClerkProvider publishableKey={PUBLISHABLE_KEY} localization={ptBR}>
       <RouterProvider router={router} />
       <ToastContainer position="top-right" theme="dark" autoClose={3000} />
     </ClerkProvider>
