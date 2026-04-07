@@ -14,7 +14,8 @@ interface Props {
 
 function formatDate(dateStr: string): string {
   const [year, month, day] = dateStr.split('-');
-  return `${day}/${month}/${year}`;
+  const date = new Date(Number(year), Number(month) - 1, Number(day));
+  return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
 function sortDays(days: DiaryDayInput[]): DiaryDayInput[] {
@@ -294,14 +295,14 @@ export default function DiaryAnswer({ patientLink, readOnly = false }: Props) {
               <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
                 <h2 className="mb-3 text-lg font-semibold">Adicionar refeicao</h2>
                 <div className="flex flex-col gap-3">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-sm text-slate-300">Refeicao:</span>
+                  <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                    <span className="hidden text-sm text-slate-300 sm:inline">Refeicao:</span>
                     {MEAL_TYPES.map((mt) => (
                       <button
                         key={mt}
                         type="button"
                         onClick={() => setSelectedMealType(mt)}
-                        className={`rounded-xl px-3 py-1.5 text-sm font-medium transition ${
+                        className={`rounded-xl px-2 py-1 text-xs font-medium transition sm:px-3 sm:py-1.5 sm:text-sm ${
                           selectedMealType === mt
                             ? 'bg-emerald-500 text-white'
                             : 'bg-slate-800/50 text-slate-300 hover:bg-slate-700/50'
@@ -312,73 +313,29 @@ export default function DiaryAnswer({ patientLink, readOnly = false }: Props) {
                     ))}
                   </div>
 
-                  <div className="flex flex-wrap items-end gap-3">
-                    {/* <div className="flex items-center gap-2">
-                      <label className="flex items-center gap-2 text-sm text-slate-300">
-                        <input
-                          type="checkbox"
-                          checked={useTime}
-                          onChange={(e) => {
-                            setUseTime(e.target.checked);
-                            if (e.target.checked) {
-                              setEntryDraft((prev) => ({ ...prev, time: timeRightNow() }));
-                            } else {
-                              setEntryDraft((prev) => ({ ...prev, time: null }));
-                            }
-                          }}
-                          className="rounded border-slate-600 bg-slate-800 text-emerald-500 focus:ring-emerald-500"
-                        />
-                        Horario
-                      </label>
-                      {useTime && (
-                        <div className="flex items-center gap-1">
-                          <select
-                            value={draftHour}
-                            onChange={(e) =>
-                              setEntryDraft((prev) => ({ ...prev, time: `${e.target.value}:${draftMinute}` }))
-                            }
-                            className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white"
-                          >
-                            {hourOptions.map((hour) => (
-                              <option key={hour} value={hour}>{hour}</option>
-                            ))}
-                          </select>
-                          <span className="text-slate-400">:</span>
-                          <select
-                            value={draftMinute}
-                            onChange={(e) =>
-                              setEntryDraft((prev) => ({ ...prev, time: `${draftHour}:${e.target.value}` }))
-                            }
-                            className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white"
-                          >
-                            {minuteOptions.map((minute) => (
-                              <option key={minute} value={minute}>{minute}</option>
-                            ))}
-                          </select>
-                        </div>
-                      )}
-                    </div> */}
+                  <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
                     <input
                       type="text"
                       placeholder="Alimento (ex: Whey)"
                       value={entryDraft.food}
                       onChange={(e) => setEntryDraft((prev) => ({ ...prev, food: e.target.value }))}
-                      className="min-w-[220px] flex-1 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white placeholder:text-slate-500"
+                      className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white placeholder:text-slate-500 sm:w-auto sm:min-w-[220px] sm:flex-1"
                     />
                     <input
                       type="text"
                       placeholder="Quantidade (ex: 1 scoop)"
                       value={entryDraft.amount}
                       onChange={(e) => setEntryDraft((prev) => ({ ...prev, amount: e.target.value }))}
-                      className="min-w-[180px] flex-1 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white placeholder:text-slate-500"
+                      className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white placeholder:text-slate-500 sm:w-auto sm:min-w-[180px] sm:flex-1"
                     />
                     <button
                       type="button"
                       onClick={addEntry}
                       disabled={!hasRequiredEntryFields}
-                      className="rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:bg-emerald-900/50"
+                      className="w-full rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:bg-emerald-900/50 sm:w-auto"
                     >
-                      Adicionar entrada ao dia
+                      <span className="sm:hidden">+ Adicionar</span>
+                      <span className="hidden sm:inline">Adicionar entrada ao dia</span>
                     </button>
                   </div>
                 </div>
@@ -391,8 +348,59 @@ export default function DiaryAnswer({ patientLink, readOnly = false }: Props) {
                   Sem entradas neste diario.
                 </div>
               )}
+              {/* Mobile: show selected day only (or all days stacked in readOnly) */}
+              <div className="space-y-6 sm:hidden">
+                {(readOnly ? days : currentDay ? [currentDay] : []).map((day, idx) => {
+                  const dayIndex = readOnly ? idx : currentDayIndex;
+                  const mealGroups = groupByMealType(sortEntries(day.entries));
+                  return (
+                    <div key={`${day.date}-${dayIndex}`} className="space-y-3">
+                      <p className="text-sm font-semibold text-emerald-300">{formatDate(day.date)}</p>
+                      {mealGroups.length === 0 ? (
+                        <div className="rounded-xl border border-slate-700 bg-slate-950/70 p-3 text-sm text-slate-500">
+                          Sem entradas neste dia.
+                        </div>
+                      ) : (
+                        mealGroups.map((group) => (
+                          <div key={group.mealType} className="space-y-2">
+                            <p className="text-xs font-semibold uppercase tracking-wider text-amber-300/80">
+                              {MEAL_TYPE_LABELS[group.mealType]}
+                            </p>
+                            {group.entries.map((entry, entryIndex) => {
+                              const globalIndex = day.entries.indexOf(entry);
+                              return (
+                                <article
+                                  key={`${entry.mealType}-${entry.food}-${entryIndex}`}
+                                  className="space-y-2 rounded-xl border border-slate-700 bg-slate-950/70 p-3"
+                                >
+                                  {entry.time && (
+                                    <p className="text-sm text-slate-400">{entry.time}</p>
+                                  )}
+                                  <h3 className="font-semibold text-emerald-200">{entry.food}</h3>
+                                  <p className="text-sm text-slate-400">{entry.amount}</p>
+                                  {!readOnly && (
+                                    <button
+                                      type="button"
+                                      onClick={() => removeEntry(dayIndex, globalIndex)}
+                                      className="text-xs font-medium text-rose-300 transition hover:text-rose-200"
+                                    >
+                                      Remover entrada
+                                    </button>
+                                  )}
+                                </article>
+                              );
+                            })}
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Desktop: multi-column grid */}
               <div
-                className="grid gap-4"
+                className="hidden sm:grid gap-4"
                 style={{ gridTemplateColumns: `repeat(${Math.max(days.length, 1)}, minmax(0, 1fr))` }}
               >
                 {days.map((day, dayIndex) => {
