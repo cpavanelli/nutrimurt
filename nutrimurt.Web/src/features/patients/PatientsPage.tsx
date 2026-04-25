@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { ApiError, usePatientsApi } from './api';
 import type { Patient, PatientInput } from './types';
 import PatientForm from './PatientForm';
-import MaintenanceHeader from '../../components/MaintenanceHeader';
 import LoadingOverlay from '../../components/LoadingOverlay';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
@@ -85,9 +84,17 @@ export default function PatientsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
-      <MaintenanceHeader title="Pacientes" addNewTitle="Novo Paciente" openCreate={openCreate} />
+    <>
       <main className="mx-auto max-w-5xl px-6 py-8">
+        <div className="mb-6 flex items-center justify-between">
+          <h1 className="text-2xl font-semibold">Pacientes</h1>
+          <button
+            onClick={openCreate}
+            className="rounded-full bg-emerald-500 px-5 py-2 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5 hover:bg-emerald-400"
+          >
+            + Novo Paciente
+          </button>
+        </div>
         {loading ? (
           <p className="text-slate-400">Carregando pacientes...</p>
         ) : error ? (
@@ -117,19 +124,19 @@ export default function PatientsPage() {
                     <td className="px-4 py-3 text-right text-sm">
                       <button
                         onClick={() => openEdit(patient)}
-                        className="mr-3 text-emerald-400 hover:text-emerald-300"
+                        className="mr-2 rounded border border-slate-500/60 bg-slate-500/10 px-3 py-1.5 text-sm font-medium text-slate-300 transition hover:bg-slate-500/20"
                       >
                         Editar
                       </button>
                       <button
                         onClick={() => handleDelete(patient.id)}
-                        className="text-red-400 hover:text-red-300"
+                        className="mr-2 rounded border border-rose-500/60 bg-rose-500/10 px-3 py-1.5 text-sm font-medium text-rose-400 transition hover:bg-rose-500/20"
                       >
                         Deletar
                       </button>
                       <button
                         onClick={() => navigate(`/patientSummary/${patient.id}`)}
-                        className="ml-3 text-sky-400 hover:text-sky-300"
+                        className="rounded border border-sky-500/60 bg-sky-500/10 px-3 py-1.5 text-sm font-medium text-sky-400 transition hover:bg-sky-500/20"
                       >
                         Resumo
                       </button>
@@ -168,6 +175,6 @@ export default function PatientsPage() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

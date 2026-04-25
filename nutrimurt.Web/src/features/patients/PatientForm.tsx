@@ -123,16 +123,16 @@ export default function PatientForm({ initial, onSubmit, onCancel, submitting, e
                 <button
                     type="button"
                     onClick={onCancel}
-                    className="rounded border border-slate-600 px-4 py-2 text-sm text-slate-200 hover:bg-slate-800"
+                    className="rounded-full border border-slate-600 px-5 py-2 text-sm font-semibold text-slate-200 shadow transition hover:-translate-y-0.5 hover:bg-slate-800"
                 >
-                    Cancel
+                    Cancelar
                 </button>
                 <button
                     type="submit"
                     disabled={submitting}
-                    className="rounded bg-emerald-500 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-400 disabled:opacity-60"
+                    className="rounded-full bg-emerald-500 px-5 py-2 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5 hover:bg-emerald-400 disabled:opacity-60"
                 >
-                    {submitting ? 'Saving...' : 'Save'}
+                    {submitting ? 'Salvando...' : 'Salvar'}
                 </button>
             </div>
         </form>

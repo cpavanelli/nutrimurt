@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { useQuestionariesApi } from './api';
 import type { Questionary, QuestionaryInput } from './types';
 import QuestionarrieForm from './QuestionarrieForm';
-import MaintenanceHeader from '../../components/MaintenanceHeader';
 import LoadingOverlay from '../../components/LoadingOverlay';
 import { toast } from 'react-toastify';
 
@@ -71,10 +70,17 @@ export default function QuestionarryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
-      <MaintenanceHeader title="Questionários" addNewTitle="Novo Questionário" openCreate={openCreate} />
-
+    <>
       <main className="mx-auto max-w-5xl px-6 py-8">
+        <div className="mb-6 flex items-center justify-between">
+          <h1 className="text-2xl font-semibold">Questionários</h1>
+          <button
+            onClick={openCreate}
+            className="rounded-full bg-emerald-500 px-5 py-2 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5 hover:bg-emerald-400"
+          >
+            + Novo Questionário
+          </button>
+        </div>
         {loading ? (
           <p className="text-slate-400">Loading questionaries...</p>
         ) : error ? (
@@ -99,15 +105,15 @@ export default function QuestionarryPage() {
                     <td className="px-4 py-3 text-right text-sm">
                       <button
                         onClick={() => openEdit(questionary)}
-                        className="mr-3 text-emerald-400 hover:text-emerald-300"
+                        className="mr-2 rounded border border-slate-500/60 bg-slate-500/10 px-3 py-1.5 text-sm font-medium text-slate-300 transition hover:bg-slate-500/20"
                       >
-                        Edit
+                        Editar
                       </button>
                       <button
                         onClick={() => handleDelete(questionary.id)}
-                        className="text-red-400 hover:text-red-300"
+                        className="rounded border border-rose-500/60 bg-rose-500/10 px-3 py-1.5 text-sm font-medium text-rose-400 transition hover:bg-rose-500/20"
                       >
-                        Delete
+                        Excluir
                       </button>
                     </td>
                   </tr>
@@ -143,6 +149,6 @@ export default function QuestionarryPage() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

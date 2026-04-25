@@ -14,37 +14,43 @@ import 'react-toastify/dist/ReactToastify.css';
 import PatientSummary from './features/patients/PatientSummary';
 import ProtectedRoute from './components/ProtectedRoute';
 import SignInPage from './pages/SignInPage';
+import Layout from './components/Layout';
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
 const router = createBrowserRouter([
   {
-    path: "/sign-in",
-    element: <SignInPage />,
-  },
-  {
     path: "/answer/:urlid",
     element: <AnswerPage />,
   },
   {
-    path: "/",
-    element: <ProtectedRoute><App /></ProtectedRoute>,
-  },
-  {
-    path: "/patients",
-    element: <ProtectedRoute><PatientsPage /></ProtectedRoute>,
-  },
-  {
-    path: "/questionaries",
-    element: <ProtectedRoute><QuestionariesPage /></ProtectedRoute>,
-  },
-  {
-    path: "/viewAnswer/:urlid",
-    element: <ProtectedRoute><ViewAnswerPage /></ProtectedRoute>,
-  },
-  {
-    path: "/patientSummary/:patientId",
-    element: <ProtectedRoute><PatientSummary /></ProtectedRoute>,
+    element: <Layout />,
+    children: [
+      {
+        path: "/sign-in",
+        element: <SignInPage />,
+      },
+      {
+        path: "/",
+        element: <ProtectedRoute><App /></ProtectedRoute>,
+      },
+      {
+        path: "/patients",
+        element: <ProtectedRoute><PatientsPage /></ProtectedRoute>,
+      },
+      {
+        path: "/questionaries",
+        element: <ProtectedRoute><QuestionariesPage /></ProtectedRoute>,
+      },
+      {
+        path: "/viewAnswer/:urlid",
+        element: <ProtectedRoute><ViewAnswerPage /></ProtectedRoute>,
+      },
+      {
+        path: "/patientSummary/:patientId",
+        element: <ProtectedRoute><PatientSummary /></ProtectedRoute>,
+      },
+    ],
   },
 ]);
 

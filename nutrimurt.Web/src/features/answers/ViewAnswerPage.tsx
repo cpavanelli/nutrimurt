@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@clerk/clerk-react';
 import { answersApi } from './pyApi';
 import type { PatientLink } from './types';
-import TopHeader from '../../components/TopHeader';
 import DiaryAnswer from './DiaryAnswer';
 
 export default function ViewAnswerPage() {
@@ -43,20 +42,17 @@ export default function ViewAnswerPage() {
   }
 
   return (
-    <main className="relative isolate min-h-screen overflow-hidden bg-slate-950 text-white">
-      <div className="absolute left-1/2 top-10 -z-10 h-96 w-96 -translate-x-1/2 rounded-full bg-teal-800/20 blur-3xl" />
-      <div className="mx-auto flex min-h-screen max-w-6xl flex-col px-6 pb-16 pt-10 lg:px-10">
-        <TopHeader />
-        <div className="mt-4">
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            className="inline-flex items-center text-sm text-slate-400 hover:text-slate-200"
-          >
-            Voltar
-          </button>
-        </div>
-        <section className="space-y-6 relative rounded-3xl border border-white/10 bg-gradient-to-b from-white/10 via-slate-900/60 to-slate-950 p-6 shadow-2xl">
+    <div className="mx-auto max-w-6xl px-6 pb-16 pt-10 lg:px-10">
+      <div className="mb-4">
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className="inline-flex items-center text-sm text-slate-400 hover:text-slate-200"
+        >
+          Voltar
+        </button>
+      </div>
+      <section className="space-y-6 relative rounded-3xl border border-white/10 bg-gradient-to-b from-white/10 via-slate-900/60 to-slate-950 p-6 shadow-2xl">
           {!patientLink?.questionnary && <p className="text-slate-400">Carregando questionario...</p>}
           {isQuestionary && patientLink?.questionnary && (
             <>
@@ -103,8 +99,7 @@ export default function ViewAnswerPage() {
             </>
           )}
         </section>
-      </div>
-    </main>
+    </div>
   );
 }
 

@@ -1,5 +1,4 @@
 import type { PatientLink, PatientWithLinks } from './types';
-import TopHeader from '../../components/TopHeader';
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { usePatientsApi } from './api';
@@ -65,17 +64,14 @@ export default function PatientSummary() {
   }, [patientId]);
 
   return (
-    <main className="relative isolate min-h-screen overflow-hidden bg-slate-950 text-white">
-      <div className="absolute left-1/2 top-10 -z-10 h-96 w-96 -translate-x-1/2 rounded-full bg-teal-800/20 blur-3xl" />
-      <div className="mx-auto flex min-h-screen max-w-6xl flex-col px-6 pb-16 pt-10 lg:px-10">
-        <TopHeader />
-        <div className="mt-4">
-          <Link to="/" className="inline-flex items-center text-sm text-slate-400 hover:text-slate-200">
-            Voltar
-          </Link>
-        </div>
+    <div className="mx-auto max-w-6xl px-6 pb-16 pt-10 lg:px-10">
+      <div className="mb-4">
+        <Link to="/" className="inline-flex items-center text-sm text-slate-400 hover:text-slate-200">
+          Voltar
+        </Link>
+      </div>
 
-        <section className="grid flex-1 gap-6 py-8">
+      <section className="grid gap-6">
           <div className="relative rounded-3xl border border-white/10 bg-gradient-to-b from-white/10 via-slate-900/60 to-slate-950 p-6 shadow-2xl ">
             <div className="mb-6 flex items-center justify-between text-xs uppercase tracking-[0.4em] text-slate-300">
               <span>Resumo do paciente</span>
@@ -127,11 +123,11 @@ export default function PatientSummary() {
                 <span>
                   <Link
                     to={`/viewAnswer/${u.urlId}`}
-                    className="rounded-full bg-emerald-500 px-5 py-2 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5 hover:bg-emerald-400"
+                    className="rounded border border-slate-500/60 bg-slate-500/10 px-3 py-1.5 text-sm font-medium text-slate-300 transition hover:bg-slate-500/20"
                   >Ver</Link>
                 </span>
                 <span>
-                  <button type="button" className="text-blue-400 hover:underline focus:outline-none"
+                  <button type="button" className="rounded border border-slate-500/60 bg-slate-500/10 px-3 py-1.5 text-sm font-medium text-slate-300 transition hover:bg-slate-500/20"
                     onClick={async () => {
                       try {
                         const result = await copyOrShareLink(`${appOrigin}/answer/${u.urlId}`);
@@ -188,11 +184,11 @@ export default function PatientSummary() {
                 <span>
                   <Link
                     to={`/viewAnswer/${u.urlId}`}
-                    className="rounded-full bg-emerald-500 px-5 py-2 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5 hover:bg-emerald-400"
+                    className="rounded border border-slate-500/60 bg-slate-500/10 px-3 py-1.5 text-sm font-medium text-slate-300 transition hover:bg-slate-500/20"
                   >Ver</Link>
                 </span>
                 <span>
-                  <button type="button" className="text-blue-400 hover:underline focus:outline-none"
+                  <button type="button" className="rounded border border-slate-500/60 bg-slate-500/10 px-3 py-1.5 text-sm font-medium text-slate-300 transition hover:bg-slate-500/20"
                     onClick={async () => {
                       try {
                         const result = await copyOrShareLink(`${appOrigin}/answer/${u.urlId}`);
@@ -222,8 +218,7 @@ export default function PatientSummary() {
             ))}
           </div>
         </section>
-      </div>
-    </main>
+    </div>
   );
 }
 
