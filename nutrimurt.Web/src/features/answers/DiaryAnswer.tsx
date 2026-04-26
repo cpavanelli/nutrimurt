@@ -6,6 +6,10 @@ import { ApiError } from '../../lib/apiClient';
 import { answersApi } from './pyApi';
 import type { PatientLink, DiaryEntry, DiaryDayInput } from './types';
 import { MEAL_TYPE_LABELS, MEAL_TYPES } from './types';
+import Card from '../../components/ui/Card';
+import Button from '../../components/ui/Button';
+import MealLabel from '../../components/ui/MealLabel';
+import { Icon } from '../../components/ui/Icon';
 
 interface Props {
   patientLink: PatientLink | null;
@@ -15,7 +19,7 @@ interface Props {
 function formatDate(dateStr: string): string {
   const [year, month, day] = dateStr.split('-');
   const date = new Date(Number(year), Number(month) - 1, Number(day));
-  return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  return date.toLocaleDateString('pt-BR', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
 function sortDays(days: DiaryDayInput[]): DiaryDayInput[] {
@@ -37,9 +41,7 @@ function groupByMealType(entries: DiaryDayInput['entries']) {
   const groups: { mealType: number; entries: DiaryDayInput['entries'] }[] = [];
   for (const mt of MEAL_TYPES) {
     const matching = entries.filter((e) => e.mealType === mt);
-    if (matching.length > 0) {
-      groups.push({ mealType: mt, entries: matching });
-    }
+    if (matching.length > 0) groups.push({ mealType: mt, entries: matching });
   }
   return groups;
 }
@@ -72,10 +74,7 @@ export default function DiaryAnswer({ patientLink, readOnly = false }: Props) {
     } else {
       newDayStr = new Date().toISOString().split('T')[0];
     }
-    setDays((prev) => {
-      const updated = [...prev, { date: newDayStr, entries: [] }];
-      return sortDays(updated);
-    });
+    setDays((prev) => sortDays([...prev, { date: newDayStr, entries: [] }]));
     setCurrentDayIndex(days.length);
   };
 
@@ -87,15 +86,13 @@ export default function DiaryAnswer({ patientLink, readOnly = false }: Props) {
 
     serverEntries.forEach((entry) => {
       const date = entry.date.split('T')[0];
-      if (!entriesByDate[date]) {
-        entriesByDate[date] = [];
-      }
+      if (!entriesByDate[date]) entriesByDate[date] = [];
       entriesByDate[date].push({
         date,
         mealType: entry.mealType,
         time: normalizeTime(entry.time),
         food: entry.food,
-        amount: entry.amount
+        amount: entry.amount,
       });
     });
 
@@ -123,7 +120,7 @@ export default function DiaryAnswer({ patientLink, readOnly = false }: Props) {
     mealType: 1,
     time: null,
     food: '',
-    amount: ''
+    amount: '',
   });
 
   const hasRequiredEntryFields = entryDraft.food && entryDraft.amount;
@@ -139,7 +136,7 @@ export default function DiaryAnswer({ patientLink, readOnly = false }: Props) {
       mealType: selectedMealType,
       time: null,
       food: entryDraft.food,
-      amount: entryDraft.amount
+      amount: entryDraft.amount,
     };
 
     setDays((prev) =>
@@ -183,12 +180,7 @@ export default function DiaryAnswer({ patientLink, readOnly = false }: Props) {
       );
       return sortDays(updated);
     });
-    // After sorting, find where this day ended up
-    const sorted = sortDays(
-      days.map((d, i) =>
-        i === index ? { ...d, date: newDate } : d
-      )
-    );
+    const sorted = sortDays(days.map((d, i) => (i === index ? { ...d, date: newDate } : d)));
     const newIdx = sorted.findIndex((d) => d.date === newDate);
     setCurrentDayIndex(newIdx >= 0 ? newIdx : 0);
   };
@@ -206,65 +198,66 @@ export default function DiaryAnswer({ patientLink, readOnly = false }: Props) {
           time: toIsoDateTime(day.date, entry.time),
           food: entry.food,
           amount: entry.amount,
-          patientDiaryId: formPatientLink.diaryId
+          patientDiaryId: formPatientLink.diaryId,
         }))
       );
 
       await answersApi.savePatientDiary(formPatientLink);
-
       setStatus('success');
-      toast.success('Diario enviado com sucesso');
+      toast.success('Diário enviado com sucesso');
     } catch (err) {
       setStatus('error');
       console.error('Error saving answers', err);
       if (err instanceof ApiError && err.status === 409) {
         toast.error(err.message || 'Você atingiu o número máximo de entradas por dia.');
       } else {
-        toast.error('Falha ao enviar diario. Tente novamente.');
+        toast.error('Falha ao enviar diário. Tente novamente.');
       }
     }
   };
 
   return (
-    <main className="relative isolate min-h-screen overflow-hidden bg-slate-950 text-white">
-      <div className="absolute left-1/2 top-10 -z-10 h-96 w-96 -translate-x-1/2 rounded-full bg-teal-800/20 blur-3xl" />
-      <div className="mx-auto flex min-h-screen max-w-6xl flex-col gap-6 px-6 pb-16 pt-10 lg:px-10">
-        <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-sm uppercase tracking-[0.3em] text-emerald-300">Nutrimurt</p>
-            <h1 className="text-2xl font-semibold">Diario alimentar</h1>
-            <p className="text-sm text-slate-400">
-              {patientLink?.diary.name ? `Diario: ${patientLink.diary.name}` : 'Registre cada refeicao do dia.'}
-            </p>
-          </div>
-        </header>
+    <main className="min-h-screen bg-surface-base px-6 py-8 text-ink-primary lg:px-10">
+      <div className="mx-auto flex max-w-6xl flex-col gap-6">
         {readOnly && (
-          <div>
-            <button
-              type="button"
-              onClick={() => navigate(-1)}
-              className="inline-flex items-center text-sm text-slate-400 hover:text-slate-200"
-            >
-              Voltar
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-1.5 text-sm text-ink-secondary transition hover:text-ink-primary"
+          >
+            <Icon name="arrowLeft" size={16} />
+            Voltar
+          </button>
         )}
 
-        <section className="rounded-3xl border border-white/10 bg-gradient-to-b from-white/10 via-slate-900/60 to-slate-950 p-6 shadow-2xl">
-          {!readOnly && (
-            <div className="flex flex-wrap gap-2 border-b border-white/10 pb-4">
-              {days.map((day, index) => (
+        <div>
+          <div className="mb-1 text-[12px] font-semibold uppercase tracking-[0.08em] text-accent-text">
+            NUTRIMURT
+          </div>
+          <h1 className="text-[22px] font-semibold">Diário Alimentar</h1>
+          <p className="mt-1 text-sm text-ink-secondary">
+            {patientLink?.diary?.name
+              ? `Diário: ${patientLink.diary.name}`
+              : 'Registre cada refeição do dia.'}
+          </p>
+        </div>
+
+        {!readOnly && (
+          <Card>
+            <div className="mb-3 text-sm font-semibold">Dias do diário</div>
+            <div className="flex flex-wrap gap-2">
+              {days.map((day, index) =>
                 index === currentDayIndex ? (
                   <div
                     key={`${day.date}-${index}`}
-                    className="inline-flex items-center rounded-xl border border-emerald-300/40 bg-emerald-500/15 px-3 py-1"
+                    className="inline-flex items-center rounded-full border border-accent bg-accent px-3 py-1"
                   >
                     <input
                       type="date"
                       value={day.date}
                       onChange={(e) => handleDateChange(index, e.target.value)}
                       aria-label={`Selecionar data do dia ${formatDate(day.date)}`}
-                      className="rounded-lg bg-transparent text-sm font-medium text-white outline-none [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:invert"
+                      className="rounded-lg bg-transparent text-[13px] font-medium text-[#0b0f1a] outline-none [color-scheme:light] [&::-webkit-calendar-picker-indicator]:cursor-pointer"
                     />
                   </div>
                 ) : (
@@ -272,197 +265,142 @@ export default function DiaryAnswer({ patientLink, readOnly = false }: Props) {
                     key={`${day.date}-${index}`}
                     type="button"
                     onClick={() => setCurrentDayIndex(index)}
-                    className="rounded-xl bg-slate-800/50 px-3 py-1 text-sm font-medium text-slate-300 transition hover:bg-slate-700/50"
+                    className="rounded-full border border-edge-soft bg-transparent px-3.5 py-1 text-[13px] font-medium text-ink-secondary transition hover:bg-surface-elevated"
                   >
                     {formatDate(day.date)}
                   </button>
                 )
-              ))}
+              )}
 
               <button
                 type="button"
                 onClick={addDiaryDay}
                 disabled={!canAddNewDay}
-                className="rounded-xl border border-emerald-300/40 bg-emerald-400/10 px-4 py-2 text-sm font-semibold text-emerald-200 transition hover:bg-emerald-400/20 disabled:cursor-not-allowed disabled:opacity-40"
+                className="rounded-full border border-accent-mid bg-transparent px-3.5 py-1 text-[13px] font-medium text-accent-text transition hover:bg-accent-dim disabled:cursor-not-allowed disabled:opacity-40"
               >
                 + Adicionar dia
               </button>
             </div>
-          )}
+          </Card>
+        )}
 
-          <div className="mt-6 space-y-6">
-            {!readOnly && (
-              <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
-                <h2 className="mb-3 text-lg font-semibold">Adicionar refeicao</h2>
-                <div className="flex flex-col gap-3">
-                  <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                    <span className="hidden text-sm text-slate-300 sm:inline">Refeicao:</span>
-                    {MEAL_TYPES.map((mt) => (
-                      <button
-                        key={mt}
-                        type="button"
-                        onClick={() => setSelectedMealType(mt)}
-                        className={`rounded-xl px-2 py-1 text-xs font-medium transition sm:px-3 sm:py-1.5 sm:text-sm ${
-                          selectedMealType === mt
-                            ? 'bg-emerald-500 text-white'
-                            : 'bg-slate-800/50 text-slate-300 hover:bg-slate-700/50'
-                        }`}
-                      >
-                        {MEAL_TYPE_LABELS[mt]}
-                      </button>
-                    ))}
-                  </div>
-
-                  <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
-                    <input
-                      type="text"
-                      placeholder="Alimento (ex: Whey)"
-                      value={entryDraft.food}
-                      onChange={(e) => setEntryDraft((prev) => ({ ...prev, food: e.target.value }))}
-                      className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white placeholder:text-slate-500 sm:w-auto sm:min-w-[220px] sm:flex-1"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Quantidade (ex: 1 scoop)"
-                      value={entryDraft.amount}
-                      onChange={(e) => setEntryDraft((prev) => ({ ...prev, amount: e.target.value }))}
-                      className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white placeholder:text-slate-500 sm:w-auto sm:min-w-[180px] sm:flex-1"
-                    />
-                    <button
-                      type="button"
-                      onClick={addEntry}
-                      disabled={!hasRequiredEntryFields}
-                      className="w-full rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:bg-emerald-900/50 sm:w-auto"
-                    >
-                      <span className="sm:hidden">+ Adicionar</span>
-                      <span className="hidden sm:inline">Adicionar entrada ao dia</span>
-                    </button>
-                  </div>
-                </div>
-              </section>
-            )}
-
-            <section className="space-y-3 rounded-2xl border border-white/10 bg-slate-900/60 p-4">
-              {days.length === 0 && (
-                <div className="rounded-xl border border-slate-700 bg-slate-950/70 p-3 text-sm text-slate-500">
-                  Sem entradas neste diario.
-                </div>
-              )}
-              {/* Mobile: show selected day only (or all days stacked in readOnly) */}
-              <div className="space-y-6 sm:hidden">
-                {(readOnly ? days : currentDay ? [currentDay] : []).map((day, idx) => {
-                  const dayIndex = readOnly ? idx : currentDayIndex;
-                  const mealGroups = groupByMealType(sortEntries(day.entries));
-                  return (
-                    <div key={`${day.date}-${dayIndex}`} className="space-y-3">
-                      <p className="text-sm font-semibold text-emerald-300">{formatDate(day.date)}</p>
-                      {mealGroups.length === 0 ? (
-                        <div className="rounded-xl border border-slate-700 bg-slate-950/70 p-3 text-sm text-slate-500">
-                          Sem entradas neste dia.
-                        </div>
-                      ) : (
-                        mealGroups.map((group) => (
-                          <div key={group.mealType} className="space-y-2">
-                            <p className="text-xs font-semibold uppercase tracking-wider text-amber-300/80">
-                              {MEAL_TYPE_LABELS[group.mealType]}
-                            </p>
-                            {group.entries.map((entry, entryIndex) => {
-                              const globalIndex = day.entries.indexOf(entry);
-                              return (
-                                <article
-                                  key={`${entry.mealType}-${entry.food}-${entryIndex}`}
-                                  className="space-y-2 rounded-xl border border-slate-700 bg-slate-950/70 p-3"
-                                >
-                                  {entry.time && (
-                                    <p className="text-sm text-slate-400">{entry.time}</p>
-                                  )}
-                                  <h3 className="font-semibold text-emerald-200">{entry.food}</h3>
-                                  <p className="text-sm text-slate-400">{entry.amount}</p>
-                                  {!readOnly && (
-                                    <button
-                                      type="button"
-                                      onClick={() => removeEntry(dayIndex, globalIndex)}
-                                      className="text-xs font-medium text-rose-300 transition hover:text-rose-200"
-                                    >
-                                      Remover entrada
-                                    </button>
-                                  )}
-                                </article>
-                              );
-                            })}
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  );
-                })}
+        {!readOnly && (
+          <Card>
+            <div className="mb-4 text-sm font-semibold">Adicionar Refeição</div>
+            <div className="mb-3.5">
+              <div className="mb-2 text-xs text-ink-secondary">Refeição:</div>
+              <div className="flex flex-wrap gap-2">
+                {MEAL_TYPES.map((mt) => (
+                  <button
+                    key={mt}
+                    type="button"
+                    onClick={() => setSelectedMealType(mt)}
+                    className={[
+                      'rounded-full border px-3.5 py-1.5 text-[13px] font-medium transition',
+                      selectedMealType === mt
+                        ? 'border-accent bg-accent text-[#0b0f1a]'
+                        : 'border-edge-soft text-ink-secondary hover:bg-surface-elevated',
+                    ].join(' ')}
+                  >
+                    {MEAL_TYPE_LABELS[mt]}
+                  </button>
+                ))}
               </div>
+            </div>
+            <div className="grid items-end gap-3 sm:grid-cols-[1fr_1fr_auto]">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[13px] font-medium text-ink-secondary">Alimento</label>
+                <input
+                  type="text"
+                  placeholder="ex: Frango grelhado"
+                  value={entryDraft.food}
+                  onChange={(e) => setEntryDraft((prev) => ({ ...prev, food: e.target.value }))}
+                  className="rounded-lg border border-edge-soft bg-surface-elevated px-3.5 py-2.5 text-sm outline-none transition focus:border-accent-mid"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[13px] font-medium text-ink-secondary">Quantidade</label>
+                <input
+                  type="text"
+                  placeholder="ex: 200g"
+                  value={entryDraft.amount}
+                  onChange={(e) => setEntryDraft((prev) => ({ ...prev, amount: e.target.value }))}
+                  className="rounded-lg border border-edge-soft bg-surface-elevated px-3.5 py-2.5 text-sm outline-none transition focus:border-accent-mid"
+                />
+              </div>
+              <Button onClick={addEntry} disabled={!hasRequiredEntryFields} className="h-[41px]">
+                Adicionar
+              </Button>
+            </div>
+          </Card>
+        )}
 
-              {/* Desktop: multi-column grid */}
-              <div
-                className="hidden sm:grid gap-4"
-                style={{ gridTemplateColumns: `repeat(${Math.max(days.length, 1)}, minmax(0, 1fr))` }}
+        <div
+          className="grid gap-4"
+          style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}
+        >
+          {days.length === 0 && (
+            <Card className="text-sm text-ink-tertiary">Sem entradas neste diário.</Card>
+          )}
+          {days.map((day, dayIndex) => {
+            const mealGroups = groupByMealType(sortEntries(day.entries));
+            return (
+              <Card
+                key={`${day.date}-${dayIndex}`}
+                className="flex flex-col gap-3"
               >
-                {days.map((day, dayIndex) => {
-                  const mealGroups = groupByMealType(sortEntries(day.entries));
-                  return (
-                    <div key={`${day.date}-${dayIndex}`} className="space-y-3">
-                      <p className="text-sm font-semibold text-emerald-300">{formatDate(day.date)}</p>
-                      {mealGroups.length === 0 ? (
-                        <div className="rounded-xl border border-slate-700 bg-slate-950/70 p-3 text-sm text-slate-500">
-                          Sem entradas neste dia.
-                        </div>
-                      ) : (
-                        mealGroups.map((group) => (
-                          <div key={group.mealType} className="space-y-2">
-                            <p className="text-xs font-semibold uppercase tracking-wider text-amber-300/80">
-                              {MEAL_TYPE_LABELS[group.mealType]}
-                            </p>
-                            {group.entries.map((entry, entryIndex) => {
-                              const globalIndex = day.entries.indexOf(entry);
-                              return (
-                                <article
-                                  key={`${entry.mealType}-${entry.food}-${entryIndex}`}
-                                  className="space-y-2 rounded-xl border border-slate-700 bg-slate-950/70 p-3"
-                                >
-                                  {entry.time && (
-                                    <p className="text-sm text-slate-400">{entry.time}</p>
-                                  )}
-                                  <h3 className="font-semibold text-emerald-200">{entry.food}</h3>
-                                  <p className="text-sm text-slate-400">{entry.amount}</p>
-                                  {!readOnly && (
-                                    <button
-                                      type="button"
-                                      onClick={() => removeEntry(dayIndex, globalIndex)}
-                                      className="text-xs font-medium text-rose-300 transition hover:text-rose-200"
-                                    >
-                                      Remover entrada
-                                    </button>
-                                  )}
-                                </article>
-                              );
-                            })}
+                <div className="text-[13px] font-semibold text-ink-secondary">
+                  {formatDate(day.date)}
+                </div>
+                {mealGroups.length === 0 ? (
+                  <div className="rounded-lg border border-edge-soft bg-surface-elevated px-3.5 py-3 text-sm text-ink-tertiary">
+                    Sem entradas neste dia.
+                  </div>
+                ) : (
+                  mealGroups.map((group) => (
+                    <div key={group.mealType} className="flex flex-col gap-2">
+                      {group.entries.map((entry, entryIndex) => {
+                        const globalIndex = day.entries.indexOf(entry);
+                        return (
+                          <div
+                            key={`${entry.mealType}-${entry.food}-${entryIndex}`}
+                            className="rounded-lg border border-edge-soft bg-surface-elevated px-3.5 py-3"
+                          >
+                            <MealLabel mealType={entry.mealType} className="mb-1.5 block" />
+                            {entry.time && (
+                              <div className="text-xs text-ink-tertiary">{entry.time}</div>
+                            )}
+                            <div className="text-sm font-semibold">{entry.food}</div>
+                            <div className="mt-0.5 text-xs text-ink-secondary">{entry.amount}</div>
+                            {!readOnly && (
+                              <button
+                                type="button"
+                                onClick={() => removeEntry(dayIndex, globalIndex)}
+                                className="mt-1.5 text-xs font-medium text-danger transition hover:opacity-80"
+                              >
+                                Remover entrada
+                              </button>
+                            )}
                           </div>
-                        ))
-                      )}
+                        );
+                      })}
                     </div>
-                  );
-                })}
-              </div>
-            </section>
-          </div>
+                  ))
+                )}
+              </Card>
+            );
+          })}
+        </div>
 
-          {!readOnly && (
-            <button
-              type="button"
-              onClick={onSubmit}
-              disabled={totalEntries === 0 || status === 'submitting'}
-              className="mt-6 w-full rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:bg-emerald-900/50"
-            >
-              {status === 'submitting' ? 'Enviando...' : 'Salvar diario'}
-            </button>
-          )}
-        </section>
+        {!readOnly && (
+          <Button
+            onClick={onSubmit}
+            disabled={totalEntries === 0 || status === 'submitting'}
+            className="w-full py-3.5 text-[15px] font-semibold"
+          >
+            {status === 'submitting' ? 'Enviando...' : 'Salvar Diário'}
+          </Button>
+        )}
       </div>
     </main>
   );

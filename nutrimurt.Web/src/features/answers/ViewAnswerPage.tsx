@@ -4,6 +4,8 @@ import { useAuth } from '@clerk/clerk-react';
 import { answersApi } from './pyApi';
 import type { PatientLink } from './types';
 import DiaryAnswer from './DiaryAnswer';
+import Card from '../../components/ui/Card';
+import { Icon } from '../../components/ui/Icon';
 
 export default function ViewAnswerPage() {
   const { urlid } = useParams<{ urlid: string }>();
@@ -18,15 +20,11 @@ export default function ViewAnswerPage() {
     setLoading(true);
     getToken()
       .then((token) => answersApi.getPatientLinkStaff(urlid, token))
-      .then((data) => {
-        setPatientLink(data);
-      })
+      .then((data) => setPatientLink(data))
       .catch((error) => {
         console.error('Error fetching patient link:', error);
       })
-      .finally(() => {
-        setLoading(false);
-      });
+      .finally(() => setLoading(false));
   }, [urlid, getToken]);
 
   const type = (patientLink as any)?.type;
@@ -34,7 +32,7 @@ export default function ViewAnswerPage() {
   const isDiary = type === 'diary' || type === 2;
 
   if (loading) {
-    return <main className="min-h-screen bg-slate-950 p-6 text-slate-300">Carregando...</main>;
+    return <div className="flex-1 p-8 text-ink-secondary">Carregando...</div>;
   }
 
   if (isDiary) {
@@ -42,64 +40,79 @@ export default function ViewAnswerPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-6 pb-16 pt-10 lg:px-10">
-      <div className="mb-4">
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          className="inline-flex items-center text-sm text-slate-400 hover:text-slate-200"
-        >
-          Voltar
-        </button>
-      </div>
-      <section className="space-y-6 relative rounded-3xl border border-white/10 bg-gradient-to-b from-white/10 via-slate-900/60 to-slate-950 p-6 shadow-2xl">
-          {!patientLink?.questionnary && <p className="text-slate-400">Carregando questionario...</p>}
+    <div className="flex-1 overflow-auto p-8">
+      <button
+        type="button"
+        onClick={() => navigate(-1)}
+        className="mb-6 flex items-center gap-1.5 text-sm text-ink-secondary transition hover:text-ink-primary"
+      >
+        <Icon name="arrowLeft" size={16} />
+        Voltar
+      </button>
+
+      <div className="mx-auto max-w-[640px]">
+        <div className="mb-2 text-[12px] font-semibold uppercase tracking-[0.08em] text-accent-text">
+          NUTRIMURT
+        </div>
+        <Card>
+          {!patientLink?.questionnary && (
+            <p className="text-ink-secondary">Carregando questionário...</p>
+          )}
           {isQuestionary && patientLink?.questionnary && (
             <>
-              <header className="mb-6 border-b border-white/10 pb-4">
-                <h1 className="text-3xl font-semibold text-white">{patientLink.questionnary?.name}</h1>
-              </header>
-              {patientLink.questionnary.questions.map((question) => (
-                <section key={question.id} className="space-y-2">
-                  <h2 className="text-slate-100 font-semibold uppercase tracking-wide">{question.questionText}</h2>
-                  {question.questionType === 1 && (
-                    <div className="flex flex-col gap-2 text-sm text-slate-300">
-                      <span>{question.answer?.answer}</span>
+              <h1 className="mb-5 border-b border-edge-soft pb-5 text-[22px] font-bold">
+                {patientLink.questionnary?.name}
+              </h1>
+              <div className="flex flex-col gap-6">
+                {patientLink.questionnary.questions.map((question, i) => (
+                  <div key={question.id}>
+                    <div className="mb-2.5 text-[12px] font-bold uppercase tracking-[0.1em] text-ink-tertiary">
+                      Pergunta {i + 1}: {question.questionText}
                     </div>
-                  )}
-                  {question.questionType === 2 && (
-                    <div className="flex flex-wrap gap-2 text-sm text-slate-300">
-                      <span>{question.answer?.answer === 'Y' ? 'Sim' : 'Nao'}</span>
-                    </div>
-                  )}
-                  {question.questionType === 3 && (
-                    <div className="flex flex-wrap gap-2 text-sm text-slate-300">
-                      {question.alternatives?.map((alt) => {
-                        const checked = (question.answerAlternatives ?? []).includes(alt.alternative);
-                        return (
-                          <label key={alt.id} className="inline-flex items-center gap-1">
+                    {question.questionType === 1 && (
+                      <div className="rounded-lg border border-edge-soft bg-surface-elevated px-3.5 py-2.5 text-sm">
+                        {question.answer?.answer || '-'}
+                      </div>
+                    )}
+                    {question.questionType === 2 && (
+                      <div className="text-sm text-ink-primary">
+                        {question.answer?.answer === 'Y' ? 'Sim' : 'Não'}
+                      </div>
+                    )}
+                    {question.questionType === 3 && (
+                      <div className="flex flex-wrap gap-3 text-sm">
+                        {question.alternatives?.map((alt) => {
+                          const checked = (question.answerAlternatives ?? []).includes(
+                            alt.alternative
+                          );
+                          return (
                             <span
-                              className={[
-                                'inline-flex h-5 w-5 items-center justify-center rounded border',
-                                checked
-                                  ? 'border-emerald-400 bg-emerald-500 text-slate-950'
-                                  : 'border-slate-600 bg-slate-800 text-transparent',
-                              ].join(' ')}
+                              key={alt.id}
+                              className="inline-flex items-center gap-2"
                             >
-                              x
+                              <span
+                                className={[
+                                  'inline-flex h-5 w-5 items-center justify-center rounded border',
+                                  checked
+                                    ? 'border-accent bg-accent text-[#0b0f1a]'
+                                    : 'border-edge-medium bg-surface-elevated text-transparent',
+                                ].join(' ')}
+                              >
+                                <Icon name="check" size={12} strokeWidth={2.4} />
+                              </span>
+                              {alt.alternative}
                             </span>
-                            {alt.alternative}
-                          </label>
-                        );
-                      })}
-                    </div>
-                  )}
-                </section>
-              ))}
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
             </>
           )}
-        </section>
+        </Card>
+      </div>
     </div>
   );
 }
-

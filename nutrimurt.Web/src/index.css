@@ -2,6 +2,55 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --bg-base: #0b0f1a;
+  --bg-panel: #111827;
+  --bg-card: #151d2e;
+  --bg-card-hover: #1a2236;
+  --bg-elevated: #1e2a40;
+  --border: rgba(255, 255, 255, 0.07);
+  --border-med: rgba(255, 255, 255, 0.12);
+  --accent: oklch(0.72 0.17 168);
+  --accent-dim: oklch(0.72 0.17 168 / 0.15);
+  --accent-mid: oklch(0.72 0.17 168 / 0.4);
+  --accent-text: oklch(0.72 0.17 168);
+  --danger: oklch(0.65 0.19 25);
+  --danger-dim: oklch(0.65 0.19 25 / 0.15);
+  --danger-mid: oklch(0.65 0.19 25 / 0.3);
+  --warning: oklch(0.78 0.15 80);
+  --text-primary: rgba(255, 255, 255, 0.92);
+  --text-secondary: rgba(255, 255, 255, 0.5);
+  --text-tertiary: rgba(255, 255, 255, 0.28);
+  --sidebar-w: 220px;
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-med);
+  border-radius: 99px;
+}
+
 @layer utilities {
   .modal-scrollbar {
     scrollbar-gutter: stable;

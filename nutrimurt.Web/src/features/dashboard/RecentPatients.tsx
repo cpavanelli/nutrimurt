@@ -1,63 +1,63 @@
-import { useEffect, useState } from 'react';
-import { useDashboardApi } from './api';
 import { Link } from 'react-router-dom';
-import type { Patient } from '../patients/types';
+import Card from '../../components/ui/Card';
+import Avatar from '../../components/ui/Avatar';
+import { Icon } from '../../components/ui/Icon';
 import Spinner from '../../components/Spinner';
+import type { RecentPatient } from './types';
 
+type Props = {
+  patients: RecentPatient[];
+  loading?: boolean;
+};
 
-export default function RecentlyAnswered() {
-  const dashboardApi = useDashboardApi();
-  const [patients, setPatients] = useState<Patient[]>([]);
-  const [loading, setLoading] = useState(true);
-
-
-
-  async function load() {
-    try {
-      setLoading(true);
-      const data = await dashboardApi.listRecentPatients();
-      setPatients(data);
-    } catch (err) {
-      console.log('Failed to load listRecentPatients');
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    load();
-  }, []);
-
+export default function RecentPatients({ patients, loading = false }: Props) {
   return (
-
-
-    <div className="relative rounded-3xl border border-white/10 bg-gradient-to-b from-white/10 via-slate-900/60 to-slate-950 p-6 shadow-2xl">
-      <div className="mb-6 flex items-center justify-between text-xs uppercase tracking-[0.4em] text-slate-300">
-        <span>Pacientes recentes</span>
+    <Card>
+      <div className="mb-4 flex items-center justify-between">
+        <span className="text-[12px] font-semibold uppercase tracking-[0.08em] text-ink-tertiary">
+          Pacientes Recentes
+        </span>
+        <Link
+          to="/patients"
+          className="flex items-center gap-1 text-[13px] text-accent-text transition hover:opacity-80"
+        >
+          Ver todos
+          <Icon name="chevronRight" size={14} />
+        </Link>
       </div>
       {loading ? (
-        <div className="flex justify-center py-8">
+        <div className="flex justify-center py-6">
           <Spinner size="md" />
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2">
-          {patients.map((p) => (
+        <div
+          className="grid gap-3"
+          style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))' }}
+        >
+          {patients.slice(0, 4).map((p) => (
             <div
               key={p.id}
-              className="flex flex-col gap-3 rounded-xl border border-white/10 bg-slate-900/60 p-4 shadow"
+              className="flex items-center gap-3 rounded-[10px] border border-edge-soft bg-surface-elevated px-4 py-3.5"
             >
-              <div className="text-lg font-semibold text-white">{p.name}</div>
-              <div className="min-w-0 break-all text-sm text-slate-300">{p.email}</div>
-              <span>
-                <Link
-                  to={`/patientSummary/${p.id}`}
-                  className="rounded-full bg-emerald-500 px-5 py-2 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5 hover:bg-emerald-400"
-                >Ver</Link>
-              </span>
+              <Avatar name={p.name} size="md" />
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-sm font-medium">{p.name}</div>
+                <div className="truncate text-xs text-ink-secondary">{p.email}</div>
+              </div>
+              <Link
+                to={`/patientSummary/${p.id}`}
+                className="text-ink-tertiary transition hover:text-ink-primary"
+                aria-label="Ver paciente"
+              >
+                <Icon name="chevronRight" size={16} />
+              </Link>
             </div>
           ))}
+          {patients.length === 0 && (
+            <div className="text-sm text-ink-tertiary">Nenhum paciente cadastrado</div>
+          )}
         </div>
       )}
-    </div>
+    </Card>
   );
 }

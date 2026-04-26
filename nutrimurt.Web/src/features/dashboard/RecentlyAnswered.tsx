@@ -1,69 +1,65 @@
-import { useEffect, useState } from 'react';
-import { useDashboardApi } from './api';
-import type { DashboardPatientLink } from './types';
 import { Link } from 'react-router-dom';
+import type { DashboardPatientLink } from './types';
+import Card from '../../components/ui/Card';
+import Button from '../../components/ui/Button';
 import Spinner from '../../components/Spinner';
 
+type Props = {
+  links: DashboardPatientLink[];
+  loading?: boolean;
+};
 
-export default function RecentlyAnswered() {
-  const dashboardApi = useDashboardApi();
-  const [patientLinks, setPatientLinks] = useState<DashboardPatientLink[]>([]);
-  const [loading, setLoading] = useState(true);
-
-
-
-  async function load() {
-    try {
-      setLoading(true);
-      const data = await dashboardApi.listRecentPatientLinks();
-      setPatientLinks(data.filter((link) => link.type === 1));
-    } catch (err) {
-      console.log('Failed to load listRecentPatientLinks');
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    load();
-  }, []);
-
+export default function RecentlyAnswered({ links, loading = false }: Props) {
   return (
-
-
-    <div className="relative rounded-3xl border border-white/10 bg-gradient-to-b from-white/10 via-slate-900/60 to-slate-950 p-6 shadow-2xl ">
-      <div className="mb-6 flex items-center justify-between text-xs uppercase tracking-[0.4em] text-slate-300 ">
-        <span>Questionários respondidos</span>
+    <Card>
+      <div className="mb-4 text-[12px] font-semibold uppercase tracking-[0.08em] text-ink-tertiary">
+        Questionários Respondidos
       </div>
       {loading ? (
-        <div className="flex justify-center py-8">
+        <div className="flex justify-center py-6">
           <Spinner size="md" />
         </div>
       ) : (
-        <div className="max-w-3xl mx-auto shadow-md rounded-xl p-6 border-white/10 bg-slate-900/60 p-4 shadow">
-          <div className="grid grid-cols-4 font-semibold border-b pb-2 ">
-            <span>Nome</span>
-            <span>Questionário</span>
-            <span>Data</span>
-            <span></span>
-          </div>
-
-          {patientLinks.map((u) => (
-            <div key={u.id} className="grid grid-cols-4 items-center py-3 border-b bg-slate-900/60 p-4 shadow">
-              <span>{u.patientName}</span>
-              <span>{u.questionnaryName}</span>
-              <span>{u.lastAnswered}</span>
-              <span>
-                <Link
-                  to={`/viewAnswer/${u.urlId}`}
-                  className="rounded-full bg-emerald-500 px-5 py-2 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5 hover:bg-emerald-400"
-                >Ver</Link>
-              </span>
-            </div>
-          ))}
-        </div>
+        <table className="w-full text-[13px]">
+          <thead>
+            <tr className="text-ink-tertiary">
+              {['Paciente', 'Questionário', 'Data', ''].map((h) => (
+                <th
+                  key={h}
+                  className="pb-2.5 pr-2 text-left text-xs font-medium"
+                >
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {links.map((u) => (
+              <tr key={u.id} className="border-t border-edge-soft">
+                <td className="py-2.5 pr-2">{u.patientName}</td>
+                <td className="py-2.5 pr-2 text-ink-secondary">{u.questionnaryName}</td>
+                <td className="whitespace-nowrap py-2.5 pr-2 font-mono text-[11px] text-ink-tertiary">
+                  {u.lastAnswered ?? '-'}
+                </td>
+                <td className="py-2.5">
+                  <Link to={`/viewAnswer/${u.urlId}`}>
+                    <Button small variant="outline" icon="eye">
+                      Ver
+                    </Button>
+                  </Link>
+                </td>
+              </tr>
+            ))}
+            {links.length === 0 && (
+              <tr>
+                <td colSpan={4} className="py-6 text-center text-ink-tertiary">
+                  Nenhum questionário respondido ainda
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       )}
-    </div>
+    </Card>
   );
 }
-

@@ -1,10 +1,14 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import { ApiError, usePatientsApi } from './api';
 import type { Patient, PatientInput } from './types';
 import PatientForm from './PatientForm';
 import LoadingOverlay from '../../components/LoadingOverlay';
-import { toast } from 'react-toastify';
-import { useNavigate } from 'react-router-dom';
+import Card from '../../components/ui/Card';
+import Button from '../../components/ui/Button';
+import Avatar from '../../components/ui/Avatar';
+import { Icon } from '../../components/ui/Icon';
 
 export default function PatientsPage() {
   const navigate = useNavigate();
@@ -16,6 +20,7 @@ export default function PatientsPage() {
   const [selected, setSelected] = useState<Patient | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string[]> | null>(null);
+  const [search, setSearch] = useState('');
 
   async function load() {
     try {
@@ -74,7 +79,7 @@ export default function PatientsPage() {
   }
 
   async function handleDelete(id: number) {
-    if (!confirm('Delete this patient?')) return;
+    if (!confirm('Excluir este paciente?')) return;
     try {
       await patientsApi.remove(id);
       setPatients((prev) => prev.filter((p) => p.id !== id));
@@ -83,95 +88,136 @@ export default function PatientsPage() {
     }
   }
 
+  const filtered = patients.filter(
+    (p) =>
+      p.name.toLowerCase().includes(search.toLowerCase()) ||
+      p.email.toLowerCase().includes(search.toLowerCase())
+  );
+
   return (
     <>
-      <main className="mx-auto max-w-5xl px-6 py-8">
-        <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-2xl font-semibold">Pacientes</h1>
-          <button
-            onClick={openCreate}
-            className="rounded-full bg-emerald-500 px-5 py-2 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5 hover:bg-emerald-400"
-          >
-            + Novo Paciente
-          </button>
+      <div className="flex-1 overflow-auto p-8">
+        <div className="mb-7 flex items-start justify-between">
+          <div>
+            <h1 className="text-[22px] font-semibold">Pacientes</h1>
+            <p className="mt-1 text-sm text-ink-secondary">
+              {patients.length} paciente{patients.length !== 1 ? 's' : ''} cadastrado
+              {patients.length !== 1 ? 's' : ''}
+            </p>
+          </div>
+          <Button icon="plus" onClick={openCreate}>
+            Novo Paciente
+          </Button>
         </div>
+
+        <div className="relative mb-5">
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar paciente..."
+            className="w-full max-w-[360px] rounded-lg border border-edge-soft bg-surface-card px-3.5 py-2.5 text-sm text-ink-primary outline-none transition focus:border-accent-mid"
+          />
+        </div>
+
         {loading ? (
-          <p className="text-slate-400">Carregando pacientes...</p>
+          <p className="text-ink-secondary">Carregando pacientes...</p>
         ) : error ? (
-          <p className="text-red-400">{error}</p>
+          <p className="text-danger">{error}</p>
         ) : (
-          <div className="overflow-hidden rounded-lg border border-slate-800 shadow">
-            <table className="min-w-full divide-y divide-slate-800 bg-slate-900">
-              <thead className="bg-slate-900/70">
+          <Card className="overflow-hidden p-0">
+            <table className="w-full text-sm">
+              <thead className="bg-surface-elevated">
                 <tr>
-                  {['Name', 'Email', 'Phone', 'Created'].map((header) => (
-                    <th key={header} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">
-                      {header === 'Created' ? 'Criado em' : header}
+                  {['Nome', 'Email', 'Telefone', 'Cadastrado em'].map((h) => (
+                    <th
+                      key={h}
+                      className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-tertiary"
+                    >
+                      {h}
                     </th>
                   ))}
-                  <th className="px-4 py-3"></th>
+                  <th className="px-5 py-3" />
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800">
-                {patients.map((patient) => (
-                  <tr key={patient.id}>
-                    <td className="px-4 py-3">{patient.name}</td>
-                    <td className="px-4 py-3">{patient.email}</td>
-                    <td className="px-4 py-3">{patient.phone}</td>
-                    <td className="px-4 py-3 text-sm text-slate-400">
-                      {new Date(patient.createdAt).toLocaleDateString()}
+              <tbody>
+                {filtered.map((p) => (
+                  <tr
+                    key={p.id}
+                    className="border-t border-edge-soft transition-colors hover:bg-surface-card-hover"
+                  >
+                    <td className="px-5 py-3.5">
+                      <div className="flex items-center gap-2.5">
+                        <Avatar name={p.name} size="sm" />
+                        <span className="font-medium">{p.name}</span>
+                      </div>
                     </td>
-                    <td className="px-4 py-3 text-right text-sm">
-                      <button
-                        onClick={() => openEdit(patient)}
-                        className="mr-2 rounded border border-slate-500/60 bg-slate-500/10 px-3 py-1.5 text-sm font-medium text-slate-300 transition hover:bg-slate-500/20"
-                      >
-                        Editar
-                      </button>
-                      <button
-                        onClick={() => handleDelete(patient.id)}
-                        className="mr-2 rounded border border-rose-500/60 bg-rose-500/10 px-3 py-1.5 text-sm font-medium text-rose-400 transition hover:bg-rose-500/20"
-                      >
-                        Deletar
-                      </button>
-                      <button
-                        onClick={() => navigate(`/patientSummary/${patient.id}`)}
-                        className="rounded border border-sky-500/60 bg-sky-500/10 px-3 py-1.5 text-sm font-medium text-sky-400 transition hover:bg-sky-500/20"
-                      >
-                        Resumo
-                      </button>
+                    <td className="px-5 py-3.5 text-ink-secondary">{p.email}</td>
+                    <td className="px-5 py-3.5 font-mono text-[13px] text-ink-secondary">{p.phone}</td>
+                    <td className="px-5 py-3.5 font-mono text-xs text-ink-tertiary">
+                      {p.createdAt ? new Date(p.createdAt).toLocaleDateString() : '-'}
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <div className="flex justify-end gap-2">
+                        <Button small variant="ghost" icon="edit" onClick={() => openEdit(p)}>
+                          Editar
+                        </Button>
+                        <Button small variant="danger" icon="trash" onClick={() => handleDelete(p.id)}>
+                          Deletar
+                        </Button>
+                        <Button
+                          small
+                          variant="outline"
+                          icon="eye"
+                          onClick={() => navigate(`/patientSummary/${p.id}`)}
+                        >
+                          Resumo
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))}
-                {patients.length === 0 && (
+                {filtered.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="px-4 py-6 text-center text-slate-400">
-                      Sem pacientes ainda. Clique em "Novo Paciente" para adicionar um.
+                    <td colSpan={5} className="px-5 py-10 text-center text-ink-tertiary">
+                      {patients.length === 0
+                        ? 'Sem pacientes ainda. Clique em "Novo Paciente" para adicionar um.'
+                        : 'Nenhum paciente encontrado'}
                     </td>
                   </tr>
                 )}
               </tbody>
             </table>
-          </div>
+          </Card>
         )}
-      </main>
+      </div>
 
       {modal && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 p-4">
-          <div className="flex min-h-full items-start justify-center py-6">
-            <div className="relative modal-scrollbar w-full max-w-lg max-h-[calc(100vh-3rem)] overflow-y-scroll rounded-xl border border-slate-800 bg-slate-900 p-6 shadow-2xl">
-              <LoadingOverlay visible={submitting} label="Salvando..." />
-              <h2 className="text-xl font-semibold mb-4">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/70 p-4 backdrop-blur-sm"
+          onClick={(e) => e.target === e.currentTarget && setModal(null)}
+        >
+          <div className="modal-scrollbar relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-edge-medium bg-surface-panel p-7 shadow-2xl">
+            <LoadingOverlay visible={submitting} label="Salvando..." />
+            <div className="mb-6 flex items-center justify-between">
+              <h2 className="text-lg font-semibold">
                 {modal === 'edit' ? 'Editar Paciente' : 'Novo Paciente'}
               </h2>
-              <PatientForm
-                initial={selected}
-                submitting={submitting}
-                onSubmit={handleSubmit}
-                errors={formErrors || undefined}
-                onCancel={() => setModal(null)}
-              />
+              <button
+                type="button"
+                onClick={() => setModal(null)}
+                className="text-ink-secondary transition hover:text-ink-primary"
+                aria-label="Fechar"
+              >
+                <Icon name="x" size={20} />
+              </button>
             </div>
+            <PatientForm
+              initial={selected}
+              submitting={submitting}
+              onSubmit={handleSubmit}
+              errors={formErrors || undefined}
+              onCancel={() => setModal(null)}
+            />
           </div>
         </div>
       )}

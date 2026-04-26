@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react';
+import { toast } from 'react-toastify';
 import { useQuestionariesApi } from './api';
 import type { Questionary, QuestionaryInput } from './types';
 import QuestionarrieForm from './QuestionarrieForm';
 import LoadingOverlay from '../../components/LoadingOverlay';
-import { toast } from 'react-toastify';
+import Card from '../../components/ui/Card';
+import Button from '../../components/ui/Button';
+import { Icon } from '../../components/ui/Icon';
 
 export default function QuestionarryPage() {
   const questionariesApi = useQuestionariesApi();
@@ -71,81 +74,99 @@ export default function QuestionarryPage() {
 
   return (
     <>
-      <main className="mx-auto max-w-5xl px-6 py-8">
-        <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-2xl font-semibold">Questionários</h1>
-          <button
-            onClick={openCreate}
-            className="rounded-full bg-emerald-500 px-5 py-2 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5 hover:bg-emerald-400"
-          >
-            + Novo Questionário
-          </button>
+      <div className="flex-1 overflow-auto p-8">
+        <div className="mb-7 flex items-start justify-between">
+          <div>
+            <h1 className="text-[22px] font-semibold">Questionários</h1>
+            <p className="mt-1 text-sm text-ink-secondary">
+              {questionaries.length} questionário{questionaries.length !== 1 ? 's' : ''} cadastrado
+              {questionaries.length !== 1 ? 's' : ''}
+            </p>
+          </div>
+          <Button icon="plus" onClick={openCreate}>
+            Novo Questionário
+          </Button>
         </div>
+
         {loading ? (
-          <p className="text-slate-400">Loading questionaries...</p>
+          <p className="text-ink-secondary">Carregando questionários...</p>
         ) : error ? (
-          <p className="text-red-400">{error}</p>
+          <p className="text-danger">{error}</p>
         ) : (
-          <div className="overflow-hidden rounded-lg border border-slate-800 shadow">
-            <table className="min-w-full divide-y divide-slate-800 bg-slate-900">
-              <thead className="bg-slate-900/70">
+          <Card className="overflow-hidden p-0">
+            <table className="w-full text-sm">
+              <thead className="bg-surface-elevated">
                 <tr>
-                  {['Nome'].map((header) => (
-                    <th key={header} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">
-                      {header}
-                    </th>
-                  ))}
-                  <th className="px-4 py-3"></th>
+                  <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-tertiary">
+                    Nome
+                  </th>
+                  <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-tertiary">
+                    Criado em
+                  </th>
+                  <th className="px-5 py-3" />
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800">
-                {questionaries.map((questionary) => (
-                  <tr key={questionary.id}>
-                    <td className="px-4 py-3">{questionary.name}</td>
-                    <td className="px-4 py-3 text-right text-sm">
-                      <button
-                        onClick={() => openEdit(questionary)}
-                        className="mr-2 rounded border border-slate-500/60 bg-slate-500/10 px-3 py-1.5 text-sm font-medium text-slate-300 transition hover:bg-slate-500/20"
-                      >
-                        Editar
-                      </button>
-                      <button
-                        onClick={() => handleDelete(questionary.id)}
-                        className="rounded border border-rose-500/60 bg-rose-500/10 px-3 py-1.5 text-sm font-medium text-rose-400 transition hover:bg-rose-500/20"
-                      >
-                        Excluir
-                      </button>
+              <tbody>
+                {questionaries.map((q) => (
+                  <tr
+                    key={q.id}
+                    className="border-t border-edge-soft transition-colors hover:bg-surface-card-hover"
+                  >
+                    <td className="px-5 py-3.5 font-medium">{q.name}</td>
+                    <td className="px-5 py-3.5 font-mono text-xs text-ink-tertiary">
+                      {q.createdAt ? new Date(q.createdAt).toLocaleDateString() : '-'}
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <div className="flex justify-end gap-2">
+                        <Button small variant="ghost" icon="edit" onClick={() => openEdit(q)}>
+                          Editar
+                        </Button>
+                        <Button small variant="danger" icon="trash" onClick={() => handleDelete(q.id)}>
+                          Excluir
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))}
                 {questionaries.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="px-4 py-6 text-center text-slate-400">
-                      Sem Questionários ainda. Clique em “Novo Questionário” para adicionar um.
+                    <td colSpan={3} className="px-5 py-10 text-center text-ink-tertiary">
+                      Sem Questionários ainda. Clique em "Novo Questionário" para adicionar um.
                     </td>
                   </tr>
                 )}
               </tbody>
             </table>
-          </div>
+          </Card>
         )}
-      </main>
+      </div>
 
       {modal && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 p-4">
-          <div className="flex min-h-full items-start justify-center py-6">
-            <div className="relative modal-scrollbar w-full max-w-3xl max-h-[calc(100vh-3rem)] overflow-y-scroll rounded-xl border border-slate-800 bg-slate-900 p-6 shadow-2xl">
-              <LoadingOverlay visible={submitting} label="Salvando..." />
-              <h2 className="text-xl font-semibold mb-4">
-              {modal === 'edit' ? 'Editar Questionário' : 'Novo Questionário'}
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/70 p-4 backdrop-blur-sm"
+          onClick={(e) => e.target === e.currentTarget && setModal(null)}
+        >
+          <div className="modal-scrollbar relative my-6 max-h-[calc(100vh-3rem)] w-full max-w-3xl overflow-y-auto rounded-2xl border border-edge-medium bg-surface-panel p-7 shadow-2xl">
+            <LoadingOverlay visible={submitting} label="Salvando..." />
+            <div className="mb-6 flex items-center justify-between">
+              <h2 className="text-lg font-semibold">
+                {modal === 'edit' ? 'Editar Questionário' : 'Novo Questionário'}
               </h2>
-              <QuestionarrieForm
-                initial={selected}
-                submitting={submitting}
-                onSubmit={handleSubmit}
-                onCancel={() => setModal(null)}
-              />
+              <button
+                type="button"
+                onClick={() => setModal(null)}
+                className="text-ink-secondary transition hover:text-ink-primary"
+                aria-label="Fechar"
+              >
+                <Icon name="x" size={20} />
+              </button>
             </div>
+            <QuestionarrieForm
+              initial={selected}
+              submitting={submitting}
+              onSubmit={handleSubmit}
+              onCancel={() => setModal(null)}
+            />
           </div>
         </div>
       )}

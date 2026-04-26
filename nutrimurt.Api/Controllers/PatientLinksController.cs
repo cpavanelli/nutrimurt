@@ -53,22 +53,6 @@ public class PatientLinksController : ControllerBase
         return Ok(links.Select(ToDto));
     }
 
-    [HttpGet("/api/patient-links/recent")]
-    public async Task<ActionResult<IEnumerable<PatientLinkDto>>> GetRecentPatientLinks()
-    {
-        var userId = User.GetUserId();
-        var links = await _context.PatientLinks
-            .Where(l => l.UserId == userId && l.LastAnswered != null)
-            .Include(l => l.Questionnary)
-            .Include(l => l.Diary)
-            .Include(l => l.Patient)
-            .OrderByDescending(l => l.LastAnswered)
-            .Take(100)
-            .ToListAsync();
-
-        return Ok(links.Select(ToDto));
-    }
-
     [HttpPost("send")]
     public async Task<ActionResult<IEnumerable<PatientLinkDto>>> SendLink(int patientId, [FromBody] SendPatientLinkRequest request)
     {

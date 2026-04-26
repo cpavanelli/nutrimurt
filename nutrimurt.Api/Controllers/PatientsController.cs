@@ -71,19 +71,6 @@ public class PatientsController : ControllerBase
         return Ok(patient);
     }
 
-    [HttpGet("/api/patients/recent")]
-    public async Task<ActionResult<IEnumerable<Patient>>> GetRecentPatients()
-    {
-        var userId = User.GetUserId();
-        var patients = await _context.Patients
-            .Where(p => p.UserId == userId)
-            .OrderByDescending(l => l.CreatedAt)
-            .Take(100)
-            .ToListAsync();
-
-        return Ok(patients);
-    }
-
     [HttpPost]
     public async Task<ActionResult<Patient>> CreatePatient(Patient patient)
     {
