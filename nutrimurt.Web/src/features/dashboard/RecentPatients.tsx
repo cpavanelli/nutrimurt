@@ -35,23 +35,21 @@ export default function RecentPatients({ patients, loading = false }: Props) {
           style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))' }}
         >
           {patients.slice(0, 4).map((p) => (
-            <div
+            <Link
               key={p.id}
-              className="flex items-center gap-3 rounded-[10px] border border-edge-soft bg-surface-elevated px-4 py-3.5"
+              to={`/patientSummary/${p.id}`}
+              className="group flex items-center gap-3 rounded-[10px] border border-edge-soft bg-surface-elevated px-4 py-3.5 transition hover:border-edge-medium hover:bg-surface-card-hover focus:outline-none focus:ring-2 focus:ring-accent"
+              aria-label={`Ver paciente ${p.name}`}
             >
               <Avatar name={p.name} size="md" />
               <div className="min-w-0 flex-1">
                 <div className="truncate text-sm font-medium">{p.name}</div>
                 <div className="truncate text-xs text-ink-secondary">{p.email}</div>
               </div>
-              <Link
-                to={`/patientSummary/${p.id}`}
-                className="text-ink-tertiary transition hover:text-ink-primary"
-                aria-label="Ver paciente"
-              >
+              <span className="text-ink-tertiary transition group-hover:text-ink-primary">
                 <Icon name="chevronRight" size={16} />
-              </Link>
-            </div>
+              </span>
+            </Link>
           ))}
           {patients.length === 0 && (
             <div className="text-sm text-ink-tertiary">Nenhum paciente cadastrado</div>

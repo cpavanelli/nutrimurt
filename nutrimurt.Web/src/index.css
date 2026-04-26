@@ -24,6 +24,29 @@
   --sidebar-w: 220px;
   --radius: 12px;
   --radius-sm: 8px;
+  --transition-theme: background 0.25s, color 0.25s, border-color 0.25s;
+  color-scheme: dark;
+}
+
+:root.light {
+  --bg-base: #dde3ed;
+  --bg-panel: #e8ecf4;
+  --bg-card: #edf0f7;
+  --bg-card-hover: #e2e7f0;
+  --bg-elevated: #d8dde8;
+  --border: rgba(0, 0, 0, 0.09);
+  --border-med: rgba(0, 0, 0, 0.15);
+  --accent: oklch(0.55 0.17 168);
+  --accent-dim: oklch(0.55 0.17 168 / 0.12);
+  --accent-mid: oklch(0.55 0.17 168 / 0.38);
+  --accent-text: oklch(0.38 0.17 168);
+  --danger: oklch(0.52 0.19 25);
+  --danger-dim: oklch(0.52 0.19 25 / 0.1);
+  --danger-mid: oklch(0.52 0.19 25 / 0.22);
+  --text-primary: rgba(0, 0, 0, 0.85);
+  --text-secondary: rgba(0, 0, 0, 0.52);
+  --text-tertiary: rgba(0, 0, 0, 0.32);
+  color-scheme: light;
 }
 
 html,
@@ -37,6 +60,18 @@ body {
   background: var(--bg-base);
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
+  transition: var(--transition-theme);
+}
+
+html {
+  background: var(--bg-base);
+}
+
+* {
+  transition:
+    background-color 0.2s,
+    border-color 0.2s,
+    color 0.15s;
 }
 
 ::-webkit-scrollbar {

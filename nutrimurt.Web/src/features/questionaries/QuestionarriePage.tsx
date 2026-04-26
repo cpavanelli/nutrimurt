@@ -83,7 +83,7 @@ export default function QuestionarryPage() {
               {questionaries.length !== 1 ? 's' : ''}
             </p>
           </div>
-          <Button icon="plus" onClick={openCreate}>
+          <Button small variant="outline" icon="plus" onClick={openCreate}>
             Novo Questionário
           </Button>
         </div>

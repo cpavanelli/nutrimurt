@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { ApiError, usePatientsApi } from './api';
@@ -21,6 +21,7 @@ export default function PatientsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string[]> | null>(null);
   const [search, setSearch] = useState('');
+  const pointerStartedOnOverlay = useRef(false);
 
   async function load() {
     try {
@@ -88,6 +89,22 @@ export default function PatientsPage() {
     }
   }
 
+  
+    function handleModalOverlayPointerDown(e: React.MouseEvent) {
+      pointerStartedOnOverlay.current = e.target === e.currentTarget;
+    }
+
+    function handleModalOverlayPointerUp(e: React.MouseEvent) {
+      if (
+        pointerStartedOnOverlay.current &&
+        e.target === e.currentTarget
+      ) {
+        setModal(null);
+      }
+
+      pointerStartedOnOverlay.current = false;
+    }
+
   const filtered = patients.filter(
     (p) =>
       p.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -105,7 +122,7 @@ export default function PatientsPage() {
               {patients.length !== 1 ? 's' : ''}
             </p>
           </div>
-          <Button icon="plus" onClick={openCreate}>
+          <Button small variant="outline" icon="plus" onClick={openCreate}>
             Novo Paciente
           </Button>
         </div>
@@ -162,7 +179,7 @@ export default function PatientsPage() {
                           Editar
                         </Button>
                         <Button small variant="danger" icon="trash" onClick={() => handleDelete(p.id)}>
-                          Deletar
+                          Excluir
                         </Button>
                         <Button
                           small
@@ -194,7 +211,13 @@ export default function PatientsPage() {
       {modal && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/70 p-4 backdrop-blur-sm"
-          onClick={(e) => e.target === e.currentTarget && setModal(null)}
+          onPointerDown={(e) => {
+            handleModalOverlayPointerDown(e);
+          }}
+          onPointerUp={(e) => {
+            handleModalOverlayPointerUp(e);
+          }}
+          // onClick={(e) => e.target === e.currentTarget && setModal(null)}
         >
           <div className="modal-scrollbar relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-edge-medium bg-surface-panel p-7 shadow-2xl">
             <LoadingOverlay visible={submitting} label="Salvando..." />

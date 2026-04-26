@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { Patient, PatientInput } from './types';
 import { IMaskInput } from 'react-imask';
+import Button from '../../components/ui/Button';
 interface Props {
     initial?: Patient | null;
     onSubmit(payload: PatientInput): void;
@@ -120,20 +121,19 @@ export default function PatientForm({ initial, onSubmit, onCancel, submitting, e
             </div>
 
             <div className="flex justify-end gap-3 pt-4">
-                <button
+                <Button
                     type="button"
                     onClick={onCancel}
-                    className="rounded-full border border-slate-600 px-5 py-2 text-sm font-semibold text-slate-200 shadow transition hover:-translate-y-0.5 hover:bg-slate-800"
+                    variant="outline"
                 >
                     Cancelar
-                </button>
-                <button
+                </Button>
+                <Button
                     type="submit"
                     disabled={submitting}
-                    className="rounded-full bg-emerald-500 px-5 py-2 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5 hover:bg-emerald-400 disabled:opacity-60"
                 >
                     {submitting ? 'Salvando...' : 'Salvar'}
-                </button>
+                </Button>
             </div>
         </form>
     );
