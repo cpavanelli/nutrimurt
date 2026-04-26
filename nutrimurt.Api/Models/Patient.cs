@@ -10,8 +10,9 @@ public class Patient
 
     public string UserId { get; set; } = string.Empty;
 
+    [Required, MaxLength(200)]
     public string Name { get; set; } = string.Empty;
-    [Required, EmailAddress]
+    [Required, EmailAddress, MaxLength(255)]
     public string Email { get; set; } = string.Empty;
 
     [RegularExpression(@"^\(\d{2}\)\d{5}-\d{4}$",

@@ -1,5 +1,7 @@
-import { SignedIn, UserButton } from '@clerk/clerk-react';
+import { SignedIn, UserButton, useUser } from '@clerk/clerk-react';
+import { useMemo } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
+import { ClerkUserProfile } from '../lib/clerkUserProfile';
 import { Icon, type IconName } from './ui/Icon';
 
 type NavItem = {
@@ -42,6 +44,10 @@ function ThemeToggle({ dark, onToggleTheme }: SidebarProps) {
 
 export default function Sidebar({ dark, onToggleTheme }: SidebarProps) {
   const location = useLocation();
+  const { user } = useUser();
+  const profile = useMemo(() => ClerkUserProfile.fromUser(user), [user]);
+  const displayName = profile.getDisplayName();
+  const email = profile.getEmail();
 
   function isActiveItem(item: NavItem) {
     if (item.to === '/') return location.pathname === '/';
@@ -87,14 +93,20 @@ export default function Sidebar({ dark, onToggleTheme }: SidebarProps) {
 
           <div className="flex flex-col gap-2.5 border-t border-edge-soft px-3 py-4">
             <ThemeToggle dark={dark} onToggleTheme={onToggleTheme} />
-            <div className="flex items-center gap-2.5">
+            <div className="flex min-w-0 items-center gap-2.5">
               <UserButton
                 appearance={{ elements: { userButtonAvatarBox: 'w-8 h-8' } }}
                 afterSignOutUrl="/sign-in"
               />
-              <div className="text-[13px] font-medium">
-                Nutricionista
-                <div className="text-[11px] font-normal text-ink-tertiary">Admin</div>
+              <div className="min-w-0 text-[13px] font-medium">
+                <div className="truncate" title={displayName}>
+                  {displayName}
+                </div>
+                {email && email !== displayName ? (
+                  <div className="truncate text-[11px] font-normal text-ink-tertiary" title={email}>
+                    {email}
+                  </div>
+                ) : null}
               </div>
             </div>
           </div>

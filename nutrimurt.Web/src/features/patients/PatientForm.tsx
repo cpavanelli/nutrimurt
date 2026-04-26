@@ -42,6 +42,14 @@ export default function PatientForm({ initial, onSubmit, onCancel, submitting, e
         }));
     }
 
+    function blockNonIntegerInput(event: React.FormEvent<HTMLInputElement>) {
+        const nativeEvent = event.nativeEvent as InputEvent;
+
+        if (nativeEvent.data && !/^\d+$/.test(nativeEvent.data)) {
+            event.preventDefault();
+        }
+    }
+
     function handleSubmit(event: React.FormEvent) {
         event.preventDefault();
         onSubmit(form);
@@ -57,8 +65,8 @@ export default function PatientForm({ initial, onSubmit, onCancel, submitting, e
                         value={(form as any)[field]}
                         onChange={handleChange}
                         className="mt-1 w-full rounded border border-slate-700 bg-slate-900 px-3 py-2 text-white"
-                        // required={field !== 'phone'}
                         required={true}
+                        maxLength={field === 'email' ? 255 : 200}
                         type={field === 'email' ? 'email' : 'text'}
                     />
                     {errors?.[field] && <p className="mt-1 text-sm text-red-400">{errors[field][0]}</p>}
@@ -110,10 +118,14 @@ export default function PatientForm({ initial, onSubmit, onCancel, submitting, e
                     <div key={field}>
                         <label className="block text-sm font-medium text-slate-200 capitalize">{field == "weight"?"Peso" : "Altura"  }</label>
                         <input
-                            type="number"
+                            type="text"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                            maxLength={3}
                             name={field}
                             value={(form as any)[field] ?? 0}
                             onChange={handleChange}
+                            onBeforeInput={blockNonIntegerInput}
                             className="mt-1 w-full rounded border border-slate-700 bg-slate-900 px-3 py-2 text-white"
                         />
                     </div>
