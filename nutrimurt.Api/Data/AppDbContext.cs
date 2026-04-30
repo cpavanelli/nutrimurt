@@ -16,6 +16,8 @@ public class AppDbContext : DbContext
     public DbSet<PatientQuestionAnswerAlternative> PatientQuestionAnswerAlternatives => Set<PatientQuestionAnswerAlternative>();
     public DbSet<PatientDiary> PatientDiaries => Set<PatientDiary>();
     public DbSet<PatientDiaryEntry> PatientDiaryEntries => Set<PatientDiaryEntry>();
+    public DbSet<PatientMealPlan> PatientMealPlans => Set<PatientMealPlan>();
+    public DbSet<PatientMealPlanEntry> PatientMealPlanEntries => Set<PatientMealPlanEntry>();
     public DbSet<UserEmailSendCounter> UserEmailSendCounters => Set<UserEmailSendCounter>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -23,5 +25,6 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Patient>().HasIndex(p => p.UserId);
         modelBuilder.Entity<Questionnaries>().HasIndex(q => q.UserId);
         modelBuilder.Entity<PatientLink>().HasIndex(l => l.UserId);
+        modelBuilder.Entity<PatientMealPlan>().HasIndex(p => p.UserId);
     }
 }

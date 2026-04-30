@@ -8,4 +8,6 @@ public static class Guardrails
     public const int MaxAlternatives = 10;
     public const int MaxLinksPerPatient = 10;
     public const int MaxEmailSendsPerDay = 10;
+    public const int MaxMealPlans = 20;
+    public const int MaxMealPlanEntriesPerPlan = 50;
 }

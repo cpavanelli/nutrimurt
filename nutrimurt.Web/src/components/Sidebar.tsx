@@ -19,6 +19,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/', label: 'Dashboard', icon: 'grid' },
   { to: '/patients', label: 'Pacientes', icon: 'users' },
   { to: '/questionaries', label: 'Questionarios', icon: 'clipboard' },
+  { to: '/mealplans', label: 'Planos Alimentares', icon: 'utensils' },
 ];
 
 function ThemeToggle({ dark, onToggleTheme }: SidebarProps) {
@@ -53,6 +54,9 @@ export default function Sidebar({ dark, onToggleTheme }: SidebarProps) {
     if (item.to === '/') return location.pathname === '/';
     if (item.to === '/patients') {
       return location.pathname === '/patients' || location.pathname.startsWith('/patientSummary/');
+    }
+    if (item.to === '/mealplans') {
+      return location.pathname.startsWith('/mealplans');
     }
     return location.pathname === item.to;
   }

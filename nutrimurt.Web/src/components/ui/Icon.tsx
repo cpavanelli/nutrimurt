@@ -21,6 +21,7 @@ export const ICON_PATHS = {
   search: 'M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16zM21 21l-4.35-4.35',
   sun: 'M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10z',
   moon: 'M21 12.79A9 9 0 1 1 11.21 3c0 0-1.21 6.79 3.79 10.79S21 12.79 21 12.79z',
+  utensils: 'M3 2v7c0 1.66 1.34 3 3 3v10M9 2v7c0 1.66-1.34 3-3 3M14 2c-1.5 0-3 1-3 4v6h3v10M21 2v20',
 } as const;
 
 export type IconName = keyof typeof ICON_PATHS;

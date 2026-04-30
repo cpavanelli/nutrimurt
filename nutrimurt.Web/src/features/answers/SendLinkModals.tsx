@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@clerk/clerk-react';
 import { toast } from 'react-toastify';
 import LoadingOverlay from '../../components/LoadingOverlay';
@@ -24,6 +25,7 @@ export default function SendLinkModals({
   diaryLinks,
   onLinksUpdated,
 }: SendLinkModalsProps) {
+  const navigate = useNavigate();
   const { getToken } = useAuth();
   const patientsApi = usePatientsApi();
   const questionariesApi = useQuestionariesApi();
@@ -202,6 +204,15 @@ export default function SendLinkModals({
           className="w-full sm:w-auto"
         >
           Enviar Diario
+        </Button>
+        <Button
+          onClick={() => navigate(`/mealplans/new?patientId=${patient.id}`)}
+          variant="outline"
+          small
+          icon="utensils"
+          className="w-full sm:w-auto"
+        >
+          Enviar Plano Alimentar
         </Button>
       </div>
 

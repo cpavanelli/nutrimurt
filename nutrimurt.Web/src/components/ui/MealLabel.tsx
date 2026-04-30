@@ -1,6 +1,7 @@
+import type { ReactNode } from 'react';
 import { MEAL_TYPE_LABELS } from '../../features/answers/types';
 
-const MEAL_COLORS: Record<number, string> = {
+export const MEAL_COLORS: Record<number, string> = {
   1: 'oklch(0.78 0.14 80)',
   2: 'oklch(0.72 0.17 168)',
   3: 'oklch(0.72 0.17 55)',
@@ -11,9 +12,10 @@ const MEAL_COLORS: Record<number, string> = {
 type Props = {
   mealType: number;
   className?: string;
+  children?: ReactNode;
 };
 
-export default function MealLabel({ mealType, className = '' }: Props) {
+export default function MealLabel({ mealType, className = '', children }: Props) {
   return (
     <span
       className={[
@@ -22,7 +24,7 @@ export default function MealLabel({ mealType, className = '' }: Props) {
       ].join(' ')}
       style={{ color: MEAL_COLORS[mealType] ?? 'var(--accent-text)' }}
     >
-      {MEAL_TYPE_LABELS[mealType]}
+      {children ?? MEAL_TYPE_LABELS[mealType]}
     </span>
   );
 }

@@ -16,6 +16,9 @@ const QuestionariesPage = lazy(() => import('./features/questionaries/Questionar
 const AnswerPage = lazy(() => import('./features/answers/AnswerPage'));
 const ViewAnswerPage = lazy(() => import('./features/answers/ViewAnswerPage'));
 const PatientSummary = lazy(() => import('./features/patients/PatientSummary'));
+const MealPlansPage = lazy(() => import('./features/mealPlans/MealPlansPage'));
+const MealPlanForm = lazy(() => import('./features/mealPlans/MealPlanForm'));
+const MealPlanView = lazy(() => import('./features/mealPlans/MealPlanView'));
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
@@ -50,6 +53,22 @@ const router = createBrowserRouter([
       {
         path: "/patientSummary/:patientId",
         element: <ProtectedRoute><PatientSummary /></ProtectedRoute>,
+      },
+      {
+        path: "/mealplans",
+        element: <ProtectedRoute><MealPlansPage /></ProtectedRoute>,
+      },
+      {
+        path: "/mealplans/new",
+        element: <ProtectedRoute><MealPlanForm /></ProtectedRoute>,
+      },
+      {
+        path: "/mealplans/:id/edit",
+        element: <ProtectedRoute><MealPlanForm /></ProtectedRoute>,
+      },
+      {
+        path: "/mealplans/:id",
+        element: <ProtectedRoute><MealPlanView /></ProtectedRoute>,
       },
     ],
   },
