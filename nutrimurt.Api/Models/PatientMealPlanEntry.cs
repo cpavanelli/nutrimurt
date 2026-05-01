@@ -14,9 +14,11 @@ public class PatientMealPlanEntry
     public MealType MealType { get; set; }
 
     [Required]
+    [StringLength(100)]
     public string Food { get; set; } = string.Empty;
 
     [Required]
+    [StringLength(50)]
     public string Amount { get; set; } = string.Empty;
 
     public bool Substitution { get; set; }
