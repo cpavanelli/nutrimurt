@@ -25,13 +25,22 @@ public static class MealPlanPdfBuilder
 
     private record MealStyle(string Label, string TextColor, string Background, string BorderColor);
 
+    private static readonly MealType[] MealTypeOrder =
+    [
+        MealType.CafeDaManha,
+        MealType.Almoco,
+        MealType.CafeDaTarde,
+        MealType.Jantar,
+        MealType.Lanche
+    ];
+
     private static readonly Dictionary<MealType, MealStyle> Styles = new()
     {
-        [MealType.CafeDaManha] = new("Café da Manhã", "#1A7A5E", "#FDF6E3", "#70C4A8"),
+        [MealType.CafeDaManha] = new("Café da Manhã", "#1A7A5E", "#E8F5F0", "#70C4A8"),
         [MealType.Almoco]      = new("Almoço",        "#1A7A5E", "#E8F5F0", "#70C4A8"),
-        [MealType.CafeDaTarde] = new("Café da Tarde", "#1A7A5E", "#FDF3E3", "#70C4A8"),
-        [MealType.Jantar]      = new("Jantar",        "#1A7A5E", "#F0EBF8", "#70C4A8"),
-        [MealType.Lanche]      = new("Lanche",        "#1A7A5E", "#FAEAE8", "#70C4A8"),
+        [MealType.CafeDaTarde] = new("Café da Tarde", "#1A7A5E", "#E8F5F0", "#70C4A8"),
+        [MealType.Jantar]      = new("Jantar",        "#1A7A5E", "#E8F5F0", "#70C4A8"),
+        [MealType.Lanche]      = new("Lanche",        "#1A7A5E", "#E8F5F0", "#70C4A8"),
     };
 
     public static byte[] Build(PatientMealPlanDetailDto dto)
@@ -40,10 +49,10 @@ public static class MealPlanPdfBuilder
         {
             doc.Page(page =>
             {
-                page.Size(PageSizes.A4);
-                page.MarginVertical(14, Unit.Millimetre);
-                page.MarginHorizontal(16, Unit.Millimetre);
-                page.DefaultTextStyle(t => t.FontFamily(FontSans).FontSize(6).FontColor(TextPrimary));
+                page.Size(PageSizes.A4.Landscape());
+                page.MarginVertical(8, Unit.Millimetre);
+                page.MarginHorizontal(8, Unit.Millimetre);
+                page.DefaultTextStyle(t => t.FontFamily(FontSans).FontSize(5).FontColor(TextPrimary));
 
                 page.Header().Element(c => ComposeHeader(c, dto));
                 page.Content().Element(c => ComposeContent(c, dto));
@@ -55,7 +64,7 @@ public static class MealPlanPdfBuilder
     private static void ComposeHeader(IContainer container, PatientMealPlanDetailDto dto)
     {
         container
-            .PaddingBottom(18)
+            .PaddingBottom(10)
             .BorderBottom(2)
             .BorderColor(Accent)
             .Row(row =>
@@ -63,51 +72,50 @@ public static class MealPlanPdfBuilder
                 row.RelativeItem().Column(c =>
                 {
                     c.Item().Text("NUTRIMURT")
-                        .FontFamily(FontMono).FontSize(10).Bold()
+                        .FontFamily(FontMono).FontSize(8).Bold()
                         .FontColor(Accent).LetterSpacing(0.16f);
                     c.Item().PaddingTop(6).Text("Plano Alimentar")
-                        .FontSize(22).Bold().FontColor(TextPrimary);
+                        .FontSize(14).Bold().FontColor(TextPrimary);
                     c.Item().PaddingTop(2).Text(dto.PatientName)
-                        .FontSize(13).FontColor(TextSecondary);
+                        .FontSize(8).FontColor(TextSecondary);
                 });
 
-                row.ConstantItem(180).AlignRight().Column(c =>
+                row.ConstantItem(140).AlignRight().Column(c =>
                 {
                     c.Item().Text($"Emitido em {DateTime.Now:dd/MM/yyyy}")
-                        .FontSize(11).FontColor(TextSecondary);
+                        .FontSize(7).FontColor(TextSecondary);
                     c.Item().PaddingTop(4).Text("Portal do Nutricionista")
-                        .FontSize(11).FontColor(TextSecondary);
+                        .FontSize(7).FontColor(TextSecondary);
                 });
             });
     }
 
     private static void ComposeContent(IContainer container, PatientMealPlanDetailDto dto)
     {
-        container.PaddingVertical(20).Column(col =>
+        container.PaddingVertical(8).Column(col =>
         {
             col.Item().Element(c => ComposeSummary(c, dto));
 
-            var groups = dto.Entries
-                .GroupBy(e => e.MealType)
-                .OrderBy(g => (int)g.Key)
-                .ToList();
-
-            if (groups.Count == 0)
+            if (dto.Entries.Count == 0)
             {
-                col.Item().PaddingTop(40).AlignCenter()
+                col.Item().PaddingTop(20).AlignCenter()
                     .Text("Sem itens neste plano alimentar.")
-                    .FontSize(11).Italic().FontColor(TextSecondary);
+                    .FontSize(8).Italic().FontColor(TextSecondary);
                 return;
             }
 
-            col.Item().PaddingTop(24).Column(meals =>
+            var grouped = dto.Entries
+                .GroupBy(e => e.MealType)
+                .ToDictionary(g => g.Key, g => g.ToList());
+
+            col.Item().PaddingTop(10).Row(row =>
             {
-                foreach (var group in groups)
+                foreach (var mealType in MealTypeOrder)
                 {
-                    meals.Item()
-                        .PaddingBottom(14)
-                        .ShowEntire()
-                        .Element(s => ComposeMealSection(s, group.Key, group.ToList()));
+                    var entries = grouped.GetValueOrDefault(mealType, []);
+                    row.RelativeItem()
+                        .PaddingHorizontal(1)
+                        .Element(s => ComposeMealSection(s, mealType, entries));
                 }
             });
         });
@@ -128,12 +136,12 @@ public static class MealPlanPdfBuilder
     {
         var cell = row.RelativeItem();
         if (!lastCell) cell = cell.BorderRight(1).BorderColor(Border);
-        cell.Background(BgPanel).Padding(14).Column(c =>
+        cell.Background(BgPanel).Padding(6).Column(c =>
         {
             c.Item().Text(label)
-                .FontSize(8).Bold().LetterSpacing(0.12f).FontColor(TextTertiary);
-            c.Item().PaddingTop(5).Text(value)
-                .FontSize(13).SemiBold().FontColor(accent ? AccentText : TextPrimary);
+                .FontSize(5).Bold().LetterSpacing(0.08f).FontColor(TextTertiary);
+            c.Item().PaddingTop(2).Text(value)
+                .FontSize(7).SemiBold().FontColor(accent ? AccentText : TextPrimary);
         });
     }
 
@@ -149,21 +157,28 @@ public static class MealPlanPdfBuilder
             col.Item()
                 .Background(style.Background)
                 .Border(1).BorderColor(style.BorderColor)
-                .PaddingVertical(8).PaddingHorizontal(12)
+                .PaddingVertical(4).PaddingHorizontal(4)
                 .Row(r =>
                 {
-                    r.AutoItem().AlignMiddle().Width(8).Height(8).Background(style.TextColor);
-                    r.AutoItem().PaddingLeft(8).AlignMiddle()
+                    r.AutoItem().AlignMiddle().Width(5).Height(5).Background(style.TextColor);
+                    r.AutoItem().PaddingLeft(4).AlignMiddle()
                         .Text(style.Label.ToUpper(PtBr))
-                        .FontSize(10).Bold().LetterSpacing(0.12f).FontColor(style.TextColor);
+                        .FontSize(5).Bold().LetterSpacing(0.08f).FontColor(style.TextColor);
                     r.RelativeItem().AlignRight().AlignMiddle()
                         .Text($"{entries.Count} {(entries.Count == 1 ? "item" : "itens")}")
-                        .FontSize(10).FontColor(TextTertiary);
+                        .FontSize(5).FontColor(TextTertiary);
                 });
 
             // Items frame
             col.Item().Border(1).BorderColor(Border).BorderTop(0).Column(items =>
             {
+                if (entries.Count == 0)
+                {
+                    items.Item().PaddingVertical(4).PaddingHorizontal(4)
+                        .Text("Sem itens").FontSize(5).Italic().FontColor(TextSecondary);
+                    return;
+                }
+
                 bool needDivider = false;
                 foreach (var e in regular)
                 {
@@ -176,13 +191,13 @@ public static class MealPlanPdfBuilder
                     items.Item()
                         .BorderTop(needDivider ? 1 : 0).BorderColor(Border)
                         //.Background("#FFFFFF")
-                        .PaddingVertical(6).PaddingHorizontal(12)
+                        .PaddingVertical(4).PaddingHorizontal(4)
                         .Row(r =>
                         {
-                            r.AutoItem().AlignMiddle().Width(6).Height(6).Background(style.TextColor);
-                            r.AutoItem().PaddingLeft(6).AlignMiddle()
+                            r.AutoItem().AlignMiddle().Width(4).Height(4).Background(style.TextColor);
+                            r.AutoItem().PaddingLeft(4).AlignMiddle()
                                 .Text("SUBSTITUIÇÃO")
-                                .FontSize(9).Bold().LetterSpacing(0.12f).FontColor("#000000");
+                                .FontSize(5).Bold().LetterSpacing(0.08f).FontColor("#000000");
                         });
 
                     bool subDivider = false;
@@ -200,27 +215,27 @@ public static class MealPlanPdfBuilder
     {
         var c = container.Background("#FFFFFF");
         if (divider) c = c.BorderTop(1).BorderColor(Border);
-        c.PaddingVertical(9).PaddingHorizontal(12).Row(r =>
+        c.PaddingVertical(3).PaddingHorizontal(4).Row(r =>
         {
             r.RelativeItem().AlignMiddle()
-                .Text(entry.Food).FontSize(12).Medium();
-            r.AutoItem().AlignMiddle().PaddingLeft(16)
+                .Text(entry.Food).FontSize(5).Medium();
+            r.AutoItem().AlignMiddle().PaddingLeft(4)
                 .Background(BgElevated)
                 .Border(1).BorderColor(Border)
-                .PaddingHorizontal(10).PaddingVertical(3)
-                .Text(entry.Amount).FontFamily(FontMono).FontSize(10).FontColor(TextSecondary);
+                .PaddingHorizontal(4).PaddingVertical(1)
+                .Text(entry.Amount).FontFamily(FontMono).FontSize(4).FontColor(TextSecondary);
         });
     }
 
     private static void ComposeFooter(IContainer container, PatientMealPlanDetailDto dto)
     {
-        container.PaddingTop(10).BorderTop(1).BorderColor(Border).PaddingTop(6).Row(r =>
+        container.PaddingTop(4).BorderTop(1).BorderColor(Border).PaddingTop(4).Row(r =>
         {
             r.RelativeItem().Text("Nutrimurt — Portal do Nutricionista")
-                .FontSize(9).FontColor(TextTertiary);
+                .FontSize(6).FontColor(TextTertiary);
             r.RelativeItem().AlignRight()
                 .Text($"{dto.PatientName} · {dto.MealPlanDate.ToString("dd/MM/yyyy", PtBr)}")
-                .FontSize(9).FontColor(TextTertiary);
+                .FontSize(6).FontColor(TextTertiary);
         });
     }
 }
