@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Plano Alimentar — Nutrimurt</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --accent:      #1a7a5e;
+    --accent-dim:  #1a7a5e1a;
+    --accent-text: #145e48;
+    --bg:          #ffffff;
+    --bg-panel:    #f6f8fb;
+    --bg-elevated: #edf0f6;
+    --border:      rgba(0,0,0,0.09);
+    --text:        rgba(0,0,0,0.88);
+    --text-sec:    rgba(0,0,0,0.52);
+    --text-ter:    rgba(0,0,0,0.32);
+    --font:        'DM Sans', Arial, sans-serif;
+    --mono:        'DM Mono', monospace;
+
+    --c-manha:  #7c6a1a;
+    --c-almoco:  #1a7a5e;
+    --c-tarde:   #7a5a1a;
+    --c-jantar:  #4a1a8c;
+    --c-lanche:  #8c2a1a;
+
+    --bg-manha:  #fdf6e3;
+    --bg-almoco:  #e8f5f0;
+    --bg-tarde:   #fdf3e3;
+    --bg-jantar:  #f0ebf8;
+    --bg-lanche:  #faeae8;
+
+    --br-manha:  #d4c070;
+    --br-almoco:  #70c4a8;
+    --br-tarde:   #d4aa70;
+    --br-jantar:  #a870d4;
+    --br-lanche:  #d47070;
+  }
+
+  html { background: #e5e8ed; }
+  body {
+    font-family: var(--font);
+    -webkit-font-smoothing: antialiased;
+    background: #ffffff;
+    color: var(--text);
+    width: 794px;
+    min-height: 1123px;
+    margin: 0 auto;
+    padding: 56px 52px 72px;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-bottom: 20px;
+    border-bottom: 2px solid var(--accent);
+    margin-bottom: 28px;
+  }
+  .logo-mark {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .doc-title { font-size: 24px; font-weight: 700; color: var(--text); }
+  .doc-patient { font-size: 14px; color: var(--text-sec); margin-top: 4px; }
+  .header-meta { text-align: right; font-size: 12px; color: var(--text-sec); line-height: 2; }
+
+  /* ── SUMMARY ── */
+  .summary {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 32px;
+    background: var(--border);
+    gap: 1px;
+  }
+  .summary-cell { background: var(--bg-panel); padding: 14px 18px; }
+  .cell-label {
+    font-size: 9px; font-weight: 700;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--text-ter); margin-bottom: 5px;
+  }
+  .cell-value { font-size: 15px; font-weight: 600; color: var(--text); }
+  .cell-value.accent { color: var(--accent-text); }
+
+  /* ── MEAL SECTIONS ── */
+  .meal-section { margin-bottom: 18px; page-break-inside: avoid; break-inside: avoid; }
+
+  .meal-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    border-radius: 7px 7px 0 0;
+    border: 1px solid;
+  }
+  .meal-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .meal-name { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; }
+  .meal-count { font-size: 11px; color: var(--text-ter); margin-left: auto; }
+
+  .meal-items {
+    border: 1px solid var(--border);
+    border-top: none;
+    border-radius: 0 0 7px 7px;
+    overflow: hidden;
+  }
+  .meal-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 11px 16px;
+    background: #fff;
+  }
+  .meal-item + .meal-item { border-top: 1px solid var(--border); }
+  .item-food { font-size: 14px; font-weight: 500; }
+  .item-qty {
+    font-size: 12px;
+    font-family: var(--mono);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 3px 10px;
+    color: var(--text-sec);
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin-left: 16px;
+  }
+
+  /* Meal-specific colours */
+  .meal-manha  { background-color: var(--bg-manha);  border-color: var(--br-manha); }
+  .meal-almoco { background-color: var(--bg-almoco); border-color: var(--br-almoco); }
+  .meal-tarde  { background-color: var(--bg-tarde);  border-color: var(--br-tarde); }
+  .meal-jantar { background-color: var(--bg-jantar); border-color: var(--br-jantar); }
+  .meal-lanche { background-color: var(--bg-lanche); border-color: var(--br-lanche); }
+
+  .dot-manha  { background: var(--c-manha); }
+  .dot-almoco { background: var(--c-almoco); }
+  .dot-tarde  { background: var(--c-tarde); }
+  .dot-jantar { background: var(--c-jantar); }
+  .dot-lanche { background: var(--c-lanche); }
+
+  .name-manha  { color: var(--c-manha); }
+  .name-almoco { color: var(--c-almoco); }
+  .name-tarde  { color: var(--c-tarde); }
+  .name-jantar { color: var(--c-jantar); }
+  .name-lanche { color: var(--c-lanche); }
+
+  /* ── FOOTER ── */
+  .footer {
+    margin-top: 48px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--text-ter);
+  }
+
+  /* ── PRINT ── */
+  @media print {
+    html, body { background: #fff; }
+    body { width: 100%; padding: 14mm 16mm 18mm; margin: 0; }
+    .meal-section { page-break-inside: avoid; break-inside: avoid; }
+    .footer { position: fixed; bottom: 10mm; left: 16mm; right: 16mm; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── HEADER ── -->
+<div class="header">
+  <div>
+    <div class="logo-mark">Nutrimurt</div>
+    <div class="doc-title">Plano Alimentar</div>
+    <div class="doc-patient">Caio Pavanelli</div>
+  </div>
+  <div class="header-meta">
+    <div>Emitido em 20/04/2026</div>
+    <div>Portal do Nutricionista</div>
+  </div>
+</div>
+
+<!-- ── SUMMARY ── -->
+<div class="summary">
+  <div class="summary-cell">
+    <div class="cell-label">Paciente</div>
+    <div class="cell-value">Caio Pavanelli</div>
+  </div>
+  <div class="summary-cell">
+    <div class="cell-label">Data do Plano</div>
+    <div class="cell-value">20/04/2026</div>
+  </div>
+  <div class="summary-cell">
+    <div class="cell-label">Peso</div>
+    <div class="cell-value">82 kg</div>
+  </div>
+  <div class="summary-cell">
+    <div class="cell-label">Total Calorias</div>
+    <div class="cell-value accent">1.800 kcal</div>
+  </div>
+</div>
+
+<!-- ── CAFÉ DA MANHÃ ── -->
+<div class="meal-section">
+  <div class="meal-header meal-manha">
+    <div class="meal-dot dot-manha"></div>
+    <span class="meal-name name-manha">Café da Manhã</span>
+    <span class="meal-count">2 itens</span>
+  </div>
+  <div class="meal-items">
+    <div class="meal-item">
+      <span class="item-food">Aveia com leite desnatado</span>
+      <span class="item-qty">1 xícara (80g)</span>
+    </div>
+    <div class="meal-item">
+      <span class="item-food">Banana nanica</span>
+      <span class="item-qty">1 unidade</span>
+    </div>
+  </div>
+</div>
+
+<!-- ── ALMOÇO ── -->
+<div class="meal-section">
+  <div class="meal-header meal-almoco">
+    <div class="meal-dot dot-almoco"></div>
+    <span class="meal-name name-almoco">Almoço</span>
+    <span class="meal-count">3 itens</span>
+  </div>
+  <div class="meal-items">
+    <div class="meal-item">
+      <span class="item-food">Arroz integral</span>
+      <span class="item-qty">4 col. de sopa</span>
+    </div>
+    <div class="meal-item">
+      <span class="item-food">Frango grelhado</span>
+      <span class="item-qty">150 g</span>
+    </div>
+    <div class="meal-item">
+      <span class="item-food">Salada verde</span>
+      <span class="item-qty">à vontade</span>
+    </div>
+  </div>
+</div>
+
+<!-- ── CAFÉ DA TARDE ── -->
+<div class="meal-section">
+  <div class="meal-header meal-tarde">
+    <div class="meal-dot dot-tarde"></div>
+    <span class="meal-name name-tarde">Café da Tarde</span>
+    <span class="meal-count">1 item</span>
+  </div>
+  <div class="meal-items">
+    <div class="meal-item">
+      <span class="item-food">Iogurte grego natural</span>
+      <span class="item-qty">1 pote (170 g)</span>
+    </div>
+  </div>
+</div>
+
+<!-- ── JANTAR ── -->
+<div class="meal-section">
+  <div class="meal-header meal-jantar">
+    <div class="meal-dot dot-jantar"></div>
+    <span class="meal-name name-jantar">Jantar</span>
+    <span class="meal-count">1 item</span>
+  </div>
+  <div class="meal-items">
+    <div class="meal-item">
+      <span class="item-food">Sopa de legumes</span>
+      <span class="item-qty">1 tigela (300 ml)</span>
+    </div>
+  </div>
+</div>
+
+<!-- ── LANCHE ── -->
+<div class="meal-section">
+  <div class="meal-header meal-lanche">
+    <div class="meal-dot dot-lanche"></div>
+    <span class="meal-name name-lanche">Lanche</span>
+    <span class="meal-count">1 item</span>
+  </div>
+  <div class="meal-items">
+    <div class="meal-item">
+      <span class="item-food">Castanhas do Pará</span>
+      <span class="item-qty">4 unidades</span>
+    </div>
+  </div>
+</div>
+
+<!-- ── FOOTER ── -->
+<div class="footer">
+  <span>Nutrimurt — Portal do Nutricionista</span>
+  <span>Caio Pavanelli · 20/04/2026</span>
+</div>
+
+</body>
+</html>

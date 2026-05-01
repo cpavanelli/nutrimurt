@@ -5,6 +5,19 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using nutrimurt.Api.Data;
+using QuestPDF.Drawing;
+using QuestPDF.Infrastructure;
+
+QuestPDF.Settings.License = LicenseType.Community;
+
+var fontAssembly = typeof(Program).Assembly;
+foreach (var resourceName in fontAssembly.GetManifestResourceNames()
+    .Where(n => n.EndsWith(".ttf", StringComparison.OrdinalIgnoreCase)))
+{
+    using var stream = fontAssembly.GetManifestResourceStream(resourceName)
+        ?? throw new InvalidOperationException($"Embedded font not found: {resourceName}");
+    FontManager.RegisterFont(stream);
+}
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -41,6 +54,7 @@ builder.Services.AddCors(options =>
         policy.WithOrigins("http://localhost:5173", "https://localhost", "https://nutrimurt.com.br")
             .AllowAnyMethod()
             .AllowAnyHeader()
+            .WithExposedHeaders("Content-Disposition")
             .AllowCredentials();
     });
 });

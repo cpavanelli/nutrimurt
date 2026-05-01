@@ -1,3 +1,6 @@
+using System.Globalization;
+using System.Text;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -5,6 +8,7 @@ using nutrimurt.Api.Constants;
 using nutrimurt.Api.Data;
 using nutrimurt.Api.Extensions;
 using nutrimurt.Api.Models;
+using nutrimurt.Api.Services;
 
 namespace nutrimurt.Api.Controllers;
 
@@ -153,6 +157,19 @@ public class PatientMealPlansController : ControllerBase
         return NoContent();
     }
 
+    [HttpGet("{id}/pdf")]
+    public async Task<IActionResult> GetPatientMealPlanPdf(int id)
+    {
+        var userId = User.GetUserId();
+        var dto = await GetDetailDto(id, userId);
+        if (dto is null)
+            return NotFound();
+
+        var bytes = MealPlanPdfBuilder.Build(dto);
+        var filename = $"plano-alimentar-{Slugify(dto.PatientName)}-{dto.MealPlanDate:yyyy-MM-dd}.pdf";
+        return File(bytes, "application/pdf", filename);
+    }
+
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeletePatientMealPlan(int id)
     {
@@ -165,6 +182,23 @@ public class PatientMealPlansController : ControllerBase
         await _context.SaveChangesAsync();
 
         return NoContent();
+    }
+
+    private static string Slugify(string input)
+    {
+        if (string.IsNullOrWhiteSpace(input))
+            return "paciente";
+
+        var decomposed = input.Normalize(NormalizationForm.FormD);
+        var sb = new StringBuilder(decomposed.Length);
+        foreach (var c in decomposed)
+        {
+            if (CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
+                sb.Append(c);
+        }
+        var ascii = sb.ToString().Normalize(NormalizationForm.FormC).ToLowerInvariant();
+        var slug = Regex.Replace(ascii, "[^a-z0-9]+", "-").Trim('-');
+        return string.IsNullOrEmpty(slug) ? "paciente" : slug;
     }
 
     private async Task<PatientMealPlanDetailDto?> GetDetailDto(int id, string userId)

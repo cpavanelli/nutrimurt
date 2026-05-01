@@ -15,6 +15,7 @@ type ButtonProps = {
   variant?: Variant;
   small?: boolean;
   icon?: IconName;
+  loading?: boolean;
 } & ButtonHTMLAttributes<HTMLButtonElement>;
 
 export default function Button({
@@ -22,13 +23,17 @@ export default function Button({
   variant = 'primary',
   small = false,
   icon,
+  loading = false,
+  disabled,
   type = 'button',
   className = '',
   ...rest
 }: ButtonProps) {
+  const renderIcon = loading ? 'loader' : icon;
   return (
     <button
       type={type}
+      disabled={disabled || loading}
       className={[
         'inline-flex items-center justify-center gap-1.5 rounded-lg font-medium transition disabled:cursor-not-allowed disabled:opacity-50',
         small ? 'px-3 py-1.5 text-[13px]' : 'px-4 py-2 text-sm',
@@ -37,7 +42,13 @@ export default function Button({
       ].join(' ')}
       {...rest}
     >
-      {icon && <Icon name={icon} size={small ? 12 : 14} />}
+      {renderIcon && (
+        <Icon
+          name={renderIcon}
+          size={small ? 12 : 14}
+          className={loading ? 'animate-spin' : undefined}
+        />
+      )}
       {children}
     </button>
   );

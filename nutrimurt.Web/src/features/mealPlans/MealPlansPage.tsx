@@ -14,6 +14,14 @@ function formatDate(value: string): string {
   return `${d}/${m}/${y}`;
 }
 
+function getErrorMessage(err: unknown, fallback: string) {
+  return err instanceof ApiError
+    ? err.message
+    : err instanceof Error
+      ? err.message
+      : fallback;
+}
+
 export default function MealPlansPage() {
   const navigate = useNavigate();
   const api = useMealPlansApi();
@@ -21,6 +29,7 @@ export default function MealPlansPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
+  const [downloadingId, setDownloadingId] = useState<number | null>(null);
 
   async function load() {
     try {
@@ -49,13 +58,19 @@ export default function MealPlansPage() {
       setMealPlans((prev) => prev.filter((m) => m.id !== id));
       toast.success('Plano excluído');
     } catch (err) {
-      const message =
-        err instanceof ApiError
-          ? err.message
-          : err instanceof Error
-            ? err.message
-            : 'Falha ao excluir';
-      toast.error(message);
+      toast.error(getErrorMessage(err, 'Falha ao excluir'));
+    }
+  }
+
+  async function handleDownloadPdf(id: number) {
+    if (downloadingId !== null) return;
+    setDownloadingId(id);
+    try {
+      await api.downloadPdf(id);
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Falha ao baixar PDF'));
+    } finally {
+      setDownloadingId(null);
     }
   }
 
@@ -132,6 +147,23 @@ export default function MealPlansPage() {
                     <div className="flex justify-end gap-2">
                       <Button
                         small
+                        variant="outline"
+                        icon="eye"
+                        onClick={() => navigate(`/mealplans/${m.id}`)}
+                      >
+                        Ver
+                      </Button>
+                      <Button
+                        small
+                        variant="outline"
+                        icon="download"
+                        loading={downloadingId === m.id}
+                        onClick={() => handleDownloadPdf(m.id)}
+                      >
+                        PDF
+                      </Button>
+                      <Button
+                        small
                         variant="ghost"
                         icon="edit"
                         onClick={() => navigate(`/mealplans/${m.id}/edit`)}
@@ -145,14 +177,6 @@ export default function MealPlansPage() {
                         onClick={() => handleDelete(m.id)}
                       >
                         Excluir
-                      </Button>
-                      <Button
-                        small
-                        variant="outline"
-                        icon="eye"
-                        onClick={() => navigate(`/mealplans/${m.id}`)}
-                      >
-                        Ver
                       </Button>
                     </div>
                   </td>

@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import { ApiError, useMealPlansApi } from './api';
 import type { MealPlan, MealPlanEntry } from './types';
 import { MEAL_TYPES, MEAL_TYPE_LABELS } from '../answers/types';
+import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
 import { MEAL_COLORS } from '../../components/ui/MealLabel';
 import { Icon } from '../../components/ui/Icon';
@@ -15,6 +17,14 @@ function formatDate(value: string): string {
   return `${d}/${m}/${y}`;
 }
 
+function getErrorMessage(err: unknown, fallback: string) {
+  return err instanceof ApiError
+    ? err.message
+    : err instanceof Error
+      ? err.message
+      : fallback;
+}
+
 export default function MealPlanView() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
@@ -24,6 +34,7 @@ export default function MealPlanView() {
   const [plan, setPlan] = useState<MealPlan | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -47,6 +58,18 @@ export default function MealPlanView() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [planId]);
+
+  async function handleDownloadPdf() {
+    if (!planId || downloadingPdf) return;
+    setDownloadingPdf(true);
+    try {
+      await api.downloadPdf(planId);
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Falha ao baixar PDF'));
+    } finally {
+      setDownloadingPdf(false);
+    }
+  }
 
   const grouped = useMemo(() => {
     if (!plan) return [];
@@ -112,14 +135,25 @@ export default function MealPlanView() {
           Voltar
         </button>
 
-        <div>
-          <div className="mb-1 text-[12px] font-semibold uppercase tracking-[0.08em] text-accent-text">
-            NUTRIMURT
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <div className="mb-1 text-[12px] font-semibold uppercase tracking-[0.08em] text-accent-text">
+              NUTRIMURT
+            </div>
+            <h1 className="text-[22px] font-semibold">{plan.name || 'Plano Alimentar'}</h1>
+            <p className="mt-1 text-sm text-ink-secondary">
+              Criado em {formatDate(plan.createdAt)}
+            </p>
           </div>
-          <h1 className="text-[22px] font-semibold">{plan.name || 'Plano Alimentar'}</h1>
-          <p className="mt-1 text-sm text-ink-secondary">
-            Criado em {formatDate(plan.createdAt)}
-          </p>
+          <Button
+            small
+            variant="outline"
+            icon="download"
+            loading={downloadingPdf}
+            onClick={handleDownloadPdf}
+          >
+            PDF
+          </Button>
         </div>
 
         <Card>
