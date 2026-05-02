@@ -22,4 +22,6 @@ public class PatientMealPlanEntry
     public string Amount { get; set; } = string.Empty;
 
     public bool Substitution { get; set; }
+
+    public bool Substitution2 { get; set; }
 }

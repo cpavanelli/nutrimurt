@@ -73,10 +73,18 @@ export default function MealPlanView() {
 
   const grouped = useMemo(() => {
     if (!plan) return [];
-    const map = new Map<number, { regular: MealPlanEntry[]; substitutions: MealPlanEntry[] }>();
+    const map = new Map<
+      number,
+      { regular: MealPlanEntry[]; substitutions: MealPlanEntry[]; substitutions2: MealPlanEntry[] }
+    >();
     plan.entries.forEach((entry) => {
-      const bucket = map.get(entry.mealType) ?? { regular: [], substitutions: [] };
-      if (entry.substitution) bucket.substitutions.push(entry);
+      const bucket = map.get(entry.mealType) ?? {
+        regular: [],
+        substitutions: [],
+        substitutions2: [],
+      };
+      if (entry.substitution2) bucket.substitutions2.push(entry);
+      else if (entry.substitution) bucket.substitutions.push(entry);
       else bucket.regular.push(entry);
       map.set(entry.mealType, bucket);
     });
@@ -84,7 +92,10 @@ export default function MealPlanView() {
       mealType: mt,
       regular: map.get(mt)?.regular ?? [],
       substitutions: map.get(mt)?.substitutions ?? [],
-    })).filter((g) => g.regular.length > 0 || g.substitutions.length > 0);
+      substitutions2: map.get(mt)?.substitutions2 ?? [],
+    })).filter(
+      (g) => g.regular.length > 0 || g.substitutions.length > 0 || g.substitutions2.length > 0
+    );
   }, [plan]);
 
   if (loading) {
@@ -209,6 +220,25 @@ export default function MealPlanView() {
                       <div className="py-2">
                         {group.substitutions.map((entry, i) => (
                           <ItemRow key={`sub-${entry.id}-${i}`} entry={entry} divider={i > 0} />
+                        ))}
+                      </div>
+                    </>
+                  )}
+
+                  {group.substitutions2.length > 0 && (
+                    <>
+                      <MealSectionHeader
+                        color={color}
+                        title="SUBSTITUIÇÃO 2"
+                        count={group.substitutions2.length}
+                      />
+                      <div className="py-2">
+                        {group.substitutions2.map((entry, i) => (
+                          <ItemRow
+                            key={"sub2-" + entry.id + "-" + i}
+                            entry={entry}
+                            divider={i > 0}
+                          />
                         ))}
                       </div>
                     </>

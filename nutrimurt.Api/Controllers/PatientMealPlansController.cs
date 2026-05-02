@@ -78,7 +78,8 @@ public class PatientMealPlansController : ControllerBase
                         entry.MealType,
                         entry.Food,
                         entry.Amount,
-                        entry.Substitution))
+                        entry.Substitution,
+                        entry.Substitution2))
                     .ToList()))
         .FirstOrDefaultAsync();
 
@@ -149,7 +150,8 @@ public class PatientMealPlansController : ControllerBase
             MealType = entry.MealType,
             Food = entry.Food,
             Amount = entry.Amount,
-            Substitution = entry.Substitution
+            Substitution = entry.Substitution,
+            Substitution2 = entry.Substitution2
         }).ToList();
 
         await _context.SaveChangesAsync();
@@ -226,7 +228,8 @@ public class PatientMealPlansController : ControllerBase
                     entry.MealType,
                     entry.Food,
                     entry.Amount,
-                    entry.Substitution)).ToList()))
+                    entry.Substitution,
+                    entry.Substitution2)).ToList()))
             .FirstOrDefaultAsync();
     }
 }
@@ -258,5 +261,6 @@ public record EntryDto(
     MealType MealType,
     string Food,
     string Amount,
-    bool Substitution
+    bool Substitution,
+    bool Substitution2
 );

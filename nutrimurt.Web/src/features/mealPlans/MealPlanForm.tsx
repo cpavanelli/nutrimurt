@@ -17,7 +17,10 @@ type DraftEntry = {
   food: string;
   amount: string;
   substitution: boolean;
+  substitution2: boolean;
 };
+
+type SubMode = 'none' | 'sub1' | 'sub2';
 
 function todayIso(): string {
   return new Date().toISOString().split('T')[0];
@@ -46,7 +49,7 @@ export default function MealPlanForm() {
   const [selectedMealType, setSelectedMealType] = useState<number>(1);
   const [foodDraft, setFoodDraft] = useState('');
   const [amountDraft, setAmountDraft] = useState('');
-  const [substitutionDraft, setSubstitutionDraft] = useState(false);
+  const [subModeDraft, setSubModeDraft] = useState<SubMode>('none');
 
   useEffect(() => {
     let cancelled = false;
@@ -70,6 +73,7 @@ export default function MealPlanForm() {
               food: e.food,
               amount: e.amount,
               substitution: e.substitution,
+              substitution2: e.substitution2,
             }))
           );
         } else {
@@ -99,10 +103,18 @@ export default function MealPlanForm() {
   const headerTitle = selectedPatient?.name ?? (isEdit ? 'Plano Alimentar' : 'Novo Plano');
 
   const grouped = useMemo(() => {
-    const map = new Map<number, { regular: DraftEntry[]; substitutions: DraftEntry[] }>();
+    const map = new Map<
+      number,
+      { regular: DraftEntry[]; substitutions: DraftEntry[]; substitutions2: DraftEntry[] }
+    >();
     entries.forEach((entry) => {
-      const bucket = map.get(entry.mealType) ?? { regular: [], substitutions: [] };
-      if (entry.substitution) bucket.substitutions.push(entry);
+      const bucket = map.get(entry.mealType) ?? {
+        regular: [],
+        substitutions: [],
+        substitutions2: [],
+      };
+      if (entry.substitution2) bucket.substitutions2.push(entry);
+      else if (entry.substitution) bucket.substitutions.push(entry);
       else bucket.regular.push(entry);
       map.set(entry.mealType, bucket);
     });
@@ -110,7 +122,10 @@ export default function MealPlanForm() {
       mealType: mt,
       regular: map.get(mt)?.regular ?? [],
       substitutions: map.get(mt)?.substitutions ?? [],
-    })).filter((g) => g.regular.length > 0 || g.substitutions.length > 0);
+      substitutions2: map.get(mt)?.substitutions2 ?? [],
+    })).filter(
+      (g) => g.regular.length > 0 || g.substitutions.length > 0 || g.substitutions2.length > 0
+    );
   }, [entries]);
 
   const canAddEntry = foodDraft.trim().length > 0 && amountDraft.trim().length > 0;
@@ -127,12 +142,12 @@ export default function MealPlanForm() {
         mealType: selectedMealType,
         food: foodDraft.trim(),
         amount: amountDraft.trim(),
-        substitution: substitutionDraft,
+        substitution: subModeDraft === 'sub1',
+        substitution2: subModeDraft === 'sub2',
       },
     ]);
     setFoodDraft('');
     setAmountDraft('');
-    setSubstitutionDraft(false);
   }
 
   function handleEnterKey(e: KeyboardEvent<HTMLInputElement>) {
@@ -162,6 +177,7 @@ export default function MealPlanForm() {
         food: e.food,
         amount: e.amount,
         substitution: e.substitution,
+        substitution2: e.substitution2,
       })),
     };
     try {
@@ -308,9 +324,29 @@ export default function MealPlanForm() {
                 );
               })}
             </div>
+            <div className="mt-3 flex items-center gap-4">
+              <label className="flex cursor-pointer items-center gap-2 text-sm text-ink-secondary">
+                <input
+                  type="checkbox"
+                  checked={subModeDraft === 'sub1'}
+                  onChange={() => setSubModeDraft((m) => (m === 'sub1' ? 'none' : 'sub1'))}
+                  className="h-4 w-4 accent-[var(--accent)]"
+                />
+                Substituição
+              </label>
+              <label className="flex cursor-pointer items-center gap-2 text-sm text-ink-secondary">
+                <input
+                  type="checkbox"
+                  checked={subModeDraft === 'sub2'}
+                  onChange={() => setSubModeDraft((m) => (m === 'sub2' ? 'none' : 'sub2'))}
+                  className="h-4 w-4 accent-[var(--accent)]"
+                />
+                Substituição 2
+              </label>
+            </div>
           </div>
 
-          <div className="grid items-end gap-3 sm:grid-cols-[1fr_1fr_auto_auto]">
+          <div className="grid items-end gap-3 sm:grid-cols-[1fr_1fr_auto]">
             <div className="flex flex-col gap-1.5">
               <label className="text-[13px] font-medium text-ink-secondary">Alimento</label>
               <input
@@ -333,15 +369,6 @@ export default function MealPlanForm() {
                 className="rounded-lg border border-edge-soft bg-surface-elevated px-3.5 py-2.5 text-sm outline-none transition focus:border-accent-mid"
               />
             </div>
-            <label className="flex h-[41px] cursor-pointer items-center gap-2 rounded-lg border border-edge-soft bg-surface-elevated px-3 text-sm text-ink-secondary transition hover:border-accent-mid">
-              <input
-                type="checkbox"
-                checked={substitutionDraft}
-                onChange={(e) => setSubstitutionDraft(e.target.checked)}
-                className="h-4 w-4 accent-[var(--accent)]"
-              />
-              Substituição
-            </label>
             <Button onClick={addEntry} disabled={!canAddEntry} icon="plus" className="h-[41px]">
               Adicionar
             </Button>
@@ -394,6 +421,27 @@ export default function MealPlanForm() {
                         {group.substitutions.map((entry, idx) => (
                           <EntryRow
                             key={`sub-${group.mealType}-${idx}`}
+                            entry={entry}
+                            onRemove={() => removeEntry(entry)}
+                          />
+                        ))}
+                      </div>
+                    </>
+                  )}
+
+                  {group.substitutions2.length > 0 && (
+                    <>
+                      <div className="mt-2 flex items-center gap-2 border-t border-edge-soft pt-3">
+                        <span
+                          className="inline-block h-2 w-2 shrink-0 rounded-full"
+                          style={{ background: color }}
+                        />
+                        <MealLabel mealType={group.mealType}>Substituição 2</MealLabel>
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        {group.substitutions2.map((entry, idx) => (
+                          <EntryRow
+                            key={"sub2-" + group.mealType + "-" + idx}
                             entry={entry}
                             onRemove={() => removeEntry(entry)}
                           />

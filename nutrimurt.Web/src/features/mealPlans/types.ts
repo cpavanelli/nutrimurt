@@ -14,6 +14,7 @@ export interface MealPlanEntry {
   food: string;
   amount: string;
   substitution: boolean;
+  substitution2: boolean;
 }
 
 export interface MealPlan {

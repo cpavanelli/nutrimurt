@@ -148,8 +148,9 @@ public static class MealPlanPdfBuilder
     private static void ComposeMealSection(IContainer container, MealType mealType, List<EntryDto> entries)
     {
         var style = Styles[mealType];
-        var regular = entries.Where(e => !e.Substitution).ToList();
-        var substitutions = entries.Where(e => e.Substitution).ToList();
+        var substitutions2 = entries.Where(e => e.Substitution2).ToList();
+        var substitutions = entries.Where(e => e.Substitution && !e.Substitution2).ToList();
+        var regular = entries.Where(e => !e.Substitution && !e.Substitution2).ToList();
 
         container.Column(col =>
         {
@@ -205,6 +206,28 @@ public static class MealPlanPdfBuilder
                     {
                         items.Item().Element(c => ComposeItemRow(c, e, subDivider));
                         subDivider = true;
+                    }
+                }
+
+                if (substitutions2.Count > 0)
+                {
+                    bool anyAbove = needDivider || substitutions.Count > 0;
+                    items.Item()
+                        .BorderTop(anyAbove ? 1 : 0).BorderColor(Border)
+                        .PaddingVertical(4).PaddingHorizontal(4)
+                        .Row(r =>
+                        {
+                            r.AutoItem().AlignMiddle().Width(4).Height(4).Background(style.TextColor);
+                            r.AutoItem().PaddingLeft(4).AlignMiddle()
+                                .Text("SUBSTITUIÇÃO 2")
+                                .FontSize(5).Bold().LetterSpacing(0.08f).FontColor("#000000");
+                        });
+
+                    bool sub2Divider = false;
+                    foreach (var e in substitutions2)
+                    {
+                        items.Item().Element(c => ComposeItemRow(c, e, sub2Divider));
+                        sub2Divider = true;
                     }
                 }
             });
