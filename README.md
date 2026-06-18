@@ -123,8 +123,78 @@ The app is available at **https://localhost** with a browser-trusted certificate
 ### Production deployment
 `docker-compose.prod.yml` extends the base compose file with:
 - Let's Encrypt certificates via a Certbot sidecar container
-- Automatic certificate renewal every 12 hours
+- Certificate renewal checks every 12 hours
 - `nginx.prod.conf` with real domain TLS
+
+#### Production certificate renewal
+
+Production nginx owns ports `80` and `443`. Because of that, Certbot renewal must use
+the `webroot` authenticator, writing ACME challenge files into the shared
+`certbot_www` volume that nginx serves from `/.well-known/acme-challenge/`.
+Do not renew with `standalone` while the gateway is running; standalone expects
+Certbot itself to bind public port `80`.
+
+One-time repair or forced renewal:
+
+```bash
+cd ~/osf
+
+docker compose -f docker-compose.yml -f docker-compose.prod.yml stop certbot
+
+docker compose -f docker-compose.yml -f docker-compose.prod.yml run --rm --entrypoint certbot certbot certonly \
+  --webroot \
+  -w /var/www/certbot \
+  --cert-name nutrimurt.com.br \
+  -d nutrimurt.com.br \
+  --email YOUR_EMAIL \
+  --agree-tos \
+  --no-eff-email \
+  --force-renewal
+
+docker compose -f docker-compose.yml -f docker-compose.prod.yml exec gateway nginx -s reload
+docker compose -f docker-compose.yml -f docker-compose.prod.yml start certbot
+```
+
+Verify the renewal config and served certificate:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml run --rm --entrypoint sh certbot -c \
+  "cat /etc/letsencrypt/renewal/nutrimurt.com.br.conf"
+
+docker compose -f docker-compose.yml -f docker-compose.prod.yml run --rm --entrypoint certbot certbot certificates
+curl -I https://nutrimurt.com.br
+```
+
+The renewal config should use `webroot`, not `standalone`. After any successful
+renewal, reload nginx so it serves the new certificate.
+
+Recommended host cron job:
+
+```cron
+15 3 * * * cd /path/to/nutrimurt && docker compose -f docker-compose.yml -f docker-compose.prod.yml run --rm --entrypoint certbot certbot renew --webroot -w /var/www/certbot --quiet && docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T gateway nginx -s reload >> /var/log/nutrimurt-certbot.log 2>&1
+```
+
+Adjust `/path/to/nutrimurt` to the actual production checkout path from `pwd`.
+Keep ports `80` and `443` open in the firewall so Let's Encrypt can validate the
+HTTP challenge.
+
+Check the cron renewal logs:
+
+```bash
+sudo tail -n 100 /var/log/nutrimurt-certbot.log
+```
+
+If the cron job was installed without log redirection, check the system cron log:
+
+```bash
+grep CRON /var/log/syslog | tail -n 100
+```
+
+Verify the live certificate expiry date:
+
+```bash
+echo | openssl s_client -servername nutrimurt.com.br -connect nutrimurt.com.br:443 2>/dev/null | openssl x509 -noout -dates
+```
 
 ## Database (PostgreSQL)
 
