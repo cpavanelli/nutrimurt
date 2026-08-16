@@ -29,7 +29,12 @@ export default clerkMiddleware(async (auth, request) => {
     return;
   }
 
-  await auth.protect();
+  // `signInUrl` on ClerkProvider only steers client-side navigation. The
+  // middleware resolves its own redirect target, and without this it sends
+  // users to Clerk's hosted Account Portal instead of our sign-in page.
+  await auth.protect({
+    unauthenticatedUrl: new URL("/sign-in", request.url).toString(),
+  });
 });
 
 export const config = {
