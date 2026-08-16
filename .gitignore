@@ -44,6 +44,9 @@ node_modules/
 # Build output
 dist/
 build/
+.next/
+.vercel/
+*.tsbuildinfo
 
 # Logs
 npm-debug.log*
