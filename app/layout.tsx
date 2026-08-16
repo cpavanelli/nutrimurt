@@ -1,3 +1,5 @@
+import { ptBR } from "@clerk/localizations";
+import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
 import "./globals.css";
 
@@ -12,8 +14,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR">
-      <body>{children}</body>
-    </html>
+    <ClerkProvider localization={ptBR} signInUrl="/sign-in">
+      <html lang="pt-BR">
+        <body>{children}</body>
+      </html>
+    </ClerkProvider>
   );
 }
