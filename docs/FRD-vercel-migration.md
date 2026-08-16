@@ -464,7 +464,9 @@ Use `slidingWindow` with `ephemeralCache` enabled to reduce Redis round-trips on
 `VITE_PY_BASE_URL`, `Clerk:Authority`, `ConnectionStrings:DefaultConnection`.
 
 Set every variable across all three Vercel environments (Production, Preview, Development) before
-the first deploy. A missing `CLERK_SECRET_KEY` fails at build time, not runtime.
+the first deploy. A missing `CLERK_SECRET_KEY` fails at **runtime**, not at build time — verified
+against PR 2, which builds clean without it because no page calls `auth()` during prerendering. The
+failure surfaces on the first authenticated request, so a green build is not evidence the key is set.
 
 ---
 
