@@ -332,6 +332,10 @@ Replace two independent implementations (`AddJwtBearer` in .NET, hand-rolled JWK
    Use `drizzle-kit generate` + `drizzle-kit migrate` to create the schema.
 3. Preserve exact table and column names — snake_case, matching what EF Core produced — so the
    schema stays recognisable against the old migrations.
+   **One deliberate divergence:** `patients.name` and `patients.email` are declared `varchar(200)`
+   and `varchar(255)`. EF created both as plain `text` — the `[MaxLength]` annotations on the model
+   were never migrated. D4 (fresh database) means there is no compatibility cost, and this closes a
+   gap the old stack carried. Every other length constraint matches EF exactly.
 4. Use `drizzle-orm/neon-http` for the driver. Its HTTP transport avoids the connection-exhaustion
    problem serverless functions cause with a normal TCP pool.
 5. Enum columns stay `integer` with TypeScript union types mirroring §3.3. Do **not** convert to
@@ -389,8 +393,30 @@ needs no change.
 7. `api.ts` / `pyApi.ts` modules keep `createApiClient` and its Clerk-token wiring; only the URL
    strings change per §4.3. Base URLs become relative — same origin, so `VITE_API_BASE_URL` and
    `VITE_PY_BASE_URL` are deleted entirely.
-8. Tailwind, PostCSS, and `index.css` carry over; the config needs its `content` globs repointed at
-   the new directory layout.
+8. **Tailwind v3 → v4 theme port.** The scaffold (PR 1) installs Tailwind **v4**, which is CSS-first:
+   it auto-detects sources, so there are no `content` globs to repoint, and it does not read
+   `theme.extend.colors` from a JS config. `nutrimurt.Web/tailwind.config.js` defines a 43-line
+   custom design system — the `surface`, `ink`, `edge`, `accent`, and `danger` scales, each mapped
+   to a CSS variable — used pervasively across every component (`bg-surface-card`,
+   `text-ink-secondary`, `border-edge-soft`). Rewrite that config as `@theme` declarations in
+   `app/globals.css`:
+
+   ```css
+   @import "tailwindcss";
+
+   @theme {
+     --color-surface-base: var(--bg-base);
+     --color-surface-card: var(--bg-card);
+     --color-ink-primary:  var(--text-primary);
+     --color-accent:       var(--accent);
+     --color-danger:       var(--danger);
+     /* …one entry per color in the v3 config, plus fontFamily */
+   }
+   ```
+
+   Utility class names are unchanged, so **no component markup needs editing**. The underlying CSS
+   variables in `index.css` carry over as-is. Budget a visual diff pass regardless: v4 changed some
+   default utility behaviours beyond the theme.
 9. Keep `react-toastify` and `react-imask` — both work in client components.
 
 **Watch:** `/answer/:urlId` is public and must render outside the authenticated `(app)` group and
