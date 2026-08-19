@@ -29,7 +29,10 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          # Matches local development and the npm major that generated
+          # package-lock.json. npm 10 resolves a different tree shape and
+          # rejects this lock, so do not drop this back to 22.
+          node-version: 24
           cache: npm
 
       - run: npm ci
