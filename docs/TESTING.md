@@ -62,6 +62,21 @@ drivers. They prove the routes are written against a transactional API and that
 the SQL is correct; they do not prove Neon's WebSocket transactions behave
 identically.
 
-That gap is closed on a **preview deploy against a Neon branch**, which is also
-where the §9 acceptance checks in the FRD belong. Verify at least one
-questionnaire edit there before cutover.
+That gap is closed on a **preview deploy**, which is also where the §9
+acceptance checks in the FRD belong.
+
+Verified on the PR 3 preview: a questionnaire edit that deletes one
+alternative, updates another in place, and inserts both a new alternative and a
+new question — all in one `withTransaction()` call — committed correctly, and
+the follow-up read showed exactly the expected rows with the surviving ids
+preserved. Neon's WebSocket driver therefore works on Vercel's Node runtime, so
+the fallback of expressing those writes as `db.batch()` on the HTTP driver is
+not needed.
+
+Repeat that check whenever a transactional write changes, and re-run it against
+the production build before cutover.
+
+> **Preview currently shares `DATABASE_URL` with production.** Until a Neon
+> branch is wired up for the Preview environment, anything a preview deploy
+> writes lands in the real database. Fix this before PR 4, which adds the
+> unauthenticated patient answer flow and Mailgun email.
