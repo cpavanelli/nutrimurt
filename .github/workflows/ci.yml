@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [main, vercel-migration]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: nutrimurt
+          POSTGRES_PASSWORD: nutrimurt
+          POSTGRES_DB: nutrimurt_test
+        ports:
+          - 55432:5432
+        options: >-
+          --health-cmd "pg_isready -U nutrimurt -d nutrimurt_test"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # Matches local development and the npm major that generated
+          # package-lock.json. npm 10 resolves a different tree shape and
+          # rejects this lock, so do not drop this back to 22.
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run lint
+
+      - run: npx tsc --noEmit
+
+      - run: npm run test:all
+        env:
+          TEST_DATABASE_URL: postgresql://nutrimurt:nutrimurt@localhost:55432/nutrimurt_test
+
+      # No DATABASE_URL on purpose: the build must not require one, so that
+      # importing a route module stays free of connection side effects.
+      - run: npm run build

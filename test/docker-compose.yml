@@ -1,0 +1,26 @@
+# Postgres for the integration tests. Deliberately not at the repository root:
+# PR 7 deletes `docker-compose*.yml` when the old stack goes, and this file has
+# to survive that.
+#
+#   npm run db:test:up      start it
+#   npm run test:integration
+#   npm run db:test:down    stop and discard
+#
+# Data lives in tmpfs, so every `up` starts from an empty database.
+services:
+  postgres:
+    image: postgres:16
+    container_name: nutrimurt-test-postgres
+    environment:
+      POSTGRES_USER: nutrimurt
+      POSTGRES_PASSWORD: nutrimurt
+      POSTGRES_DB: nutrimurt_test
+    ports:
+      - "55432:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nutrimurt -d nutrimurt_test"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
