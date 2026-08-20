@@ -1,15 +1,15 @@
 import { ApiError } from '../../lib/apiClient';
 import type { PatientLink } from './types';
 
-const rawBaseUrl = import.meta.env.VITE_PY_BASE_URL ?? '/py';
-const normalizedBaseUrl = rawBaseUrl.replace(/\/+$/, '');
-const baseUrl =
-  normalizedBaseUrl === ''
-    ? '/py'
-    : normalizedBaseUrl.endsWith('/py')
-      ? normalizedBaseUrl
-      : `${normalizedBaseUrl}/py`;
-
+/**
+ * Repointed from the Python service to the Next.js route handlers (PR 4).
+ *
+ * The routes live on the same origin as the app, so there is no base URL any
+ * more — `VITE_PY_BASE_URL` is gone. Until cutover the deployed SPA still runs
+ * against the old stack from its existing build; do not rebuild and redeploy
+ * `nutrimurt.Web/dist` onto the droplet from this branch, because these paths
+ * do not exist there.
+ */
 
 async function request<T>(input: RequestInfo, init?: RequestInit, token?: string | null): Promise<T> {
   const headers: HeadersInit = {
@@ -29,23 +29,50 @@ async function request<T>(input: RequestInfo, init?: RequestInit, token?: string
   return res.json();
 }
 
+const jsonPost = (body: unknown): RequestInit => ({
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(body),
+});
+
 export const answersApi = {
   /** Public patient-facing fetch — no auth required, returns minimal PII. */
   getPatientLink: (urlID: string) =>
-    request<PatientLink>(`${baseUrl}/answer/public/${urlID}`),
+    request<PatientLink>(`/api/public/links/${encodeURIComponent(urlID)}`),
   /** Staff-only fetch — requires Clerk auth token. */
   getPatientLinkStaff: (urlID: string, token?: string | null) =>
-    request<PatientLink>(`${baseUrl}/answer/staff/${urlID}`, undefined, token),
+    request<PatientLink>(`/api/links/${encodeURIComponent(urlID)}`, undefined, token),
+  /**
+   * The link is identified by the path, not by the body (R9). The old
+   * `/py/savePatientAnswers` took `urlId` *and* `id` in the payload and never
+   * checked that they matched, so a caller could overwrite another patient's
+   * answers. The server now resolves the target from `urlId` alone, and the
+   * body carries answers only.
+   */
   save: (patientLink: PatientLink) =>
-    request<void>(`${baseUrl}/savePatientAnswers`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(patientLink),
-    }),
-    savePatientDiary: (patientLink: PatientLink) =>
-    request<void>(`${baseUrl}/savePatientDiary`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(patientLink),
-    })
+    request<{ status: string }>(
+      `/api/public/links/${encodeURIComponent(patientLink.urlId)}/answers`,
+      jsonPost({
+        questions: (patientLink.questionnary?.questions ?? []).map((question) => ({
+          id: question.id,
+          questionType: question.questionType,
+          answer: question.answer ? { answer: question.answer.answer } : null,
+          answerAlternatives: question.answerAlternatives ?? [],
+        })),
+      }),
+    ),
+  /** Same path-not-body rule as `save`. */
+  savePatientDiary: (patientLink: PatientLink) =>
+    request<{ status: string }>(
+      `/api/public/links/${encodeURIComponent(patientLink.urlId)}/diary`,
+      jsonPost({
+        entries: (patientLink.diary?.entries ?? []).map((entry) => ({
+          date: entry.date,
+          mealType: entry.mealType,
+          time: entry.time ?? null,
+          food: entry.food,
+          amount: entry.amount,
+        })),
+      }),
+    ),
 };

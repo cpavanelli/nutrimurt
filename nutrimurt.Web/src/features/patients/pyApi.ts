@@ -1,11 +1,11 @@
-const rawBaseUrl = import.meta.env.VITE_PY_BASE_URL ?? '/py';
-const normalizedBaseUrl = rawBaseUrl.replace(/\/+$/, '');
-const baseUrl =
-  normalizedBaseUrl === ''
-    ? '/py'
-    : normalizedBaseUrl.endsWith('/py')
-      ? normalizedBaseUrl
-      : `${normalizedBaseUrl}/py`;
+/**
+ * Repointed from the Python service to the Next.js route handlers (PR 4).
+ * Same-origin, so `VITE_PY_BASE_URL` is gone — see the note in
+ * `features/answers/pyApi.ts` about not redeploying this build before cutover.
+ *
+ * `sendTestEmail` was removed: nothing called it, and the `/py/testEmail`
+ * route it posted to does not exist in `main.py`.
+ */
 
 async function readErrorMessage(res: Response, fallback: string): Promise<string> {
   const text = await res.text();
@@ -29,23 +29,9 @@ async function readErrorMessage(res: Response, fallback: string): Promise<string
   return text;
 }
 
-export async function sendTestEmail(email: string, name: string, token?: string | null): Promise<{ status: string }> {
-  const res = await fetch(
-    `${baseUrl}/testEmail/${encodeURIComponent(email)}/${encodeURIComponent(name)}`,
-    {
-      method: 'POST',
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    },
-  );
-  if (!res.ok) {
-    throw new Error(await readErrorMessage(res, `testEmail failed with ${res.status}`));
-  }
-  return res.json();
-}
-
 export async function sendEmail(urlID: string, token?: string | null): Promise<{ status: string }> {
   const res = await fetch(
-    `${baseUrl}/sendEmail/${encodeURIComponent(urlID)}`,
+    `/api/links/${encodeURIComponent(urlID)}/send`,
     {
       method: 'POST',
       headers: token ? { Authorization: `Bearer ${token}` } : {},

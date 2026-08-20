@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { z } from "zod";
 
 import { UnauthorizedError } from "@/lib/auth";
-import { routeIdSchema } from "@/lib/validation/schemas";
+import { routeIdSchema, urlIdSchema } from "@/lib/validation/schemas";
 
 export type Parsed<T> =
   | { success: true; data: T }
@@ -61,6 +61,17 @@ export async function parseJson<T>(
 
 export function parseRouteId(value: string): Parsed<number> {
   const result = routeIdSchema.safeParse(value);
+  return result.success
+    ? result
+    : { success: false, response: validationResponse(result.error) };
+}
+
+/**
+ * Patient links arrive as a path segment on unauthenticated routes, so the
+ * shape is checked before the value reaches a query.
+ */
+export function parseUrlId(value: string): Parsed<string> {
+  const result = urlIdSchema.safeParse(value);
   return result.success
     ? result
     : { success: false, response: validationResponse(result.error) };
