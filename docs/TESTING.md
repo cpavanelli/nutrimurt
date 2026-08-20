@@ -76,7 +76,16 @@ not needed.
 Repeat that check whenever a transactional write changes, and re-run it against
 the production build before cutover.
 
-> **Preview currently shares `DATABASE_URL` with production.** Until a Neon
-> branch is wired up for the Preview environment, anything a preview deploy
-> writes lands in the real database. Fix this before PR 4, which adds the
-> unauthenticated patient answer flow and Mailgun email.
+> **Every Vercel environment shares one `DATABASE_URL`.** Preview and
+> Development point at the production Neon branch, so anything a preview deploy
+> writes lands in the real database. This is a deliberate choice for the
+> duration of the migration — there is one operator and one dataset, and the
+> isolation the alternative buys is not needed yet.
+>
+> What it costs: smoke tests must clean up after themselves, and a preview URL
+> is a live endpoint against real data. Keep Vercel Deployment Protection
+> enabled for Preview so those URLs are not publicly reachable — that matters
+> from PR 4 onward, once unauthenticated patient routes exist.
+>
+> Isolating this later is one Neon branch plus a Preview-scoped `DATABASE_URL`
+> in Vercel. No schema or code change, so it can be done at any point.
