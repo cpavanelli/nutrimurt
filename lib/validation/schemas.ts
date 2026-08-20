@@ -1,5 +1,8 @@
 import { z } from "zod";
 
+import { guardrails } from "@/lib/guardrails";
+import { URL_ID_PATTERN } from "@/lib/url-id";
+
 import { isValidCpf } from "./cpf";
 
 const id = z.number().int().nonnegative();
@@ -15,6 +18,10 @@ export const routeIdSchema = z
   .regex(/^\d+$/, "ID inválido.")
   .transform(Number)
   .refine((value) => value > 0, "ID inválido.");
+
+export const urlIdSchema = z
+  .string()
+  .regex(URL_ID_PATTERN, "Link inválido.");
 
 export const patientInputSchema = z.object({
   name: z.string().trim().min(1, "O nome é obrigatório.").max(200),
@@ -66,4 +73,83 @@ export const questionInputSchema = nestedQuestionInputSchema.extend({
 
 export const questionUpdateSchema = questionInputSchema.extend({
   id: z.number().int().positive(),
+});
+
+const mealType = z.union([
+  z.literal(1),
+  z.literal(2),
+  z.literal(3),
+  z.literal(4),
+  z.literal(5),
+]);
+
+/**
+ * Mirrors SendPatientLinkRequest. The conditional rules come from
+ * PatientLinksController: a questionnaire link needs a questionnaire, a diary
+ * link needs a name. Messages are reproduced verbatim, accents included.
+ */
+export const sendPatientLinkSchema = z
+  .object({
+    type: z.union([z.literal(1), z.literal(2)]),
+    questionnaryId: z.number().int().nullish(),
+    diaryName: z.string().trim().nullish(),
+  })
+  .superRefine((value, ctx) => {
+    if (
+      value.type === 1 &&
+      !(value.questionnaryId && value.questionnaryId > 0)
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["questionnaryId"],
+        message: "Escolha um questionario.",
+      });
+    }
+
+    if (value.type === 2 && !value.diaryName) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["diaryName"],
+        message: "Escolha um nome para o diario.",
+      });
+    }
+  });
+
+/**
+ * Patient submissions. Note what is absent: no link id, no diary id, no urlId.
+ * The route resolves the target from the path, so a body cannot name another
+ * link.
+ */
+export const submittedQuestionSchema = z.object({
+  id: z.number().int().positive(),
+  questionType: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+  answer: z
+    .object({ answer: z.string().max(guardrails.maxTextLength).nullish() })
+    .nullish(),
+  answerAlternatives: z
+    .array(z.string().max(guardrails.maxTextLength))
+    .optional()
+    .default([]),
+});
+
+export const patientAnswersSchema = z.object({
+  questions: z.array(submittedQuestionSchema),
+});
+
+export const submittedDiaryEntrySchema = z.object({
+  date: dateOnly,
+  mealType,
+  time: z
+    .string()
+    .regex(
+      /^(\d{2}:\d{2}|\d{4}-\d{2}-\d{2}T.+)$/,
+      "Informe um horário válido.",
+    )
+    .nullish(),
+  food: z.string().max(guardrails.maxTextLength),
+  amount: z.string().max(200),
+});
+
+export const patientDiarySchema = z.object({
+  entries: z.array(submittedDiaryEntrySchema),
 });

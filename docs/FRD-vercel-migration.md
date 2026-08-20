@@ -305,6 +305,19 @@ is not the legacy server route `/py/getPatientLink/{urlID}`. Only `/answer/publi
 `urlId` inside the JSON body. The new routes take it from the path. The request body drops to the
 answers/entries array only. Both `features/answers/pyApi.ts` call sites must be updated in step.
 
+> **Third call site.** `sendEmail` lives in `features/patients/**pyApi.ts**`, not the answers one,
+> and also needed repointing. The same file held `sendTestEmail`, which had no caller and posted to
+> `/py/testEmail` — a route that never existed in `main.py`. Removed in PR 4.
+
+**Security fix carried by the same change (PR 4).** The old save endpoints resolved the link by
+`urlId` only to prove one existed, then wrote using the `id` — and for diaries the `diary_id` —
+taken from the request body. The two were never compared. Any patient holding one valid `urlId`
+could therefore delete and overwrite a *different* patient's answers by naming their link id, with
+no authentication, and link ids are sequential and exposed in the public payload. Moving `urlId`
+into the path removes the body's ability to name a target at all: the route resolves the row from
+the path and the body carries answers only. Covered by regression tests in
+`test/integration/public-answers.test.ts`.
+
 ---
 
 ## 5. Component migration detail
@@ -459,6 +472,7 @@ Use `slidingWindow` with `ephemeralCache` enabled to reduce Redis round-trips on
 | `UPSTASH_REDIS_REST_URL` | Upstash integration | Auto-injected |
 | `UPSTASH_REDIS_REST_TOKEN` | Upstash integration | Auto-injected |
 | `NEXT_PUBLIC_APP_URL` | manual | Replaces `WEBSITE_URL`; used to build emailed answer links |
+| `EMAIL_SEND_ENABLED` | manual | **New** — `"true"` in Production only. Anything else makes `lib/email.ts` log the message instead of calling Mailgun. Preview and Development share the production database, so without this a preview deploy would mail real patients; a delivered email cannot be undone the way a row can. The daily quota slot is still reserved either way, so the guardrail behaves identically everywhere. |
 
 **Retired:** `DB_PASSWORD`, `CONNECTION_STRING`, `WEBSITE_URL`, `VITE_API_BASE_URL`,
 `VITE_PY_BASE_URL`, `Clerk:Authority`, `ConnectionStrings:DefaultConnection`.
@@ -590,12 +604,12 @@ Behaviour parity with the current production stack.
 | R1 | **CSP breaks Clerk after cutover.** The nginx CSP is tuned for Clerk's domains; a missed directive silently kills sign-in. | High | Port CSP directives literally. Verify sign-in on preview *before* cutover, with the browser console open. |
 | R2 | **PDF fidelity drift.** `@react-pdf/renderer` uses a different layout engine than QuestPDF. | Medium | Generate the same meal plan from both stacks and diff visually. Budget a full day for PR 5 — it is the least mechanical port. |
 | R3 | **`maxDuration` timeout on PDF generation.** | Medium | Set `maxDuration` explicitly; confirm the ceiling on your Vercel plan; measure with a 50-entry plan (the guardrail maximum). |
-| R4 | **Email quota race.** `reserve_email_send_slot` runs under one Python process today; serverless runs many concurrently, so a naive read-then-write lets users exceed 10/day. | Medium | Implement as a single atomic `INSERT ... ON CONFLICT DO UPDATE ... RETURNING`, then reject on the returned count. Never read-then-write. |
+| R4 | **Email quota race.** `reserve_email_send_slot` runs under one Python process today; serverless runs many concurrently, so a naive read-then-write lets users exceed 10/day. | Medium | Implement as a single atomic `INSERT ... ON CONFLICT DO UPDATE ... RETURNING`, then reject on the returned count. ✅ Done in PR 4: `lib/services/email-quota.ts` is a single `INSERT ... ON CONFLICT DO UPDATE` whose `WHERE` decides inside the row lock, so an over-quota attempt returns no row and never inflates the counter. A concurrency test asserts exactly 10 of 20 parallel sends succeed. |
 | R5 | **Immediate cutover with no rollback (accepted, D10).** | High | 60s TTL pre-lowered; droplet stopped but retained 30 days; 5-minute smoke test immediately post-flip. |
 | R6 | **CPF validation port bug** silently accepts invalid documents. | Medium | Unit-test the ported check-digit algorithm against known-valid and known-invalid CPFs before PR 3 merges. |
 | R7 | **Neon cold starts** on the free tier add latency after idle periods. | Low | Acceptable at current scale. Enable the scale-to-zero delay setting if it becomes noticeable. |
 | R8 | **Dropped legacy endpoints** turn out to be referenced somewhere. | Low | ✅ Already verified unreferenced (§4.3). Re-grep before PR 7 deletes the Python service. |
-| R9 | **Body-shape change** on answer submission breaks the public flow — the most damaging silent failure, since patients hit it unauthenticated. | Medium | Change `pyApi.ts` and the route handler in the same PR; end-to-end test in a private window. |
+| R9 | **Body-shape change** on answer submission breaks the public flow — the most damaging silent failure, since patients hit it unauthenticated. | Medium | ✅ Routes and clients changed together in PR 4; a third call site turned up in `features/patients/pyApi.ts` (§4.3). Integration tests cover the new shape. **Still outstanding:** the end-to-end check in a private window on a preview deploy. |
 
 ---
 
