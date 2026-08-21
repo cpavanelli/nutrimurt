@@ -1,7 +1,14 @@
 import { fileURLToPath } from "node:url";
+
+import react from "@vitejs/plugin-react";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
+  // Next keeps tsconfig `jsx` as "preserve", which the test transformer will
+  // not execute on its own — JSX reaches the parser untransformed and fails.
+  // Today this matters only for the PDF document; PR 6 brings the whole React
+  // frontend under test.
+  plugins: [react()],
   resolve: {
     alias: {
       "@": fileURLToPath(new URL(".", import.meta.url)),
@@ -13,7 +20,7 @@ export default defineConfig({
         extends: true,
         test: {
           name: "unit",
-          include: ["lib/**/*.test.ts"],
+          include: ["lib/**/*.test.ts", "lib/**/*.test.tsx"],
         },
       },
       {

@@ -42,26 +42,26 @@ function saveBlob(blob: Blob, filename: string) {
 export function createMealPlansApi(getToken: GetToken) {
   const request = createApiClient(getToken);
   return {
-    list: () => request<MealPlanListItem[]>(`${baseUrl}/api/patientmealplans`),
-    get: (id: number) => request<MealPlan>(`${baseUrl}/api/patientmealplans/${id}`),
+    list: () => request<MealPlanListItem[]>(`${baseUrl}/api/meal-plans`),
+    get: (id: number) => request<MealPlan>(`${baseUrl}/api/meal-plans/${id}`),
     create: (payload: MealPlanInput) =>
-      request<MealPlan>(`${baseUrl}/api/patientmealplans`, {
+      request<MealPlan>(`${baseUrl}/api/meal-plans`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...payload, id: 0 }),
       }),
     update: (id: number, payload: MealPlanInput) =>
-      request<void>(`${baseUrl}/api/patientmealplans/${id}`, {
+      request<void>(`${baseUrl}/api/meal-plans/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...payload, id }),
       }),
     remove: (id: number) =>
-      request<void>(`${baseUrl}/api/patientmealplans/${id}`, { method: 'DELETE' }),
+      request<void>(`${baseUrl}/api/meal-plans/${id}`, { method: 'DELETE' }),
     downloadPdf: async (id: number) => {
       const { blob, headers } = await requestBlob(
         getToken,
-        `${baseUrl}/api/patientmealplans/${id}/pdf`
+        `${baseUrl}/api/meal-plans/${id}/pdf`
       );
       const filename =
         getFilenameFromContentDisposition(headers.get('content-disposition')) ??

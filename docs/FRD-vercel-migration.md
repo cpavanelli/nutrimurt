@@ -381,8 +381,22 @@ needs no change.
 
 `MealPlanPdfBuilder.cs` (264 LOC, QuestPDF) becomes a `@react-pdf/renderer` document.
 
-- Register the TTF fonts currently embedded from `Assets/Fonts/` via `Font.register()`. Place them
-  under `public/fonts/` or import as buffers.
+- Register the TTF fonts currently embedded from `Assets/Fonts/` via `Font.register()`. **Done in
+  PR 5:** copied to `lib/pdf/fonts/` — not `public/`, which would serve private assets over HTTP —
+  and read from disk at render time. Because nothing imports them, Next cannot trace them into the
+  serverless function, so `next.config.ts` lists them under `outputFileTracingIncludes` for this
+  route. Without that entry the route works locally and throws only in production.
+
+> **Known fidelity gap (R2).** DM Sans is present only as a single variable font, and no italic
+> file was ever embedded. `@react-pdf/renderer` selects a registered file per weight and style and
+> synthesises neither bold nor oblique, so every combination resolves to the same file. Sizes,
+> colours, letter-spacing, borders and the grid are exact; headings lose their heavier stroke and
+> the two "Sem itens" messages lose their slant. QuestPDF avoided this by passing variable axes
+> through to Skia and slanting glyphs itself. Closing the gap means adding static DM Sans weights
+> and an italic as separate TTFs — a font-licensing and asset question, not a code change.
+>
+> Note that every weight/style combination must be registered regardless: an unregistered one
+> throws at render time rather than falling back.
 - Reproduce the horizontal compact layout from commit `c59f8da`, including the second substitution
   column added in `52d5c5a` (`Substitution` and `Substitution2` on `PatientMealPlanEntry`).
 - The handler streams a `Buffer` with `Content-Type: application/pdf` and a `Content-Disposition`
@@ -603,7 +617,7 @@ Behaviour parity with the current production stack.
 |---|---|---|---|
 | R1 | **CSP breaks Clerk after cutover.** The nginx CSP is tuned for Clerk's domains; a missed directive silently kills sign-in. | High | Port CSP directives literally. Verify sign-in on preview *before* cutover, with the browser console open. |
 | R2 | **PDF fidelity drift.** `@react-pdf/renderer` uses a different layout engine than QuestPDF. | Medium | Generate the same meal plan from both stacks and diff visually. Budget a full day for PR 5 — it is the least mechanical port. |
-| R3 | **`maxDuration` timeout on PDF generation.** | Medium | Set `maxDuration` explicitly; confirm the ceiling on your Vercel plan; measure with a 50-entry plan (the guardrail maximum). |
+| R3 | **`maxDuration` timeout on PDF generation.** | Medium | ✅ `maxDuration = 30` and `runtime = "nodejs"` set in PR 5. A 50-entry plan, the guardrail maximum, renders in well under a second locally and is covered by a test that fails if it ever exceeds 20s. **Still outstanding:** confirm the ceiling on the target Vercel plan, since Hobby caps below 30s and the platform value wins. |
 | R4 | **Email quota race.** `reserve_email_send_slot` runs under one Python process today; serverless runs many concurrently, so a naive read-then-write lets users exceed 10/day. | Medium | Implement as a single atomic `INSERT ... ON CONFLICT DO UPDATE ... RETURNING`, then reject on the returned count. ✅ Done in PR 4: `lib/services/email-quota.ts` is a single `INSERT ... ON CONFLICT DO UPDATE` whose `WHERE` decides inside the row lock, so an over-quota attempt returns no row and never inflates the counter. A concurrency test asserts exactly 10 of 20 parallel sends succeed. |
 | R5 | **Immediate cutover with no rollback (accepted, D10).** | High | 60s TTL pre-lowered; droplet stopped but retained 30 days; 5-minute smoke test immediately post-flip. |
 | R6 | **CPF validation port bug** silently accepts invalid documents. | Medium | Unit-test the ported check-digit algorithm against known-valid and known-invalid CPFs before PR 3 merges. |

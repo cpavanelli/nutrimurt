@@ -153,3 +153,24 @@ export const submittedDiaryEntrySchema = z.object({
 export const patientDiarySchema = z.object({
   entries: z.array(submittedDiaryEntrySchema),
 });
+
+export const mealPlanEntryInputSchema = z.object({
+  mealType,
+  food: z.string().trim().min(1, "O alimento é obrigatório.").max(100),
+  amount: z.string().trim().max(50),
+  substitution: z.boolean(),
+  substitution2: z.boolean(),
+});
+
+/**
+ * The SPA posts `{ ...payload, id: 0 }` on create and `{ ...payload, id }` on
+ * update, so `id` is accepted and ignored on create.
+ */
+export const mealPlanInputSchema = z.object({
+  id: z.number().int().nonnegative().optional(),
+  patientId: z.number().int().positive(),
+  name: z.string().trim().min(1, "O nome é obrigatório.").max(200),
+  totalCals: z.number().int(),
+  mealPlanDate: dateOnly,
+  entries: z.array(mealPlanEntryInputSchema).optional().default([]),
+});
