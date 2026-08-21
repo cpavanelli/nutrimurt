@@ -1,0 +1,154 @@
+"use client";
+
+import { useState } from 'react';
+import type { Patient, PatientInput } from './types';
+import { IMaskInput } from 'react-imask';
+import Button from '../../components/ui/Button';
+interface Props {
+    initial?: Patient | null;
+    onSubmit(payload: PatientInput): void;
+    onCancel(): void;
+    submitting?: boolean;
+    errors?: Record<string, string[]>;
+}
+
+const empty: PatientInput = {
+    name: '',
+    email: '',
+    phone: '',
+    cpf: '',
+    birth: '',
+    weight: 0,
+    height: 0,
+};
+
+const toDateInput = (value?: string | null) =>
+  value ? value.split('T')[0] : '';
+
+export default function PatientForm({ initial, onSubmit, onCancel, submitting, errors }: Props) {
+    const [form, setForm] = useState<PatientInput>(initial ? {
+        name: initial.name,
+        email: initial.email,
+        phone: initial.phone,
+        cpf: initial.cpf,
+        birth: toDateInput(initial.birth),
+        weight: initial.weight,
+        height: initial.height,
+    } : empty);
+
+    function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
+        const { name, value } = event.target;
+        setForm((prev) => ({
+            ...prev,
+            [name]: name === 'weight' || name === 'height' ? Number(value) : value,
+        }));
+    }
+
+    function blockNonIntegerInput(event: React.FormEvent<HTMLInputElement>) {
+        const nativeEvent = event.nativeEvent as InputEvent;
+
+        if (nativeEvent.data && !/^\d+$/.test(nativeEvent.data)) {
+            event.preventDefault();
+        }
+    }
+
+    function handleSubmit(event: React.FormEvent) {
+        event.preventDefault();
+        onSubmit(form);
+    }
+
+    return (
+        <form onSubmit={handleSubmit} className="space-y-4">
+            {['name', 'email'].map((field) => (
+                <div key={field}>
+                    <label className="block text-sm font-medium text-slate-200 capitalize">{field != "name"?field : "Nome"  }</label>
+                    <input
+                        name={field}
+                        value={form[field as keyof typeof form] as string}
+                        onChange={handleChange}
+                        className="mt-1 w-full rounded border border-slate-700 bg-slate-900 px-3 py-2 text-white"
+                        required={true}
+                        maxLength={field === 'email' ? 255 : 200}
+                        type={field === 'email' ? 'email' : 'text'}
+                    />
+                    {errors?.[field] && <p className="mt-1 text-sm text-red-400">{errors[field][0]}</p>}
+                </div>
+            ))}
+
+            <div>
+                <label className="block text-sm font-medium text-slate-200">Celular</label>
+                <IMaskInput
+                    mask="(00)00000-0000"
+                    name="phone"
+                    value={form.phone}
+                    required={true}
+                    onAccept={(value) => setForm((prev) => ({ ...prev, phone: value }))}
+                    unmask={false} // keep formatted value
+                    className="mt-1 w-full rounded border border-slate-700 bg-slate-900 px-3 py-2 text-white"
+                    placeholder="(11)12345-6789"
+                />
+            </div>
+
+            <div>
+                <label className="block text-sm font-medium text-slate-200">CPF</label>
+                <IMaskInput
+                    mask="000.000.000-00"
+                    name="cpf"
+                    value={form.cpf}
+                    required={true}
+                    onAccept={(value) => setForm((prev) => ({ ...prev, cpf: value }))}
+                    unmask={false} // keep formatted value
+                    className="mt-1 w-full rounded border border-slate-700 bg-slate-900 px-3 py-2 text-white"
+                    placeholder="000.000.000-00"
+                />
+                {errors?.cpf && <p className="mt-1 text-sm text-red-400">{errors.cpf[0]}</p>}
+            </div>
+
+            <div>
+                <label className="block text-sm font-medium text-slate-200">Data de Nascimento</label>
+                <input
+                    type="date"
+                    name="birth"
+                    value={form.birth ?? ''}
+                    onChange={handleChange}
+                    className="mt-1 w-full rounded border border-slate-700 bg-slate-900 px-3 py-2 text-white"
+                />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+                {(['weight', 'height'] as const).map((field) => (
+                    <div key={field}>
+                        <label className="block text-sm font-medium text-slate-200 capitalize">{field == "weight"?"Peso" : "Altura"  }</label>
+                        <input
+                            type="text"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                            maxLength={3}
+                            name={field}
+                            value={(form[field as keyof typeof form] as number) ?? 0}
+                            onChange={handleChange}
+                            onBeforeInput={blockNonIntegerInput}
+                            className="mt-1 w-full rounded border border-slate-700 bg-slate-900 px-3 py-2 text-white"
+                        />
+                    </div>
+                ))}
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4">
+                <Button
+                    type="button"
+                    onClick={onCancel}
+                    variant="outline"
+                >
+                    Cancelar
+                </Button>
+                <Button
+                    type="submit"
+                    disabled={submitting}
+                >
+                    {submitting ? 'Salvando...' : 'Salvar'}
+                </Button>
+            </div>
+        </form>
+    );
+}
