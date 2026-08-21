@@ -217,7 +217,7 @@ cp -r /tmp/nm-scaffold/. .
 - **`.gitignore`** — merge the Next.js entries (`node_modules/`, `.next/`, `.vercel/`,
   `*.tsbuildinfo`) into the existing file. Do not let the scaffold overwrite it; the current file
   carries `infra/certs/` and `.env.*` rules that stay relevant until PR 7.
-- **Root `.env`** — currently holds `DB_PASSWORD` for docker-compose. Next.js auto-loads root
+- **Root `.env`** — currently holds the old Docker database credential. Next.js auto-loads root
   `.env`, so a stale entry there is harmless but misleading. Put new local secrets in `.env.local`
   (already gitignored, and preferred by Next.js) and let the old `.env` be removed with PR 7.
 
@@ -332,7 +332,7 @@ Replace two independent implementations (`AddJwtBearer` in .NET, hand-rolled JWK
 - Route handlers call a `requireUserId()` helper wrapping `auth()`, throwing a `401` when `userId`
   is null. This replaces both `ClaimsPrincipalExtensions.GetUserId()` and `get_user_id()`.
 - The `sub` claim continues to populate the `user_id` column. No data or claim-shape change.
-- `VITE_CLERK_PUBLISHABLE_KEY` becomes `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`; add
+- The Clerk publishable key moves to Next.js's public environment-variable convention; add
   `CLERK_SECRET_KEY` (new — the Next SDK requires it, the old stack did not).
 - Keep the existing Clerk **production** instance. Its `clerk.nutrimurt.com.br` CNAME is independent
   of the apex A record, so it survives the DNS cutover untouched.
@@ -416,10 +416,9 @@ needs no change.
 4. Swap router primitives: `react-router-dom`'s `useNavigate` → `next/navigation`'s `useRouter`,
    `useParams` → `next/navigation`'s `useParams`, `<Link to>` → `next/link`'s `<Link href>`.
 5. `<ProtectedRoute>` is deleted; `middleware.ts` plus the `(app)` route group layout handle it.
-6. `import.meta.env.VITE_*` → `process.env.NEXT_PUBLIC_*`.
+6. Browser environment reads move from `import.meta.env` to `process.env.NEXT_PUBLIC_*`.
 7. `api.ts` / `pyApi.ts` modules keep `createApiClient` and its Clerk-token wiring; only the URL
-   strings change per §4.3. Base URLs become relative — same origin, so `VITE_API_BASE_URL` and
-   `VITE_PY_BASE_URL` are deleted entirely.
+   strings change per §4.3. Base URLs become relative because the frontend and API are same-origin.
 8. **Tailwind v3 → v4 theme port.** The scaffold (PR 1) installs Tailwind **v4**, which is CSS-first:
    it auto-detects sources, so there are no `content` globs to repoint, and it does not read
    `theme.extend.colors` from a JS config. `nutrimurt.Web/tailwind.config.js` defines a 43-line
@@ -468,7 +467,7 @@ Clerk is sensitive to a missing `frame-src` or `connect-src` entry.
 Use `slidingWindow` with `ephemeralCache` enabled to reduce Redis round-trips on hot paths.
 
 **CORS** is deleted. Frontend and API become same-origin, so the allowlist in `Program.cs` and the
-`CORSMiddleware` in `main.py` have nothing left to do.
+legacy Python CORS middleware have nothing left to do.
 
 ---
 
@@ -478,18 +477,17 @@ Use `slidingWindow` with `ephemeralCache` enabled to reduce Redis round-trips on
 |---|---|---|
 | `DATABASE_URL` | Neon integration | Auto-injected |
 | `DATABASE_URL_UNPOOLED` | Neon integration | Used by `drizzle-kit` for migrations |
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk | Was `VITE_CLERK_PUBLISHABLE_KEY` |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk | Renamed during the migration |
 | `CLERK_SECRET_KEY` | Clerk | **New** — required by the Next SDK |
 | `MAILGUN_API_KEY` | existing `.env` | Unchanged |
 | `MAILGUN_DOMAIN` | existing `.env` | `mg.nutrimurt.com.br` |
 | `MAILGUN_FROM` | existing `.env` | `NutriMurt <noreply@mg.nutrimurt.com.br>` |
 | `UPSTASH_REDIS_REST_URL` | Upstash integration | Auto-injected |
 | `UPSTASH_REDIS_REST_TOKEN` | Upstash integration | Auto-injected |
-| `NEXT_PUBLIC_APP_URL` | manual | Replaces `WEBSITE_URL`; used to build emailed answer links |
+| `NEXT_PUBLIC_APP_URL` | manual | Used to build emailed answer links |
 | `EMAIL_SEND_ENABLED` | manual | **New** — `"true"` in Production only. Anything else makes `lib/email.ts` log the message instead of calling Mailgun. Preview and Development share the production database, so without this a preview deploy would mail real patients; a delivered email cannot be undone the way a row can. The daily quota slot is still reserved either way, so the guardrail behaves identically everywhere. |
 
-**Retired:** `DB_PASSWORD`, `CONNECTION_STRING`, `WEBSITE_URL`, `VITE_API_BASE_URL`,
-`VITE_PY_BASE_URL`, `Clerk:Authority`, `ConnectionStrings:DefaultConnection`.
+**Retired:** all old Docker database, service base URL, and framework-specific auth variables.
 
 Set every variable across all three Vercel environments (Production, Preview, Development) before
 the first deploy. A missing `CLERK_SECRET_KEY` fails at build time, not runtime.
@@ -628,7 +626,7 @@ Behaviour parity with the current production stack.
 - [ ] `pre-vercel-migration` tag created and pushed **before** any deletion.
 - [ ] `nutrimurt.Api/`, `nutrimurt.PyService/`, `infra/`, and all compose files removed.
 - [ ] `README.md` describes only the Next.js stack.
-- [ ] No `VITE_*`, `CONNECTION_STRING`, or `DB_PASSWORD` references remain.
+- [ ] No retired legacy environment-variable references remain.
 
 ---
 

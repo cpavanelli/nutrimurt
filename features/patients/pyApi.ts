@@ -1,6 +1,6 @@
 /**
  * Talks to the Next.js route handlers, not the retired Python service.
- * Same-origin, so there is no base URL and no `VITE_PY_BASE_URL`.
+ * Same-origin, so the client does not need a service base URL.
  *
  * `sendTestEmail` was removed: nothing called it, and the `/py/testEmail`
  * route it posted to does not exist in `main.py`.

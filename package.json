@@ -11,9 +11,7 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "test:integration": "vitest run --project integration",
-    "test:all": "vitest run",
-    "db:test:up": "docker compose -f test/docker-compose.yml up -d --wait",
-    "db:test:down": "docker compose -f test/docker-compose.yml down"
+    "test:all": "vitest run"
   },
   "dependencies": {
     "@clerk/localizations": "4.15.3",

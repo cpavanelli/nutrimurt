@@ -4,7 +4,7 @@ import type { PatientLink } from './types';
 /**
  * Talks to the Next.js route handlers, not the retired Python service.
  *
- * Same-origin, so there is no base URL and no `VITE_PY_BASE_URL`.
+ * Same-origin, so the client does not need a service base URL.
  */
 
 async function request<T>(input: RequestInfo, init?: RequestInit, token?: string | null): Promise<T> {
