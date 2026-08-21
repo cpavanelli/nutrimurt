@@ -4,6 +4,8 @@ import {
 } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
+import { rateLimitRequest } from "@/lib/rate-limit";
+
 const isPublicRoute = createRouteMatcher([
   "/answer/:urlId",
   "/api/public/:path*",
@@ -11,7 +13,30 @@ const isPublicRoute = createRouteMatcher([
   "/sign-in/:path*",
 ]);
 
-export default clerkMiddleware(async (auth, request) => {
+export default clerkMiddleware(async (auth, request, event) => {
+  const rateLimit = await rateLimitRequest(request);
+
+  if (rateLimit) {
+    event.waitUntil(rateLimit.pending);
+
+    if (!rateLimit.success) {
+      const retryAfter = Math.max(
+        0,
+        Math.ceil((rateLimit.reset - Date.now()) / 1_000),
+      );
+
+      return NextResponse.json(
+        { error: "Too many requests" },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": retryAfter.toString(),
+          },
+        },
+      );
+    }
+  }
+
   if (isPublicRoute(request)) {
     return;
   }
