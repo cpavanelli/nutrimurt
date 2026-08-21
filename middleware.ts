@@ -32,6 +32,9 @@ export default clerkMiddleware(
             status: 429,
             headers: {
               "Retry-After": retryAfter.toString(),
+              "RateLimit-Limit": rateLimit.limit.toString(),
+              "RateLimit-Remaining": rateLimit.remaining.toString(),
+              "RateLimit-Reset": retryAfter.toString(),
             },
           },
         );

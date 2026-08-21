@@ -483,8 +483,8 @@ Use `slidingWindow` with `ephemeralCache` enabled to reduce Redis round-trips on
 | `MAILGUN_API_KEY` | existing `.env` | Unchanged |
 | `MAILGUN_DOMAIN` | existing `.env` | `mg.nutrimurt.com.br` |
 | `MAILGUN_FROM` | existing `.env` | `NutriMurt <noreply@mg.nutrimurt.com.br>` |
-| `UPSTASH_REDIS_REST_URL` | Upstash integration | Auto-injected |
-| `UPSTASH_REDIS_REST_TOKEN` | Upstash integration | Auto-injected |
+| `KV_REST_API_URL` | Upstash integration | Auto-injected. The Vercel marketplace integration injects the `KV_` names, not `UPSTASH_REDIS_REST_*`; `lib/rate-limit.ts` reads either |
+| `KV_REST_API_TOKEN` | Upstash integration | Auto-injected. See above |
 | `NEXT_PUBLIC_APP_URL` | manual | Replaces `WEBSITE_URL`; used to build emailed answer links |
 | `EMAIL_SEND_ENABLED` | manual | **New** — `"true"` in Production only. Anything else makes `lib/email.ts` log the message instead of calling Mailgun. Preview and Development share the production database, so without this a preview deploy would mail real patients; a delivered email cannot be undone the way a row can. The daily quota slot is still reserved either way, so the guardrail behaves identically everywhere. |
 

@@ -37,14 +37,34 @@ export function getClientIp(headers: Headers): string {
   return firstForwardedIp || headers.get("x-real-ip")?.trim() || "unknown";
 }
 
+/**
+ * Vercel's Upstash marketplace integration injects `KV_REST_API_*`, while a
+ * store created straight from Upstash injects `UPSTASH_REDIS_REST_*`.
+ * `Redis.fromEnv()` only understands the latter, so read both rather than
+ * hand-maintaining alias variables the integration would rotate out from under
+ * us.
+ */
+export function getRedisCredentials(): { url: string; token: string } | null {
+  const url =
+    process.env.UPSTASH_REDIS_REST_URL ?? process.env.KV_REST_API_URL;
+  const token =
+    process.env.UPSTASH_REDIS_REST_TOKEN ?? process.env.KV_REST_API_TOKEN;
+
+  return url && token ? { url, token } : null;
+}
+
 export function isRateLimitConfigured(): boolean {
-  return Boolean(
-    process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN,
-  );
+  return getRedisCredentials() !== null;
 }
 
 function createRateLimiters() {
-  const redis = Redis.fromEnv();
+  const credentials = getRedisCredentials();
+
+  if (!credentials) {
+    throw new Error("Redis credentials are not configured.");
+  }
+
+  const redis = new Redis(credentials);
 
   return {
     // A 20-request sliding window over two seconds preserves nginx's 10 req/s

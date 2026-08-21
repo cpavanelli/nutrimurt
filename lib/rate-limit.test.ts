@@ -4,6 +4,7 @@ import type { NextRequest } from "next/server";
 
 import {
   getClientIp,
+  getRedisCredentials,
   isRateLimitConfigured,
   rateLimitRequest,
   selectRateLimitPolicy,
@@ -64,13 +65,30 @@ describe("getClientIp", () => {
   });
 });
 
+const REDIS_VARS = [
+  "UPSTASH_REDIS_REST_URL",
+  "UPSTASH_REDIS_REST_TOKEN",
+  "KV_REST_API_URL",
+  "KV_REST_API_TOKEN",
+] as const;
+
+function clearRedisEnv() {
+  for (const key of REDIS_VARS) {
+    delete process.env[key];
+  }
+}
+
 describe("rateLimitRequest", () => {
-  const savedUrl = process.env.UPSTASH_REDIS_REST_URL;
-  const savedToken = process.env.UPSTASH_REDIS_REST_TOKEN;
+  const saved = REDIS_VARS.map((key) => [key, process.env[key]] as const);
 
   afterEach(() => {
-    process.env.UPSTASH_REDIS_REST_URL = savedUrl;
-    process.env.UPSTASH_REDIS_REST_TOKEN = savedToken;
+    for (const [key, value] of saved) {
+      if (value === undefined) {
+        delete process.env[key];
+      } else {
+        process.env[key] = value;
+      }
+    }
   });
 
   function apiRequest() {
@@ -84,19 +102,44 @@ describe("rateLimitRequest", () => {
   // The limiter runs in middleware ahead of every API request, so an
   // unconfigured or unreachable Upstash must not take the API down with it.
   it("skips limiting instead of throwing when Upstash is not configured", async () => {
-    delete process.env.UPSTASH_REDIS_REST_URL;
-    delete process.env.UPSTASH_REDIS_REST_TOKEN;
+    clearRedisEnv();
 
     expect(isRateLimitConfigured()).toBe(false);
     await expect(rateLimitRequest(apiRequest())).resolves.toBeNull();
   });
 
-  it("reports configured only when both Upstash variables are present", () => {
+  it("reports configured only when both variables are present", () => {
+    clearRedisEnv();
     process.env.UPSTASH_REDIS_REST_URL = "https://example.upstash.io";
-    delete process.env.UPSTASH_REDIS_REST_TOKEN;
     expect(isRateLimitConfigured()).toBe(false);
 
     process.env.UPSTASH_REDIS_REST_TOKEN = "token";
     expect(isRateLimitConfigured()).toBe(true);
+  });
+
+  // Vercel's Upstash marketplace integration injects the KV_ names, which is
+  // what actually shipped; reading only UPSTASH_ silently disabled limiting.
+  it("accepts Vercel's KV_REST_API_* naming", () => {
+    clearRedisEnv();
+    process.env.KV_REST_API_URL = "https://example.upstash.io";
+    process.env.KV_REST_API_TOKEN = "kv-token";
+
+    expect(getRedisCredentials()).toEqual({
+      url: "https://example.upstash.io",
+      token: "kv-token",
+    });
+  });
+
+  it("prefers UPSTASH_ over KV_ when both are set", () => {
+    clearRedisEnv();
+    process.env.UPSTASH_REDIS_REST_URL = "https://upstash.example";
+    process.env.UPSTASH_REDIS_REST_TOKEN = "upstash-token";
+    process.env.KV_REST_API_URL = "https://kv.example";
+    process.env.KV_REST_API_TOKEN = "kv-token";
+
+    expect(getRedisCredentials()).toEqual({
+      url: "https://upstash.example",
+      token: "upstash-token",
+    });
   });
 });
