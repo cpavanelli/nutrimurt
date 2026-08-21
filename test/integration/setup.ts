@@ -31,7 +31,7 @@ beforeAll(async () => {
   } catch (error) {
     throw new Error(
       `Could not reach the test database at ${connectionString}.\n` +
-        "Start a disposable Postgres 16 database or set TEST_DATABASE_URL.\n" +
+        "Start it with `npm run db:test:up`, or set TEST_DATABASE_URL.\n" +
         `Original error: ${(error as Error).message}`,
     );
   }

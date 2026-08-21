@@ -37,6 +37,12 @@ export function getClientIp(headers: Headers): string {
   return firstForwardedIp || headers.get("x-real-ip")?.trim() || "unknown";
 }
 
+export function isRateLimitConfigured(): boolean {
+  return Boolean(
+    process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN,
+  );
+}
+
 function createRateLimiters() {
   const redis = Redis.fromEnv();
 
@@ -66,17 +72,52 @@ function createRateLimiters() {
 }
 
 let rateLimiters: ReturnType<typeof createRateLimiters> | undefined;
+let limitersUnavailable = false;
 
+function getRateLimiters() {
+  if (limitersUnavailable) {
+    return undefined;
+  }
+
+  if (!rateLimiters) {
+    try {
+      rateLimiters = createRateLimiters();
+    } catch (error) {
+      limitersUnavailable = true;
+      console.error("Rate limiting disabled: Redis unavailable.", error);
+      return undefined;
+    }
+  }
+
+  return rateLimiters;
+}
+
+/**
+ * Fails open on purpose. The limiter runs in middleware, ahead of every API
+ * request, so a missing Upstash binding or an Upstash outage would otherwise
+ * take the entire API down — a worse outcome than not throttling. Absent
+ * configuration is the normal state in local development and in CI.
+ */
 export async function rateLimitRequest(request: NextRequest) {
   const policy = selectRateLimitPolicy(
     request.method,
     request.nextUrl.pathname,
   );
 
-  if (!policy) {
+  if (!policy || !isRateLimitConfigured()) {
     return null;
   }
 
-  rateLimiters ??= createRateLimiters();
-  return rateLimiters[policy].limit(getClientIp(request.headers));
+  const limiters = getRateLimiters();
+
+  if (!limiters) {
+    return null;
+  }
+
+  try {
+    return await limiters[policy].limit(getClientIp(request.headers));
+  } catch (error) {
+    console.error("Rate limit check failed; allowing the request.", error);
+    return null;
+  }
 }

@@ -1,8 +1,5 @@
 import type { NextConfig } from "next";
 
-const contentSecurityPolicy =
-  "default-src 'self'; script-src 'self' https://clerk.nutrimurt.com.br https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://clerk.nutrimurt.com.br https://img.clerk.com; connect-src 'self' https://clerk.nutrimurt.com.br https://challenges.cloudflare.com; worker-src 'self' blob:; frame-src 'self' https://clerk.nutrimurt.com.br https://challenges.cloudflare.com;";
-
 const nextConfig: NextConfig = {
   /**
    * The PDF route reads its TTFs from `lib/pdf/fonts` at runtime rather than
@@ -12,6 +9,13 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     "/api/meal-plans/[id]/pdf": ["./lib/pdf/fonts/**"],
   },
+  /**
+   * The Content-Security-Policy is deliberately absent here.
+   * `clerkMiddleware` emits it instead, so it can carry a per-request nonce
+   * and the active Clerk Frontend API host — both of which differ between
+   * preview and production. A second static policy in this file would be a
+   * duplicate source of truth that drifts silently.
+   */
   async headers() {
     return [
       {
@@ -28,10 +32,6 @@ const nextConfig: NextConfig = {
           {
             key: "Strict-Transport-Security",
             value: "max-age=63072000; includeSubDomains; preload",
-          },
-          {
-            key: "Content-Security-Policy",
-            value: contentSecurityPolicy,
           },
         ],
       },

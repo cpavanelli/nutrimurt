@@ -1,6 +1,13 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
-import { getClientIp, selectRateLimitPolicy } from "./rate-limit";
+import type { NextRequest } from "next/server";
+
+import {
+  getClientIp,
+  isRateLimitConfigured,
+  rateLimitRequest,
+  selectRateLimitPolicy,
+} from "./rate-limit";
 
 describe("selectRateLimitPolicy", () => {
   it("uses the public-link read policy only for GET requests", () => {
@@ -54,5 +61,42 @@ describe("getClientIp", () => {
       "203.0.113.11",
     );
     expect(getClientIp(new Headers())).toBe("unknown");
+  });
+});
+
+describe("rateLimitRequest", () => {
+  const savedUrl = process.env.UPSTASH_REDIS_REST_URL;
+  const savedToken = process.env.UPSTASH_REDIS_REST_TOKEN;
+
+  afterEach(() => {
+    process.env.UPSTASH_REDIS_REST_URL = savedUrl;
+    process.env.UPSTASH_REDIS_REST_TOKEN = savedToken;
+  });
+
+  function apiRequest() {
+    return {
+      method: "GET",
+      nextUrl: { pathname: "/api/patients" },
+      headers: new Headers({ "x-forwarded-for": "203.0.113.10" }),
+    } as unknown as NextRequest;
+  }
+
+  // The limiter runs in middleware ahead of every API request, so an
+  // unconfigured or unreachable Upstash must not take the API down with it.
+  it("skips limiting instead of throwing when Upstash is not configured", async () => {
+    delete process.env.UPSTASH_REDIS_REST_URL;
+    delete process.env.UPSTASH_REDIS_REST_TOKEN;
+
+    expect(isRateLimitConfigured()).toBe(false);
+    await expect(rateLimitRequest(apiRequest())).resolves.toBeNull();
+  });
+
+  it("reports configured only when both Upstash variables are present", () => {
+    process.env.UPSTASH_REDIS_REST_URL = "https://example.upstash.io";
+    delete process.env.UPSTASH_REDIS_REST_TOKEN;
+    expect(isRateLimitConfigured()).toBe(false);
+
+    process.env.UPSTASH_REDIS_REST_TOKEN = "token";
+    expect(isRateLimitConfigured()).toBe(true);
   });
 });
