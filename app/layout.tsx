@@ -58,6 +58,7 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider
+      dynamic
       localization={ptBR}
       signInUrl="/sign-in"
       afterSignOutUrl="/sign-in"
