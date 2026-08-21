@@ -9,22 +9,22 @@ import type { Questionary, QuestionaryInput } from './types';
 export function createQuestionariesApi(getToken: GetToken) {
   const request = createApiClient(getToken);
   return {
-    list: () => request<Questionary[]>(`/api/Questionnaries`),
-    get: (id: number) => request<Questionary>(`/api/Questionnaries/${id}`),
+    list: () => request<Questionary[]>(`/api/questionnaires`),
+    get: (id: number) => request<Questionary>(`/api/questionnaires/${id}`),
     create: (payload: QuestionaryInput) =>
-      request<Questionary>(`/api/Questionnaries`, {
+      request<Questionary>(`/api/questionnaires`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       }),
     update: (id: number, payload: QuestionaryInput) =>
-      request<void>(`/api/Questionnaries/${id}`, {
+      request<void>(`/api/questionnaires/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...payload, id }),
       }),
     remove: (id: number) =>
-      request<void>(`/api/Questionnaries/${id}`, { method: 'DELETE' }),
+      request<void>(`/api/questionnaires/${id}`, { method: 'DELETE' }),
   };
 }
 

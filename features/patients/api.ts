@@ -38,7 +38,7 @@ export function createPatientsApi(getToken: GetToken) {
   return {
     list: () => request<Patient[]>(`/api/patients`),
     get: (id: number) => request<Patient>(`/api/patients/${id}`),
-    getWithAll: (id: number) => request<PatientWithLinks>(`/api/patients/getWithAll/${id}`),
+    getWithAll: (id: number) => request<PatientWithLinks>(`/api/patients/${id}?include=all`),
     create: (payload: PatientInput) =>
       request<Patient>(`/api/patients`, {
         method: 'POST',
