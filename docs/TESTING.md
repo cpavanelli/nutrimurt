@@ -7,7 +7,7 @@ introduced with PR 3 and is the bar for every later PR in the Vercel migration.
 
 | Tier | Runs against | Command | Covers |
 |---|---|---|---|
-| Unit | nothing external | `npm test` | Pure logic: CPF check digits, validation schemas, error shaping, date formatting |
+| Unit | nothing external | `npm test` | Pure logic: CPF check digits, validation schemas, error shaping, date formatting, edge policy selection |
 | Integration | local Postgres 16 in Docker | `npm run test:integration` | Route handlers end to end: user scoping, guardrails, validation contract, FK cascades, transaction boundaries |
 
 `npm run test:all` runs both. CI runs both plus `lint`, `tsc --noEmit`, and a

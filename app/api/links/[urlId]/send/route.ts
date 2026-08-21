@@ -48,7 +48,7 @@ export const POST = withApiHandler(
       return conflict(emailQuotaMessage);
     }
 
-    // FRD §6: NEXT_PUBLIC_APP_URL replaces the Python service's WEBSITE_URL.
+    // FRD §6: NEXT_PUBLIC_APP_URL is the canonical origin for emailed links.
     const websiteUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
     const noun = link.type === 1 ? "questionário" : "diário";
     const subject =
