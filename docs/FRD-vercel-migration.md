@@ -543,6 +543,27 @@ No merge to `main` until PR 7 passes acceptance.
 - **Done when:** every route in §3.5 renders and functions on a preview deploy, `npm run build`
   passes with no type errors, and the PDF download filename is correct.
 
+Two URLs changed, per the route mapping: `/viewAnswer/:urlid` → `/view-answer/[urlId]` and
+`/patientSummary/:patientId` → `/patients/[patientId]`. Both were only ever reached from in-app
+links, which moved with them, but any bookmark a user holds will 404.
+
+Things the port could not carry over literally:
+
+- **`<SignedIn>` no longer exists** in Clerk Core 3. The sidebar is a client component that already
+  reads the session for its user card, so it gates on `isLoaded && isSignedIn` and renders nothing
+  until Clerk resolves — which also removes the signed-out flash of the nav. `<UserButton>` lost
+  its `afterSignOutUrl` prop too; that moved to `ClerkProvider`.
+- **`useSearchParams()` forces a client bailout during prerender** unless it sits under a Suspense
+  boundary, so both routes rendering `MealPlanForm` wrap it in `<Suspense fallback={null}>`. The
+  SPA wrapped its entire router the same way, so there is no new loading flash.
+- **`<ProtectedRoute>` is gone**, replaced by `middleware.ts` plus the `(app)` group layout.
+  `/answer/[urlId]` sits outside that group because patients reach it with no session.
+- **Fonts moved from a Google Fonts `<link>` to `next/font`**, which self-hosts them and removes a
+  render-blocking request.
+- **`docker-compose*.yml` now references a `nutrimurt.Web/dist` that no longer exists**, so the old
+  stack cannot be rebuilt from this branch. Those files are deleted in PR 7 anyway; production runs
+  from its existing build until cutover.
+
 ### PR 7 — Edge policy, cleanup, cutover prep
 - Security headers in `next.config.ts`, rate limiting in `middleware.ts`.
 - **Tag `pre-vercel-migration` and push it before deleting anything** (§4.1).
